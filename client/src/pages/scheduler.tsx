@@ -144,7 +144,7 @@ export default function Scheduler() {
                     <div
                       key={i}
                       className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
-                      style={{ width: '540px' }}
+                      style={{ width: '600px' }}
                     >
                       <div>{formatDayLabel(i)}</div>
                       <div className="flex justify-between mt-1 text-[10px]">
