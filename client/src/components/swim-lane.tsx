@@ -115,12 +115,29 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
     }),
   }), [assembler.id, assemblyCards, updateCardMutation]);
 
-  // Check for dependency warnings
+  // Check for dependency warnings and generate conflict details
   const getCardWarnings = (card: AssemblyCard) => {
     return card.dependencies?.some(dep => {
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       return !depCard || depCard.status !== "completed";
     });
+  };
+
+  const getDependencyConflictDetails = (card: AssemblyCard) => {
+    if (!card.dependencies?.length) return null;
+    
+    const conflicts: string[] = [];
+    
+    card.dependencies.forEach(dep => {
+      const depCard = assemblyCards.find(c => c.cardNumber === dep);
+      if (!depCard) {
+        conflicts.push(`Card ${dep} not found`);
+      } else if (depCard.status !== "completed") {
+        conflicts.push(`Card ${dep} is ${depCard.status} (needs to be completed)`);
+      }
+    });
+    
+    return conflicts.length > 0 ? conflicts.join('; ') : null;
   };
 
   return (
@@ -156,6 +173,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
               card={card}
               onEdit={onCardEdit}
               hasWarning={getCardWarnings(card)}
+              conflictDetails={getDependencyConflictDetails(card)}
             />
           ))}
       </div>

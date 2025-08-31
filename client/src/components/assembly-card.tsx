@@ -2,11 +2,13 @@ import { useDrag } from "react-dnd";
 import { GripVertical, AlertTriangle } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface AssemblyCardProps {
   card: AssemblyCard;
   onEdit: (card: AssemblyCard) => void;
   hasWarning?: boolean;
+  conflictDetails?: string | null;
 }
 
 const getPhaseClass = (phase: number) => {
@@ -30,7 +32,7 @@ const getSequenceTypeLabel = (type: string) => {
   }
 };
 
-export default function AssemblyCardComponent({ card, onEdit, hasWarning }: AssemblyCardProps) {
+export default function AssemblyCardComponent({ card, onEdit, hasWarning, conflictDetails }: AssemblyCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "assembly-card",
     item: { 
@@ -48,7 +50,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
   // Calculate width reactively - this will update when card.duration changes
   const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
 
-  return (
+  const cardElement = (
     <div
       ref={drag}
       className={cn(
@@ -88,4 +90,21 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
       )}
     </div>
   );
+
+  // Wrap with tooltip if there are dependency conflicts
+  if (hasWarning && conflictDetails) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {cardElement}
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="text-sm font-medium">Dependency Conflict</p>
+          <p className="text-xs">{conflictDetails}</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return cardElement;
 }
