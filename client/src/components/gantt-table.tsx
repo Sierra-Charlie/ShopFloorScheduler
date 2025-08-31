@@ -115,7 +115,13 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       if (!depCard) return true; // Card not found
       
-      // Check if dependency will finish before this card starts
+      // Check position-based conflicts within the same assembler
+      if (depCard.assignedTo === card.assignedTo) {
+        // Dependency card is in the same swim lane - check position order
+        return (depCard.position || 0) >= (card.position || 0);
+      }
+      
+      // Check timing conflicts for cards in different assemblers
       if (card.startTime && depCard.endTime) {
         return new Date(depCard.endTime) > new Date(card.startTime);
       }

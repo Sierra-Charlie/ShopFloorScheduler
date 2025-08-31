@@ -121,7 +121,13 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       if (!depCard) return true; // Card not found
       
-      // Check if dependency will finish before this card starts
+      // Check position-based conflicts within the same assembler
+      if (depCard.assignedTo === card.assignedTo) {
+        // Dependency card is in the same swim lane - check position order
+        return (depCard.position || 0) >= (card.position || 0);
+      }
+      
+      // Check timing conflicts for cards in different assemblers
       if (card.startTime && depCard.endTime) {
         return new Date(depCard.endTime) > new Date(card.startTime);
       }
@@ -140,8 +146,13 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       if (!depCard) {
         conflicts.push(`Card ${dep} not found`);
+      } else if (depCard.assignedTo === card.assignedTo) {
+        // Same assembler - check position order
+        if ((depCard.position || 0) >= (card.position || 0)) {
+          conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
+        }
       } else if (card.startTime && depCard.endTime) {
-        // Check timing conflict
+        // Different assemblers - check timing
         if (new Date(depCard.endTime) > new Date(card.startTime)) {
           conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts`);
         }
