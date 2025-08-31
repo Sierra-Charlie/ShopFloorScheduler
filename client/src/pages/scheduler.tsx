@@ -138,7 +138,7 @@ export default function Scheduler() {
             <div className="min-w-max">
               {/* Time Header - sticky within the scroll container */}
               <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center">
                   <div className="w-48 font-semibold text-sm">Assembler</div>
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
