@@ -100,7 +100,7 @@ export default function Scheduler() {
                 >
                   <div>Day {i + 1}</div>
                   <div className="flex justify-between mt-1 text-[10px]">
-                    <span>6AM</span><span>8AM</span><span>10AM</span><span>12PM</span><span>12:30PM</span><span>2:30PM</span>
+                    <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span><span>3p</span>
                   </div>
                 </div>
               ))}
