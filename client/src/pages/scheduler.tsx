@@ -147,8 +147,8 @@ export default function Scheduler() {
                       style={{ width: '540px' }}
                     >
                       <div>{formatDayLabel(i)}</div>
-                      <div className="flex mt-1 text-[10px]" style={{ justifyContent: 'space-between', paddingRight: '0px' }}>
-                        <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span>
+                      <div className="flex justify-between mt-1 text-[10px]">
+                        <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span><span></span>
                       </div>
                     </div>
                   ))}
