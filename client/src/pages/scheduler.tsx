@@ -23,6 +23,12 @@ export default function Scheduler() {
   // Calculate business days (Mon-Fri) from start date
   const getBusinessDay = (startDateStr: string, dayOffset: number) => {
     const start = new Date(startDateStr);
+    
+    // For Day 1 (dayOffset 0), return the start date
+    if (dayOffset === 0) {
+      return start;
+    }
+    
     let current = new Date(start);
     let businessDaysAdded = 0;
     
@@ -38,7 +44,7 @@ export default function Scheduler() {
   };
 
   const formatDayLabel = (dayIndex: number) => {
-    const date = dayIndex === 0 ? new Date(startDate) : getBusinessDay(startDate, dayIndex);
+    const date = getBusinessDay(startDate, dayIndex);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[date.getDay()];
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
