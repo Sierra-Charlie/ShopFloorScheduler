@@ -65,8 +65,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
 
       {/* Precedents - Top Right */}
       {(card.precedents?.length || 0) > 0 && (
-        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[60px]">
-          <div className="font-semibold">Precedent</div>
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[40px]">
           <div className="text-[10px]">{card.precedents?.join(', ')}</div>
         </div>
       )}
