@@ -98,9 +98,9 @@ export default function Scheduler() {
                   key={i}
                   className="w-60 text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
                 >
-                  <div>Week {i + 1}</div>
-                  <div className="flex justify-between mt-1">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span>
+                  <div>Day {i + 1}</div>
+                  <div className="flex justify-between mt-1 text-[10px]">
+                    <span>6AM</span><span>8AM</span><span>10AM</span><span>12PM</span><span>12:30PM</span><span>2:30PM</span>
                   </div>
                 </div>
               ))}
