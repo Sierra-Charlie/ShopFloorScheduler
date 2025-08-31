@@ -89,36 +89,41 @@ export default function Scheduler() {
       {/* Schedule Summary View */}
       {currentView === "schedule" && (
         <div className="flex flex-col h-screen">
-          {/* Time Header */}
-          <div className="bg-card border-b border-border px-6 py-3 sticky top-16 z-30">
-            <div className="flex items-center space-x-4 min-w-max">
-              <div className="w-48 font-semibold text-sm">Assembler</div>
-              {Array.from({ length: 4 }, (_, i) => (
-                <div
-                  key={i}
-                  className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
-                  style={{ width: '480px' }}
-                >
-                  <div>Day {i + 1}</div>
-                  <div className="flex justify-between mt-1 text-[10px]">
-                    <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span><span>3p</span>
-                  </div>
+          {/* Shared scroll container for header and content */}
+          <div className="flex-1 overflow-auto">
+            <div className="min-w-max">
+              {/* Time Header - sticky within the scroll container */}
+              <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
+                <div className="flex items-center space-x-4">
+                  <div className="w-48 font-semibold text-sm">Assembler</div>
+                  {Array.from({ length: 4 }, (_, i) => (
+                    <div
+                      key={i}
+                      className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
+                      style={{ width: '480px' }}
+                    >
+                      <div>Day {i + 1}</div>
+                      <div className="flex justify-between mt-1 text-[10px]">
+                        <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span><span>3p</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Swim Lanes Container */}
-          <div className="flex-1 overflow-auto time-grid">
-            {assemblers.map((assembler) => (
-              <SwimLane
-                key={assembler.id}
-                assembler={assembler}
-                assemblyCards={assemblyCards.filter(card => card.assignedTo === assembler.id)}
-                onCardEdit={handleCardEdit}
-                data-testid={`swim-lane-${assembler.id}`}
-              />
-            ))}
+              {/* Swim Lanes Container */}
+              <div className="time-grid">
+                {assemblers.map((assembler) => (
+                  <SwimLane
+                    key={assembler.id}
+                    assembler={assembler}
+                    assemblyCards={assemblyCards.filter(card => card.assignedTo === assembler.id)}
+                    onCardEdit={handleCardEdit}
+                    data-testid={`swim-lane-${assembler.id}`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
