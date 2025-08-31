@@ -3,6 +3,7 @@ import { Assembler, AssemblyCard } from "@shared/schema";
 import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useToast } from "@/hooks/use-toast";
 import AssemblyCardComponent from "./assembly-card";
+import CardDropTarget from "./card-drop-target";
 import { cn } from "@/lib/utils";
 
 interface SwimLaneProps {
@@ -26,16 +27,30 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
 
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: "assembly-card",
-    drop: async (item: { id: string; cardNumber: string }) => {
+    drop: async (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string }, monitor) => {
       try {
-        await updateCardMutation.mutateAsync({
-          id: item.id,
-          assignedTo: assembler.id,
-        });
-        toast({
-          title: "Card moved successfully",
-          description: `${item.cardNumber} assigned to ${assembler.name}`,
-        });
+        const draggedCard = assemblyCards.find(c => c.id === item.id);
+        const isAlreadyInThisLane = draggedCard?.assignedTo === assembler.id;
+        
+        if (isAlreadyInThisLane) {
+          // Card is being reordered within the same lane - no action needed here
+          // Individual card drop zones will handle the positioning
+          return;
+        } else {
+          // Card is being moved to a different assembler
+          // Calculate new position (add to end of current cards)
+          const maxPosition = Math.max(-1, ...assemblyCards.map(c => c.position || 0));
+          
+          await updateCardMutation.mutateAsync({
+            id: item.id,
+            assignedTo: assembler.id,
+            position: maxPosition + 1,
+          });
+          toast({
+            title: "Card moved successfully",
+            description: `${item.cardNumber} assigned to ${assembler.name}`,
+          });
+        }
       } catch (error) {
         toast({
           title: "Failed to move card",
@@ -48,7 +63,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-  }), [assembler.id, updateCardMutation]);
+  }), [assembler.id, assemblyCards, updateCardMutation]);
 
   // Check for dependency warnings
   const getCardWarnings = (card: AssemblyCard) => {
@@ -85,13 +100,22 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       >
         {assemblyCards
           .sort((a, b) => (a.position || 0) - (b.position || 0))
-          .map((card) => (
-            <AssemblyCardComponent
+          .map((card, index) => (
+            <CardDropTarget
               key={card.id}
               card={card}
-              onEdit={onCardEdit}
-              hasWarning={getCardWarnings(card)}
-            />
+              position={index}
+              assemblyCards={assemblyCards}
+              assemblerId={assembler.id}
+              updateCardMutation={updateCardMutation}
+              toast={toast}
+            >
+              <AssemblyCardComponent
+                card={card}
+                onEdit={onCardEdit}
+                hasWarning={getCardWarnings(card)}
+              />
+            </CardDropTarget>
           ))}
       </div>
     </div>

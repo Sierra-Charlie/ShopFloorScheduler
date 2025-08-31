@@ -33,11 +33,16 @@ const getSequenceTypeLabel = (type: string) => {
 export default function AssemblyCardComponent({ card, onEdit, hasWarning }: AssemblyCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "assembly-card",
-    item: { id: card.id, cardNumber: card.cardNumber },
+    item: { 
+      id: card.id, 
+      cardNumber: card.cardNumber,
+      originalPosition: card.position,
+      assignedTo: card.assignedTo 
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [card.id]);
+  }), [card.id, card.position, card.assignedTo]);
 
   const phaseClass = getPhaseClass(card.phase);
   const width = Math.max(card.duration * 30, 90); // 30px per hour, minimum 90px
