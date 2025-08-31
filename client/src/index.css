@@ -115,7 +115,7 @@
     background-image: 
         linear-gradient(to right, var(--border) 1px, transparent 1px);
     background-size: 60px 100%;
-    background-position: 272px 0; /* First line between 6a and 7a: 192px (w-48) + 24px (px-6) + 16px (space-x-4) + 10px (pl-2) + 30px (to center between 6a and 7a) */
+    background-position: 242px 0; /* First line at 6a: 192px (w-48) + 24px (px-6) + 16px (space-x-4) + 10px (pl-2) */
   }
   
   .phase-1 { 
