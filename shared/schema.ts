@@ -34,8 +34,20 @@ export const insertAssemblyCardSchema = createInsertSchema(assemblyCards).omit({
   id: true,
 });
 
-export const updateAssemblyCardSchema = insertAssemblyCardSchema.partial().extend({
+export const updateAssemblyCardSchema = z.object({
   id: z.string(),
+  cardNumber: z.string().optional(),
+  name: z.string().optional(),
+  type: z.enum(["M", "E", "S", "P", "KB"]).optional(),
+  duration: z.number().min(1).optional(),
+  phase: z.number().min(1).max(4).optional(),
+  assignedTo: z.string().nullable().optional(),
+  status: z.enum(["scheduled", "in_progress", "completed", "blocked"]).optional(),
+  dependencies: z.array(z.string()).optional(),
+  precedents: z.array(z.string()).optional(),
+  startTime: z.date().nullable().optional(),
+  endTime: z.date().nullable().optional(),
+  position: z.number().nullable().optional(),
 });
 
 export type InsertAssembler = z.infer<typeof insertAssemblerSchema>;

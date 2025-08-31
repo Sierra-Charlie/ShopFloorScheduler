@@ -53,6 +53,8 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
       await updateCardMutation.mutateAsync({
         id: cardId,
         ...editValues,
+        type: editValues.type as "M" | "E" | "S" | "P" | "KB" | undefined,
+        status: editValues.status as "scheduled" | "in_progress" | "completed" | "blocked" | undefined,
       });
       setEditingCard(null);
       setEditValues({});
@@ -177,7 +179,16 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className={cn("w-3 h-3 rounded mr-2", getPhaseColor(card.phase))}></div>
-                      <span className="text-sm font-medium">{card.cardNumber}</span>
+                      {isEditing ? (
+                        <Input
+                          value={editValues.cardNumber || card.cardNumber}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, cardNumber: e.target.value }))}
+                          className="w-20 text-sm font-medium"
+                          data-testid={`input-card-number-${card.cardNumber}`}
+                        />
+                      ) : (
+                        <span className="text-sm font-medium">{card.cardNumber}</span>
+                      )}
                       {hasIssues && (
                         <AlertTriangle className="ml-2 h-4 w-4 text-warning" />
                       )}
@@ -244,39 +255,107 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
                   
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
-                      <Input
-                        value={editValues.dependencies?.join(", ") || card.dependencies?.join(", ") || ""}
-                        onChange={(e) => setEditValues(prev => ({ 
-                          ...prev, 
-                          dependencies: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
-                        }))}
-                        placeholder="None"
-                        className={cn("w-24", hasIssues && "border-warning")}
-                        data-testid={`input-dependencies-${card.cardNumber}`}
-                      />
+                      <Select
+                        value={""}
+                        onValueChange={(value) => {
+                          const currentDeps = editValues.dependencies || card.dependencies || [];
+                          if (!currentDeps.includes(value)) {
+                            setEditValues(prev => ({ 
+                              ...prev, 
+                              dependencies: [...currentDeps, value]
+                            }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger className={cn("w-32", hasIssues && "border-warning")} data-testid={`select-dependencies-${card.cardNumber}`}>
+                          <SelectValue placeholder="Add dependency" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assemblyCards
+                            .filter(c => c.cardNumber !== card.cardNumber)
+                            .map(c => (
+                              <SelectItem key={c.id} value={c.cardNumber}>
+                                {c.cardNumber} - {c.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <span className={cn("text-sm", hasIssues && "text-warning")} data-testid={`text-dependencies-${card.cardNumber}`}>
                         {card.dependencies?.join(", ") || "None"}
                       </span>
                     )}
+                    {isEditing && (editValues.dependencies || card.dependencies || []).length > 0 && (
+                      <div className="mt-1">
+                        {(editValues.dependencies || card.dependencies || []).map(dep => (
+                          <span 
+                            key={dep} 
+                            className="inline-block text-xs bg-accent text-accent-foreground px-2 py-1 rounded mr-1 mb-1 cursor-pointer"
+                            onClick={() => {
+                              const currentDeps = editValues.dependencies || card.dependencies || [];
+                              setEditValues(prev => ({ 
+                                ...prev, 
+                                dependencies: currentDeps.filter(d => d !== dep)
+                              }));
+                            }}
+                          >
+                            {dep} ×
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
-                      <Input
-                        value={editValues.precedents?.join(", ") || card.precedents?.join(", ") || ""}
-                        onChange={(e) => setEditValues(prev => ({ 
-                          ...prev, 
-                          precedents: e.target.value.split(",").map(s => s.trim()).filter(Boolean) 
-                        }))}
-                        placeholder="None"
-                        className="w-24"
-                        data-testid={`input-precedents-${card.cardNumber}`}
-                      />
+                      <Select
+                        value={""}
+                        onValueChange={(value) => {
+                          const currentPrec = editValues.precedents || card.precedents || [];
+                          if (!currentPrec.includes(value)) {
+                            setEditValues(prev => ({ 
+                              ...prev, 
+                              precedents: [...currentPrec, value]
+                            }));
+                          }
+                        }}
+                      >
+                        <SelectTrigger className="w-32" data-testid={`select-precedents-${card.cardNumber}`}>
+                          <SelectValue placeholder="Add precedent" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {assemblyCards
+                            .filter(c => c.cardNumber !== card.cardNumber)
+                            .map(c => (
+                              <SelectItem key={c.id} value={c.cardNumber}>
+                                {c.cardNumber} - {c.name}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <span className="text-sm" data-testid={`text-precedents-${card.cardNumber}`}>
                         {card.precedents?.join(", ") || "None"}
                       </span>
+                    )}
+                    {isEditing && (editValues.precedents || card.precedents || []).length > 0 && (
+                      <div className="mt-1">
+                        {(editValues.precedents || card.precedents || []).map(prec => (
+                          <span 
+                            key={prec} 
+                            className="inline-block text-xs bg-accent text-accent-foreground px-2 py-1 rounded mr-1 mb-1 cursor-pointer"
+                            onClick={() => {
+                              const currentPrec = editValues.precedents || card.precedents || [];
+                              setEditValues(prev => ({ 
+                                ...prev, 
+                                precedents: currentPrec.filter(p => p !== prec)
+                              }));
+                            }}
+                          >
+                            {prec} ×
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </td>
                   
