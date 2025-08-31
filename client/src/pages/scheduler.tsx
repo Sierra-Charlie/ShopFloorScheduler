@@ -16,6 +16,7 @@ export default function Scheduler() {
   const [selectedCard, setSelectedCard] = useState<AssemblyCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [startDate, setStartDate] = useState("2025-09-08");
+  const [startTime, setStartTime] = useState("08:00");
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
@@ -44,11 +45,20 @@ export default function Scheduler() {
   };
 
   const formatDayLabel = (dayIndex: number) => {
+    // Use the same start date as Gantt view
     const date = getBusinessDay(startDate, dayIndex);
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[date.getDay()];
     const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
     return `Day ${dayIndex + 1} - ${dayName} ${formattedDate}`;
+  };
+
+  // Calculate start time offset in pixels (60px per hour)
+  const getStartTimeOffset = () => {
+    const [hours, minutes] = startTime.split(':').map(Number);
+    const startHour = 6; // 6am is the leftmost position
+    const hourOffset = hours - startHour + (minutes / 60);
+    return Math.max(0, hourOffset * 60); // 60px per hour
   };
 
   const handleCardEdit = (card: AssemblyCard) => {
@@ -153,6 +163,7 @@ export default function Scheduler() {
                     assembler={assembler}
                     assemblyCards={assemblyCards.filter(card => card.assignedTo === assembler.id)}
                     onCardEdit={handleCardEdit}
+                    startTimeOffset={getStartTimeOffset()}
                     data-testid={`swim-lane-${assembler.id}`}
                   />
                 ))}
@@ -180,6 +191,18 @@ export default function Scheduler() {
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                     className="w-40"
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="start-time" className="text-sm font-medium">
+                    Start Time:
+                  </Label>
+                  <Input
+                    id="start-time"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="w-24"
                   />
                 </div>
               </div>
