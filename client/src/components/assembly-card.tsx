@@ -46,7 +46,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
 
   const phaseClass = getPhaseClass(card.phase);
   // Calculate width reactively - this will update when card.duration changes
-  const width = Math.max((card.duration || 1) * 60, 180); // 60px per hour, minimum 180px
+  const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
 
   return (
     <div
