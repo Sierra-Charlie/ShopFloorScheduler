@@ -50,12 +50,26 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
 
   const handleSave = async (cardId: string) => {
     try {
-      await updateCardMutation.mutateAsync({
+      console.log("Attempting to save card:", cardId, "with data:", editValues);
+      
+      // Clean the data before sending
+      const updateData: any = {
         id: cardId,
-        ...editValues,
-        type: editValues.type as "M" | "E" | "S" | "P" | "KB" | undefined,
-        status: editValues.status as "scheduled" | "in_progress" | "completed" | "blocked" | undefined,
-      });
+      };
+      
+      if (editValues.cardNumber !== undefined) updateData.cardNumber = editValues.cardNumber;
+      if (editValues.name !== undefined) updateData.name = editValues.name;
+      if (editValues.type !== undefined) updateData.type = editValues.type;
+      if (editValues.duration !== undefined) updateData.duration = editValues.duration;
+      if (editValues.phase !== undefined) updateData.phase = editValues.phase;
+      if (editValues.assignedTo !== undefined) updateData.assignedTo = editValues.assignedTo;
+      if (editValues.status !== undefined) updateData.status = editValues.status;
+      if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
+      if (editValues.precedents !== undefined) updateData.precedents = editValues.precedents;
+      
+      console.log("Cleaned update data:", updateData);
+      
+      await updateCardMutation.mutateAsync(updateData);
       setEditingCard(null);
       setEditValues({});
       toast({
@@ -63,6 +77,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
         description: "Assembly card has been updated",
       });
     } catch (error) {
+      console.error("Update error:", error);
       toast({
         title: "Failed to update card",
         description: "Please try again",

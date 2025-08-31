@@ -93,14 +93,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/assembly-cards/:id", async (req, res) => {
     try {
+      console.log("Update request received:", req.params.id, req.body);
       const updateData = updateAssemblyCardSchema.parse({ ...req.body, id: req.params.id });
+      console.log("Validated update data:", updateData);
       const card = await storage.updateAssemblyCard(updateData);
       if (!card) {
         return res.status(404).json({ message: "Assembly card not found" });
       }
       res.json(card);
     } catch (error) {
+      console.error("Update error:", error);
       if (error instanceof z.ZodError) {
+        console.error("Validation errors:", error.errors);
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to update assembly card" });
