@@ -143,7 +143,7 @@ export default function Scheduler() {
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
                       key={i}
-                      className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
+                      className="text-center text-xs font-medium text-muted-foreground border-l border-border"
                       style={{ width: '540px' }}
                     >
                       <div>{formatDayLabel(i)}</div>
