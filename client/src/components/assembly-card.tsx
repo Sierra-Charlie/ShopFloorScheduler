@@ -45,7 +45,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
   }), [card.id, card.position, card.assignedTo]);
 
   const phaseClass = getPhaseClass(card.phase);
-  // Ensure width updates when duration changes
+  // Calculate width reactively - this will update when card.duration changes
   const width = Math.max((card.duration || 1) * 30, 90); // 30px per hour, minimum 90px
 
   return (
@@ -60,7 +60,6 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
       style={{ width: `${width}px` }}
       onDoubleClick={() => onEdit(card)}
       data-testid={`assembly-card-${card.cardNumber}`}
-      key={`${card.id}-${card.duration}`}
     >
       {/* Dependencies - Top Left */}
       {(card.dependencies?.length || 0) > 0 && (

@@ -3,7 +3,6 @@ import { Assembler, AssemblyCard } from "@shared/schema";
 import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useToast } from "@/hooks/use-toast";
 import AssemblyCardComponent from "./assembly-card";
-import CardDropTarget from "./card-drop-target";
 import { cn } from "@/lib/utils";
 
 interface SwimLaneProps {
@@ -100,22 +99,13 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       >
         {assemblyCards
           .sort((a, b) => (a.position || 0) - (b.position || 0))
-          .map((card, index) => (
-            <CardDropTarget
-              key={card.id}
+          .map((card) => (
+            <AssemblyCardComponent
+              key={`${card.id}-${card.duration}-${card.name}`}
               card={card}
-              position={index}
-              assemblyCards={assemblyCards}
-              assemblerId={assembler.id}
-              updateCardMutation={updateCardMutation}
-              toast={toast}
-            >
-              <AssemblyCardComponent
-                card={card}
-                onEdit={onCardEdit}
-                hasWarning={getCardWarnings(card)}
-              />
-            </CardDropTarget>
+              onEdit={onCardEdit}
+              hasWarning={getCardWarnings(card)}
+            />
           ))}
       </div>
     </div>
