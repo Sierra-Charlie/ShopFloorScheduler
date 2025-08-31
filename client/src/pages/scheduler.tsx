@@ -96,8 +96,7 @@ export default function Scheduler() {
               {Array.from({ length: 4 }, (_, i) => (
                 <div
                   key={i}
-                  className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
-                  style={{ width: '120px' }}
+                  className="w-60 text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
                 >
                   <div>Day {i + 1}</div>
                   <div className="flex justify-between mt-1 text-[10px]">
