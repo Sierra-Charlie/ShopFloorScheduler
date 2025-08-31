@@ -188,7 +188,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit, startTi
           "swim-lane flex items-center space-x-2 p-3 min-h-20 flex-1",
           isOver && canDrop && "drag-over"
         )}
-        style={{ paddingLeft: `${3 * 4 + startTimeOffset + 120}px` }} // 3 * 4px (p-3) + start time offset + 120px (align with 8a)
+        style={{ paddingLeft: `${3 * 4 + startTimeOffset + 96}px` }} // 3 * 4px (p-3) + start time offset + 96px (align with 8a line)
         data-testid={`swim-lane-${assembler.id}`}
       >
         {assemblyCards
