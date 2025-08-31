@@ -113,7 +113,15 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
   const hasDependencyIssues = (card: AssemblyCard) => {
     return card.dependencies?.some(dep => {
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
-      return !depCard || depCard.status !== "completed";
+      if (!depCard) return true; // Card not found
+      
+      // Check if dependency will finish before this card starts
+      if (card.startTime && depCard.endTime) {
+        return new Date(depCard.endTime) > new Date(card.startTime);
+      }
+      
+      // If no timing info, check status
+      return depCard.status === "blocked";
     });
   };
 

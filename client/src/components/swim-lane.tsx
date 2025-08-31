@@ -119,7 +119,15 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
   const getCardWarnings = (card: AssemblyCard) => {
     return card.dependencies?.some(dep => {
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
-      return !depCard || depCard.status !== "completed";
+      if (!depCard) return true; // Card not found
+      
+      // Check if dependency will finish before this card starts
+      if (card.startTime && depCard.endTime) {
+        return new Date(depCard.endTime) > new Date(card.startTime);
+      }
+      
+      // If no timing info, check status
+      return depCard.status === "blocked";
     });
   };
 
@@ -132,8 +140,13 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       if (!depCard) {
         conflicts.push(`Card ${dep} not found`);
-      } else if (depCard.status !== "completed") {
-        conflicts.push(`Card ${dep} is ${depCard.status} (needs to be completed)`);
+      } else if (card.startTime && depCard.endTime) {
+        // Check timing conflict
+        if (new Date(depCard.endTime) > new Date(card.startTime)) {
+          conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts`);
+        }
+      } else if (depCard.status === "blocked") {
+        conflicts.push(`Card ${dep} is blocked`);
       }
     });
     
