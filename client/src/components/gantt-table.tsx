@@ -132,13 +132,10 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <div className="bg-card border-b border-border p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold" data-testid="gantt-title">
-            Assembly Card Details Editor
-          </h2>
           <div className="flex items-center space-x-3">
             <Button size="sm" data-testid="button-add-card">
               <Plus className="mr-2 h-4 w-4" />

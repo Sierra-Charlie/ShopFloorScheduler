@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Calendar, Table, Save } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
@@ -13,9 +15,35 @@ export default function Scheduler() {
   const [currentView, setCurrentView] = useState<"schedule" | "gantt">("schedule");
   const [selectedCard, setSelectedCard] = useState<AssemblyCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [startDate, setStartDate] = useState("2025-09-08");
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+
+  // Calculate business days (Mon-Fri) from start date
+  const getBusinessDay = (startDateStr: string, dayOffset: number) => {
+    const start = new Date(startDateStr);
+    let current = new Date(start);
+    let businessDaysAdded = 0;
+    
+    while (businessDaysAdded < dayOffset) {
+      current.setDate(current.getDate() + 1);
+      // Monday = 1, Friday = 5, Saturday = 6, Sunday = 0
+      if (current.getDay() !== 0 && current.getDay() !== 6) {
+        businessDaysAdded++;
+      }
+    }
+    
+    return current;
+  };
+
+  const formatDayLabel = (dayIndex: number) => {
+    const date = dayIndex === 0 ? new Date(startDate) : getBusinessDay(startDate, dayIndex);
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[date.getDay()];
+    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+    return `Day ${dayIndex + 1} - ${dayName} ${formattedDate}`;
+  };
 
   const handleCardEdit = (card: AssemblyCard) => {
     setSelectedCard(card);
@@ -102,7 +130,7 @@ export default function Scheduler() {
                       className="text-center text-xs font-medium text-muted-foreground border-l border-border pl-2"
                       style={{ width: '480px' }}
                     >
-                      <div>Day {i + 1}</div>
+                      <div>{formatDayLabel(i)}</div>
                       <div className="flex justify-between mt-1 text-[10px]">
                         <span>6a</span><span>7a</span><span>8a</span><span>9a</span><span>10a</span><span>11a</span><span>12p</span><span>1p</span><span>2p</span><span>3p</span>
                       </div>
@@ -130,11 +158,35 @@ export default function Scheduler() {
 
       {/* Gantt View */}
       {currentView === "gantt" && (
-        <GanttTable
-          assemblyCards={assemblyCards}
-          assemblers={assemblers}
-          onCardEdit={handleCardEdit}
-        />
+        <div className="flex flex-col h-screen">
+          {/* Gantt Header with Start Date Input */}
+          <div className="bg-card border-b border-border p-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold">Assembly Card Details Editor</h2>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="start-date" className="text-sm font-medium">
+                    Assembly Build Start Date:
+                  </Label>
+                  <Input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-40"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex-1">
+            <GanttTable
+              assemblyCards={assemblyCards}
+              assemblers={assemblers}
+              onCardEdit={handleCardEdit}
+            />
+          </div>
+        </div>
       )}
 
       {/* Assembly Card Modal */}
