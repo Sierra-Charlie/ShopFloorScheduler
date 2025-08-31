@@ -86,22 +86,24 @@ export default function Scheduler() {
     <div className="min-h-screen bg-background overflow-x-auto">
       {/* Header */}
       <header className="bg-card border-b border-border px-6 py-4 sticky top-0 z-40">
+        <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
+          Manufacturing Shop Floor Scheduler
+        </h1>
+      </header>
+
+      {/* Toolbar */}
+      <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
-              Manufacturing Shop Floor Scheduler
-            </h1>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span className="font-semibold mr-2">Delivery Sequence:</span>
-              <span className="phase-1 w-3 h-3 rounded"></span>
-              <span>1</span>
-              <span className="phase-2 w-3 h-3 rounded ml-4"></span>
-              <span>2</span>
-              <span className="phase-3 w-3 h-3 rounded ml-4"></span>
-              <span>3</span>
-              <span className="phase-4 w-3 h-3 rounded ml-4"></span>
-              <span>4</span>
-            </div>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <span className="font-semibold mr-2">Delivery Sequence:</span>
+            <span className="phase-1 w-3 h-3 rounded"></span>
+            <span>1</span>
+            <span className="phase-2 w-3 h-3 rounded ml-4"></span>
+            <span>2</span>
+            <span className="phase-3 w-3 h-3 rounded ml-4"></span>
+            <span>3</span>
+            <span className="phase-4 w-3 h-3 rounded ml-4"></span>
+            <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
             <Button
@@ -128,7 +130,7 @@ export default function Scheduler() {
             </Button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Schedule Summary View */}
       {currentView === "schedule" && (
