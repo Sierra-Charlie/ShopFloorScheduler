@@ -54,7 +54,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning, confli
     <div
       ref={drag}
       className={cn(
-        "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative cursor-grab active:cursor-grabbing",
+        "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative cursor-grab active:cursor-grabbing border border-black",
         phaseClass,
         isDragging && "opacity-50",
         hasWarning && "border-2 border-warning"
