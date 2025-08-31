@@ -115,7 +115,7 @@
     background-image: 
         linear-gradient(to right, var(--border) 1px, transparent 1px),
         linear-gradient(to bottom, var(--border) 1px, transparent 1px);
-    background-size: 60px 80px;
+    background-size: calc(100% / 10) 80px;
   }
   
   .phase-1 { 
