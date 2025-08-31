@@ -57,18 +57,16 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
     >
       {/* Dependencies - Top Left */}
       {(card.dependencies?.length || 0) > 0 && (
-        <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[40px]">
+        <div className="absolute -top-2 -left-2 bg-blue-500 text-xs px-1 py-0.5 rounded text-center min-w-[40px] text-[#000000]">
           <div className="text-[10px]">{card.dependencies?.join(', ')}</div>
         </div>
       )}
-
       {/* Precedents - Top Right */}
       {(card.precedents?.length || 0) > 0 && (
         <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[40px]">
           <div className="text-[10px]">{card.precedents?.join(', ')}</div>
         </div>
       )}
-
       <div className="flex items-center justify-between">
         <span className="font-bold">{card.cardNumber}</span>
         <GripVertical className="h-3 w-3 opacity-70" />
@@ -77,14 +75,11 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
         {card.name}
       </div>
       <div className="text-xs opacity-80">{card.duration} hrs</div>
-      
       {hasWarning && (
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-warning rounded-full warning-indicator">
           <AlertTriangle className="h-2 w-2 text-white absolute top-0.5 left-0.5" />
         </div>
       )}
-      
-      
     </div>
   );
 }
