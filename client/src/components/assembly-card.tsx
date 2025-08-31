@@ -55,6 +55,22 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
       onDoubleClick={() => onEdit(card)}
       data-testid={`assembly-card-${card.cardNumber}`}
     >
+      {/* Dependencies - Top Left */}
+      {(card.dependencies?.length || 0) > 0 && (
+        <div className="absolute -top-2 -left-2 bg-blue-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[60px]">
+          <div className="font-semibold">Dependents</div>
+          <div className="text-[10px]">{card.dependencies?.join(', ')}</div>
+        </div>
+      )}
+
+      {/* Precedents - Top Right */}
+      {(card.precedents?.length || 0) > 0 && (
+        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-1 py-0.5 rounded text-center min-w-[60px]">
+          <div className="font-semibold">Precedent</div>
+          <div className="text-[10px]">{card.precedents?.join(', ')}</div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <span className="font-bold">{card.cardNumber}</span>
         <GripVertical className="h-3 w-3 opacity-70" />
@@ -70,13 +86,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
         </div>
       )}
       
-      {(card.precedents?.length || 0) > 0 && (
-        <div className="absolute -right-1 top-1/2 transform translate-x-full -translate-y-1/2">
-          <svg className="w-3 h-3 text-muted-foreground" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-          </svg>
-        </div>
-      )}
+      
     </div>
   );
 }
