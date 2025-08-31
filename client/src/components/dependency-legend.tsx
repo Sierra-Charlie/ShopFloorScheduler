@@ -1,0 +1,42 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertTriangle } from "lucide-react";
+
+export default function DependencyLegend() {
+  return (
+    <Card className="fixed bottom-4 right-4 max-w-xs shadow-lg z-40" data-testid="dependency-legend">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-sm">Sequence Codes</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-2 text-xs">
+          <div className="flex items-center space-x-2">
+            <span className="font-mono font-bold" data-testid="code-m">M</span>
+            <span>Mechanical Install</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-mono font-bold" data-testid="code-e">E</span>
+            <span>Electrical Install</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-mono font-bold" data-testid="code-s">S</span>
+            <span>Sub-Assembly</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-mono font-bold" data-testid="code-p">P</span>
+            <span>Pre-Assembly</span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-mono font-bold" data-testid="code-kb">KB</span>
+            <span>Kanban</span>
+          </div>
+        </div>
+        <div className="mt-3 pt-3 border-t border-border">
+          <div className="flex items-center space-x-2 text-xs">
+            <AlertTriangle className="h-3 w-3 text-warning" />
+            <span>Dependency conflict</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
