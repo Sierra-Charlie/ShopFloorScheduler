@@ -113,9 +113,9 @@
   
   .time-grid {
     background-image: 
-        linear-gradient(to right, var(--border) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--border) 1px, transparent 1px);
-    background-size: calc(100% / 10) 80px;
+        linear-gradient(to right, var(--border) 1px, transparent 1px);
+    background-size: 60px 100%;
+    background-position: 240px 0; /* Start grid lines after assembler column (192px) + padding */
   }
   
   .phase-1 { 
