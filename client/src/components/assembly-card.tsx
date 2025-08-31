@@ -57,7 +57,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning }: Asse
     >
       {/* Dependencies - Top Left */}
       {(card.dependencies?.length || 0) > 0 && (
-        <div className="absolute -top-2 -left-2 bg-blue-500 text-xs px-1 py-0.5 rounded text-center min-w-[40px] text-[#000000]">
+        <div className="absolute -top-2 -left-2 text-xs px-1 py-0.5 rounded text-center min-w-[40px] bg-[#000000] text-[#ffffff]">
           <div className="text-[10px]">{card.dependencies?.join(', ')}</div>
         </div>
       )}
