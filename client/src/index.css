@@ -115,7 +115,7 @@
     background-image: 
         linear-gradient(to right, var(--border) 1px, transparent 1px);
     background-size: 60px 100%;
-    background-position: 292px 0; /* Align with hour boundaries: 192px (assembler) + 24px (px-6) + 16px (space-x-4) + 60px (first hour) */
+    background-position: 252px 0; /* Align first grid line between 6a and 7a: 192px (w-48) + 24px (px-6) + 16px (space-x-4) + 10px (pl-2) + 10px (half of first hour spacing) */
   }
   
   .phase-1 { 
