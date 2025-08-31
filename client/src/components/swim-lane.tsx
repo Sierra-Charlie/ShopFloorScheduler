@@ -32,9 +32,60 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit }: SwimL
         const isAlreadyInThisLane = draggedCard?.assignedTo === assembler.id;
         
         if (isAlreadyInThisLane) {
-          // Card is being reordered within the same lane - no action needed here
-          // Individual card drop zones will handle the positioning
-          return;
+          // Card is being reordered within the same lane
+          // Get the mouse position to determine drop location
+          const clientOffset = monitor.getClientOffset();
+          if (clientOffset) {
+            const laneElement = document.querySelector(`[data-testid="swim-lane-${assembler.id}"]`);
+            if (laneElement) {
+              const laneRect = laneElement.getBoundingClientRect();
+              const relativeX = clientOffset.x - laneRect.left;
+              
+              // Find the card that should be after the drop position
+              const sortedCards = assemblyCards
+                .filter(c => c.assignedTo === assembler.id)
+                .sort((a, b) => (a.position || 0) - (b.position || 0));
+              
+              let newPosition = sortedCards.length;
+              let cumulativeWidth = 0;
+              
+              for (let i = 0; i < sortedCards.length; i++) {
+                const cardWidth = Math.max((sortedCards[i].duration || 1) * 60, 60) + 8; // card width + gap
+                if (relativeX < cumulativeWidth + cardWidth / 2 && sortedCards[i].id !== item.id) {
+                  newPosition = i;
+                  break;
+                }
+                cumulativeWidth += cardWidth;
+              }
+              
+              // Adjust position if dragging card from earlier position
+              const currentIndex = sortedCards.findIndex(c => c.id === item.id);
+              if (currentIndex < newPosition) {
+                newPosition--;
+              }
+              
+              // Only update if position actually changed
+              if (currentIndex !== newPosition) {
+                // Reorder the cards
+                const reorderedCards = [...sortedCards];
+                const [movedCard] = reorderedCards.splice(currentIndex, 1);
+                reorderedCards.splice(newPosition, 0, movedCard);
+                
+                // Update positions for all cards
+                for (let i = 0; i < reorderedCards.length; i++) {
+                  await updateCardMutation.mutateAsync({
+                    id: reorderedCards[i].id,
+                    position: i,
+                  });
+                }
+                
+                toast({
+                  title: "Card reordered",
+                  description: `${item.cardNumber} moved to position ${newPosition + 1}`,
+                });
+              }
+            }
+          }
         } else {
           // Card is being moved to a different assembler
           // Calculate new position (add to end of current cards)
