@@ -115,7 +115,7 @@
     background-image: 
         linear-gradient(to right, var(--border) 1px, transparent 1px);
     background-size: 60px 100%;
-    background-position: 240px 0; /* Start grid lines after assembler column (192px) + padding */
+    background-position: 300px 0; /* Start grid lines at first hour boundary (240px + 60px offset) */
   }
   
   .phase-1 { 
