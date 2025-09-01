@@ -497,7 +497,10 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleEdit(card)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(card);
+                          }}
                           data-testid={`button-edit-${card.cardNumber}`}
                         >
                           <Edit className="h-4 w-4" />
@@ -505,7 +508,10 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => handleDelete(card.id, card.cardNumber)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(card.id, card.cardNumber);
+                          }}
                           className="text-warning hover:text-warning/80"
                           data-testid={`button-delete-${card.cardNumber}`}
                         >
