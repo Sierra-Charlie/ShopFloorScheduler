@@ -48,6 +48,26 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
 
+  // Initialize timer state based on card status when dialog opens
+  useEffect(() => {
+    if (isOpen && card) {
+      if (card.status === "assembling" && card.startTime) {
+        // Card is already being assembled, restore timer state
+        const startTime = new Date(card.startTime);
+        const now = new Date();
+        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        setStartTime(startTime);
+        setElapsedTime(elapsed);
+        setIsTimerRunning(true);
+      } else {
+        // Reset timer state for non-assembling cards
+        setIsTimerRunning(false);
+        setElapsedTime(0);
+        setStartTime(null);
+      }
+    }
+  }, [isOpen, card]);
+
   // Timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -63,11 +83,11 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     try {
       // If there's already elapsed time, calculate the new start time to continue from where we left off
       const now = new Date();
-      const adjustedStartTime = new Date(now.getTime() - (elapsedTime * 1000));
+      const adjustedStartTime = elapsedTime > 0 ? new Date(now.getTime() - (elapsedTime * 1000)) : now;
       setStartTime(adjustedStartTime);
       setIsTimerRunning(true);
       
-      // Update card status to assembling
+      // Update card status to assembling (server will set startTime automatically)
       if (card) {
         await updateCardMutation.mutateAsync({
           id: card.id,
@@ -264,7 +284,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               )}
 
               <div className="flex space-x-2">
-                {!isTimerRunning ? (
+                {card.status !== "assembling" && !isTimerRunning ? (
                   <Button 
                     onClick={handleStartTimer}
                     className="bg-green-600 hover:bg-green-700"
