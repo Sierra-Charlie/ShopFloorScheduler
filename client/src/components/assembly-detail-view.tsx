@@ -52,12 +52,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   useEffect(() => {
     if (isOpen && card) {
       if (card.status === "assembling" && card.startTime) {
-        // Card is already being assembled, restore timer state
-        const startTime = new Date(card.startTime);
-        const now = new Date();
-        const elapsed = Math.max(0, Math.floor((now.getTime() - startTime.getTime()) / 1000));
-        setStartTime(startTime);
-        setElapsedTime(elapsed);
+        // Card is already being assembled, use server's startTime
+        const serverStartTime = new Date(card.startTime);
+        setStartTime(serverStartTime);
         setIsTimerRunning(true);
       } else {
         // Reset timer state for non-assembling cards
@@ -68,25 +65,25 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     }
   }, [isOpen, card]);
 
-  // Timer effect
+  // Timer effect - always calculate from server's startTime if available
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (isTimerRunning && startTime) {
+    if (card?.status === "assembling" && card.startTime) {
+      const serverStartTime = new Date(card.startTime);
+      // Update elapsed time immediately
+      setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
+      
       interval = setInterval(() => {
-        setElapsedTime(Math.max(0, Math.floor((Date.now() - startTime.getTime()) / 1000)));
+        setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
       }, 1000);
+    } else if (card?.status !== "assembling") {
+      setElapsedTime(0);
     }
     return () => clearInterval(interval);
-  }, [isTimerRunning, startTime]);
+  }, [card?.status, card?.startTime]);
 
   const handleStartTimer = async () => {
     try {
-      // If there's already elapsed time, calculate the new start time to continue from where we left off
-      const now = new Date();
-      const adjustedStartTime = elapsedTime > 0 ? new Date(now.getTime() - (elapsedTime * 1000)) : now;
-      setStartTime(adjustedStartTime);
-      setIsTimerRunning(true);
-      
       // Update card status to assembling (server will set startTime automatically)
       if (card) {
         await updateCardMutation.mutateAsync({
@@ -103,14 +100,39 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     }
   };
 
-  const handleStopTimer = () => {
-    setIsTimerRunning(false);
+  const handleStopTimer = async () => {
+    try {
+      if (card) {
+        await updateCardMutation.mutateAsync({
+          id: card.id,
+          status: "ready_for_build",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to stop assembly",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleResetTimer = () => {
-    setIsTimerRunning(false);
-    setElapsedTime(0);
-    setStartTime(null);
+  const handleResetTimer = async () => {
+    try {
+      if (card) {
+        await updateCardMutation.mutateAsync({
+          id: card.id,
+          status: "ready_for_build",
+          startTime: null,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to reset timer",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBuildComplete = async () => {
@@ -284,7 +306,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               )}
 
               <div className="flex space-x-2">
-                {card.status !== "assembling" && !isTimerRunning ? (
+                {card.status !== "assembling" ? (
                   <Button 
                     onClick={handleStartTimer}
                     className="bg-green-600 hover:bg-green-700"
@@ -312,7 +334,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                   <Square className="mr-2 h-4 w-4" />
                   Reset
                 </Button>
-                {(isTimerRunning || elapsedTime > 0) && card.status !== "completed" && (
+                {card.status === "assembling" && (
                   <Button 
                     onClick={handleBuildComplete}
                     className="bg-blue-600 hover:bg-blue-700"

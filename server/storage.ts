@@ -241,9 +241,19 @@ export class MemStorage implements IStorage {
     
     const updated: AssemblyCard = { ...existing, ...update };
     
-    // Automatically set startTime when status changes to assembling
-    if (update.status === "assembling" && !existing.startTime) {
+    // Handle explicit startTime updates (including null for reset)
+    if ('startTime' in update) {
+      updated.startTime = update.startTime ?? null;
+    }
+    
+    // Automatically set startTime when status changes to assembling (only if not explicitly set)
+    if (update.status === "assembling" && !('startTime' in update) && !existing.startTime) {
       updated.startTime = new Date();
+    }
+    
+    // Clear startTime when status changes away from assembling (unless explicitly preserving)
+    if (update.status !== "assembling" && update.status !== "completed" && !('startTime' in update)) {
+      updated.startTime = null;
     }
     
     // Automatically set endTime when status changes to completed
