@@ -72,7 +72,6 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
         await updateCardMutation.mutateAsync({
           id: card.id,
           status: "assembling",
-          startTime: now,
         });
       }
     } catch (error) {
@@ -97,7 +96,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const handleBuildComplete = async () => {
     try {
       const now = new Date();
-      const actualDurationHours = elapsedTime / 3600;
+      const actualDurationHours = Math.max(elapsedTime / 3600, 0.01); // Ensure minimum duration
       
       setIsTimerRunning(false);
       
@@ -106,8 +105,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
         await updateCardMutation.mutateAsync({
           id: card.id,
           status: "completed",
-          endTime: now,
-          duration: Math.round(actualDurationHours * 100) / 100, // Round to 2 decimal places
+          duration: Math.max(Math.round(actualDurationHours * 100) / 100, 1), // Round to 2 decimal places, minimum 1 hour
         });
       }
       
