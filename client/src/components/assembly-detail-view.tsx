@@ -5,11 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText, CheckCircle } from "lucide-react";
+import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText, CheckCircle, Camera } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useUpdateAssemblyCard, useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { cn } from "@/lib/utils";
+import { CameraCapture } from "./CameraCapture";
+import { apiRequest } from "@/lib/queryClient";
 
 interface AssemblyDetailViewProps {
   card: AssemblyCard | null;
@@ -45,6 +47,8 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [showAndonDialog, setShowAndonDialog] = useState(false);
   const [andonIssue, setAndonIssue] = useState("");
+  const [showCamera, setShowCamera] = useState(false);
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   const { data: assemblyCards = [] } = useAssemblyCards();
@@ -210,6 +214,44 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     }
   };
 
+  const handlePhotoCapture = async (photoBlob: Blob) => {
+    try {
+      // Get upload URL from server
+      const uploadResponse = await fetch("/api/objects/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const { uploadURL } = await uploadResponse.json();
+      
+      // Upload photo to object storage
+      const uploadResult = await fetch(uploadURL, {
+        method: "PUT",
+        body: photoBlob,
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      });
+      
+      if (uploadResult.ok) {
+        setAttachedPhoto(uploadURL);
+        toast({
+          title: "Photo captured",
+          description: "Photo attached to Andon alert",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Failed to upload photo",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+    setShowCamera(false);
+  };
+
   const handleAndonAlert = async () => {
     if (!andonIssue.trim()) {
       toast({
@@ -220,14 +262,32 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       return;
     }
 
+    let photoPath = null;
+    if (attachedPhoto) {
+      try {
+        const response = await fetch("/api/andon-photos", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ photoURL: attachedPhoto }),
+        });
+        const data = await response.json();
+        photoPath = data.objectPath;
+      } catch (error) {
+        console.error("Error saving photo:", error);
+      }
+    }
+
     try {
       // In a real app, this would send an alert to supervisors
       toast({
         title: "Andon Alert Sent",
-        description: `Production supervisor notified about issue with ${currentCard?.cardNumber}`,
+        description: `Production supervisor notified about issue with ${currentCard?.cardNumber}${photoPath ? " (with photo)" : ""}`,
       });
       setShowAndonDialog(false);
       setAndonIssue("");
+      setAttachedPhoto(null);
     } catch (error) {
       toast({
         title: "Failed to send alert",
@@ -464,6 +524,36 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               />
             </div>
             
+            {/* Photo Attachment Section */}
+            <div>
+              <Label className="text-sm font-medium">Photo (Optional):</Label>
+              <div className="mt-2 space-y-2">
+                {attachedPhoto ? (
+                  <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                    <span className="text-sm text-green-700">Photo attached</span>
+                    <Button
+                      onClick={() => setAttachedPhoto(null)}
+                      variant="outline"
+                      size="sm"
+                      data-testid="button-remove-photo"
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setShowCamera(true)}
+                    variant="outline"
+                    className="w-full"
+                    data-testid="button-take-photo"
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Take Photo
+                  </Button>
+                )}
+              </div>
+            </div>
+            
             <div className="flex space-x-2">
               <Button 
                 onClick={handleAndonAlert}
@@ -485,6 +575,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Camera Dialog */}
+      {showCamera && (
+        <CameraCapture
+          onPhotoCapture={handlePhotoCapture}
+          onCancel={() => setShowCamera(false)}
+        />
+      )}
     </>
   );
 }

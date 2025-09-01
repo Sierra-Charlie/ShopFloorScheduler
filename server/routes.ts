@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema } from "@shared/schema";
 import { z } from "zod";
+import { ObjectStorageService } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Users routes
@@ -185,6 +186,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to validate dependencies" });
+    }
+  });
+
+  // Photo upload routes for Andon alerts
+  app.post("/api/objects/upload", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ error: "Failed to get upload URL" });
+    }
+  });
+
+  app.put("/api/andon-photos", async (req, res) => {
+    if (!req.body.photoURL) {
+      return res.status(400).json({ error: "photoURL is required" });
+    }
+
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(
+        req.body.photoURL,
+      );
+
+      res.status(200).json({
+        objectPath: objectPath,
+      });
+    } catch (error) {
+      console.error("Error setting andon photo:", error);
+      res.status(500).json({ error: "Internal server error" });
     }
   });
 
