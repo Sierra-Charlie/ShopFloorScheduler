@@ -56,9 +56,16 @@ export default function Scheduler() {
       return null;
     }
     
-    // Calculate time position within the day (6am = 0px, each hour = 60px)
+    // Check if current time is within work hours (6 AM to 3 PM CT)
     const currentHour = centralTime.getHours();
     const currentMinutes = centralTime.getMinutes();
+    
+    // Hide line if outside work hours (before 6 AM or after 3 PM)
+    if (currentHour < 6 || currentHour >= 15) {
+      return null;
+    }
+    
+    // Calculate time position within the day (6am = 0px, each hour = 60px)
     const timeOffset = Math.max(0, (currentHour - 6) * 60 + currentMinutes); // 60px per hour
     
     // Calculate total position (day offset + time offset)
