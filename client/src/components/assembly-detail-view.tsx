@@ -173,12 +173,12 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       
       setIsTimerRunning(false);
       
-      // Update card status to completed and record duration
+      // Update card status to completed and record actual duration (keep original duration unchanged)
       if (currentCard) {
         await updateCardMutation.mutateAsync({
           id: currentCard.id,
           status: "completed",
-          duration: Math.max(Math.round(actualDurationHours * 100) / 100, 1), // Round to 2 decimal places, minimum 1 hour
+          actualDuration: Math.max(Math.round(actualDurationHours * 100) / 100, 0.01), // Round to 2 decimal places, minimum 0.01 hour
         });
       }
       
@@ -315,7 +315,10 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                     "text-2xl font-mono font-bold",
                     isOvertime ? "text-red-600" : "text-green-600"
                   )}>
-                    {formatTime(elapsedTime)}
+                    {currentCard.status === "completed" && currentCard.actualDuration 
+                      ? formatTime(currentCard.actualDuration * 3600) // Convert hours to seconds for display
+                      : formatTime(elapsedTime)
+                    }
                   </div>
                 </div>
                 <div className="text-center">
@@ -326,11 +329,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 </div>
               </div>
 
-              {isOvertime && (
+              {(isOvertime || (currentCard.status === "completed" && currentCard.actualDuration && currentCard.actualDuration * 3600 > expectedSeconds)) && (
                 <Alert className="mb-4">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    Assembly is running {formatTime(elapsedTime - expectedSeconds)} over expected time
+                    {currentCard.status === "completed" && currentCard.actualDuration 
+                      ? `Assembly took ${formatTime((currentCard.actualDuration * 3600) - expectedSeconds)} over expected time`
+                      : `Assembly is running ${formatTime(elapsedTime - expectedSeconds)} over expected time`
+                    }
                   </AlertDescription>
                 </Alert>
               )}

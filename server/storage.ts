@@ -172,7 +172,8 @@ export class MemStorage implements IStorage {
         startTime: card.startTime || null,
         endTime: card.endTime || null,
         elapsedTime: card.elapsedTime || 0,
-        pickingStartTime: null
+        pickingStartTime: null as Date | null,
+        actualDuration: null
       });
     });
   }
@@ -259,6 +260,11 @@ export class MemStorage implements IStorage {
       updated.pickingStartTime = update.pickingStartTime ?? null;
     }
     
+    // Handle explicit actualDuration updates
+    if ('actualDuration' in update) {
+      updated.actualDuration = update.actualDuration ?? null;
+    }
+    
     // Status change logic
     if (update.status) {
       if (update.status === "assembling") {
@@ -296,9 +302,16 @@ export class MemStorage implements IStorage {
       }
     }
     
-    // Automatically set endTime when status changes to completed
-    if (update.status === "completed" && !existing.endTime) {
-      updated.endTime = new Date();
+    // Automatically set endTime and actualDuration when status changes to completed
+    if (update.status === "completed") {
+      if (!existing.endTime) {
+        updated.endTime = new Date();
+      }
+      // Calculate actual duration from elapsed time if not explicitly provided
+      if (!('actualDuration' in update) && existing.elapsedTime) {
+        // Convert elapsed seconds to hours (decimal)
+        updated.actualDuration = Math.round((existing.elapsedTime / 3600) * 100) / 100;
+      }
     }
     
     this.assemblyCards.set(update.id, updated);

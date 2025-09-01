@@ -32,6 +32,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   endTime: timestamp("end_time"),
   elapsedTime: integer("elapsed_time").default(0), // accumulated elapsed seconds when paused
   pickingStartTime: timestamp("picking_start_time"), // when picking started
+  actualDuration: integer("actual_duration"), // actual time taken in hours when completed
   position: integer("position").default(0), // horizontal position in timeline
 });
 
@@ -62,6 +63,7 @@ export const updateAssemblyCardSchema = z.object({
   endTime: z.date().nullable().optional(),
   elapsedTime: z.number().optional(),
   pickingStartTime: z.date().nullable().optional(),
+  actualDuration: z.number().optional(),
   position: z.number().nullable().optional(),
 });
 

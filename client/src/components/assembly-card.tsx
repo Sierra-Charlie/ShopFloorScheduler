@@ -53,8 +53,9 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     card.status === "completed" ? "bg-green-500" :
     card.status === "picking" ? getPhaseClass(card.phase) :
     "bg-gray-400";
-  // Calculate width reactively - this will update when card.duration changes
-  const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
+  // Calculate width reactively - use actualDuration for completed cards, otherwise use expected duration
+  const displayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
+  const width = Math.max((displayDuration || 1) * 60, 60); // 60px per hour, minimum 60px
 
   const cardElement = (
     <div
