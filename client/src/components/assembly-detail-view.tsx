@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText } from "lucide-react";
+import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText, CheckCircle } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { cn } from "@/lib/utils";
 
 interface AssemblyDetailViewProps {
@@ -45,6 +46,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const [showAndonDialog, setShowAndonDialog] = useState(false);
   const [andonIssue, setAndonIssue] = useState("");
   const { toast } = useToast();
+  const updateCardMutation = useUpdateAssemblyCard();
 
   // Timer effect
   useEffect(() => {
@@ -57,12 +59,29 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     return () => clearInterval(interval);
   }, [isTimerRunning, startTime]);
 
-  const handleStartTimer = () => {
-    // If there's already elapsed time, calculate the new start time to continue from where we left off
-    const now = new Date();
-    const adjustedStartTime = new Date(now.getTime() - (elapsedTime * 1000));
-    setStartTime(adjustedStartTime);
-    setIsTimerRunning(true);
+  const handleStartTimer = async () => {
+    try {
+      // If there's already elapsed time, calculate the new start time to continue from where we left off
+      const now = new Date();
+      const adjustedStartTime = new Date(now.getTime() - (elapsedTime * 1000));
+      setStartTime(adjustedStartTime);
+      setIsTimerRunning(true);
+      
+      // Update card status to assembling
+      if (card) {
+        await updateCardMutation.mutateAsync({
+          id: card.id,
+          status: "assembling",
+          startTime: now,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to start assembly",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleStopTimer = () => {
@@ -73,6 +92,36 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     setIsTimerRunning(false);
     setElapsedTime(0);
     setStartTime(null);
+  };
+
+  const handleBuildComplete = async () => {
+    try {
+      const now = new Date();
+      const actualDurationHours = elapsedTime / 3600;
+      
+      setIsTimerRunning(false);
+      
+      // Update card status to completed and record duration
+      if (card) {
+        await updateCardMutation.mutateAsync({
+          id: card.id,
+          status: "completed",
+          endTime: now,
+          duration: Math.round(actualDurationHours * 100) / 100, // Round to 2 decimal places
+        });
+      }
+      
+      toast({
+        title: "Assembly Complete!",
+        description: `${card?.cardNumber} completed in ${formatTime(elapsedTime)}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to complete assembly",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -129,7 +178,13 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-3">
-              <div className={cn("w-4 h-4 rounded", card.status === "ready_for_build" ? getPhaseClass(card.phase) : "bg-gray-400")}></div>
+              <div className={cn(
+                "w-4 h-4 rounded",
+                card.status === "ready_for_build" ? getPhaseClass(card.phase) :
+                card.status === "assembling" ? "bg-blue-500" :
+                card.status === "completed" ? "bg-green-500" :
+                "bg-gray-400"
+              )}></div>
               <span>Assembly Card {card.cardNumber}</span>
               <div className="text-sm bg-black text-white px-2 py-1 rounded">
                 Phase {card.phase}
@@ -229,6 +284,16 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                   <Square className="mr-2 h-4 w-4" />
                   Reset
                 </Button>
+                {(isTimerRunning || elapsedTime > 0) && card.status !== "completed" && (
+                  <Button 
+                    onClick={handleBuildComplete}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    data-testid="button-build-complete"
+                  >
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Build Complete
+                  </Button>
+                )}
               </div>
             </div>
 

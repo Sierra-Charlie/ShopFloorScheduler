@@ -47,7 +47,11 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     }),
   }), [card.id, card.position, card.assignedTo]);
 
-  const phaseClass = card.status === "ready_for_build" ? getPhaseClass(card.phase) : "bg-gray-400";
+  const phaseClass = 
+    card.status === "ready_for_build" ? getPhaseClass(card.phase) :
+    card.status === "assembling" ? "bg-blue-500" :
+    card.status === "completed" ? "bg-green-500" :
+    "bg-gray-400";
   // Calculate width reactively - this will update when card.duration changes
   const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
 
