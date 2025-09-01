@@ -55,11 +55,13 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   // Initialize timer state based on card status when dialog opens
   useEffect(() => {
     if (isOpen && currentCard) {
-      if (currentCard.status === "assembling" && currentCard.startTime) {
-        // Card is actively being assembled, use server's startTime
-        const serverStartTime = new Date(currentCard.startTime);
-        setStartTime(serverStartTime);
+      if (currentCard.status === "assembling") {
+        // Card is actively being assembled
         setIsTimerRunning(true);
+        if (currentCard.startTime) {
+          const serverStartTime = new Date(currentCard.startTime);
+          setStartTime(serverStartTime);
+        }
       } else if (currentCard.status === "paused") {
         // Card is paused, show accumulated time but don't run timer
         setIsTimerRunning(false);
@@ -76,18 +78,35 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   // Timer effect - always calculate from server's startTime if available
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (currentCard?.status === "assembling" && currentCard.startTime) {
-      const serverStartTime = new Date(currentCard.startTime);
-      // Update elapsed time immediately
-      setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
-      
-      interval = setInterval(() => {
+    if (currentCard?.status === "assembling") {
+      if (currentCard.startTime) {
+        // Use server's startTime
+        const serverStartTime = new Date(currentCard.startTime);
+        setIsTimerRunning(true);
+        
+        // Update elapsed time immediately
         setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
-      }, 1000);
+        
+        interval = setInterval(() => {
+          setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
+        }, 1000);
+      } else {
+        // Card is assembling but no startTime yet - server is setting it
+        // Use current time as fallback and let next effect update with server time
+        const fallbackStart = new Date();
+        setIsTimerRunning(true);
+        setElapsedTime(0);
+        
+        interval = setInterval(() => {
+          setElapsedTime(Math.max(0, Math.floor((Date.now() - fallbackStart.getTime()) / 1000)));
+        }, 1000);
+      }
     } else if (currentCard?.status === "paused") {
       // Show accumulated elapsed time when paused
+      setIsTimerRunning(false);
       setElapsedTime(currentCard.elapsedTime || 0);
     } else if (currentCard?.status !== "assembling" && currentCard?.status !== "paused") {
+      setIsTimerRunning(false);
       setElapsedTime(0);
     }
     return () => clearInterval(interval);
