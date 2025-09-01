@@ -171,7 +171,8 @@ export class MemStorage implements IStorage {
         assignedTo: card.assignedTo || null,
         startTime: card.startTime || null,
         endTime: card.endTime || null,
-        elapsedTime: card.elapsedTime || 0
+        elapsedTime: card.elapsedTime || 0,
+        pickingStartTime: null
       });
     });
   }
@@ -253,6 +254,11 @@ export class MemStorage implements IStorage {
       updated.elapsedTime = update.elapsedTime ?? 0;
     }
     
+    // Handle explicit pickingStartTime updates
+    if ('pickingStartTime' in update) {
+      updated.pickingStartTime = update.pickingStartTime ?? null;
+    }
+    
     // Status change logic
     if (update.status) {
       if (update.status === "assembling") {
@@ -267,6 +273,11 @@ export class MemStorage implements IStorage {
             updated.elapsedTime = 0;
           }
         }
+      } else if (update.status === "picking") {
+        // Starting material picking - set picking start time
+        if (!('pickingStartTime' in update)) {
+          updated.pickingStartTime = new Date();
+        }
       } else if (update.status === "paused") {
         // Pausing - calculate and store elapsed time
         if (existing.startTime && existing.status === "assembling") {
@@ -274,8 +285,14 @@ export class MemStorage implements IStorage {
           updated.elapsedTime = Math.max(currentElapsed, existing.elapsedTime || 0);
         }
         // Keep startTime for reference but timer will be paused
-      } else if (update.status === "ready_for_build" && !('startTime' in update) && !('elapsedTime' in update)) {
-        // Only reset if explicitly requested
+      } else if (update.status === "ready_for_build") {
+        // When marking as ready for build, clear picking start time
+        if (!('pickingStartTime' in update)) {
+          updated.pickingStartTime = null;
+        }
+        if (!('startTime' in update) && !('elapsedTime' in update)) {
+          // Only reset assembly times if explicitly requested
+        }
       }
     }
     

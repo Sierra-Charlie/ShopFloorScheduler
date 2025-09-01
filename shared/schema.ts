@@ -25,12 +25,13 @@ export const assemblyCards = pgTable("assembly_cards", {
   duration: integer("duration").notNull(), // in hours
   phase: integer("phase").notNull(), // 1, 2, 3, 4
   assignedTo: varchar("assigned_to").references(() => assemblers.id),
-  status: text("status").notNull().default("scheduled"), // "scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused"
+  status: text("status").notNull().default("scheduled"), // "scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   precedents: text("precedents").array().notNull().default([]), // array of card numbers that depend on this one
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   elapsedTime: integer("elapsed_time").default(0), // accumulated elapsed seconds when paused
+  pickingStartTime: timestamp("picking_start_time"), // when picking started
   position: integer("position").default(0), // horizontal position in timeline
 });
 
@@ -54,12 +55,13 @@ export const updateAssemblyCardSchema = z.object({
   duration: z.number().min(1).optional(),
   phase: z.number().min(1).max(4).optional(),
   assignedTo: z.string().nullable().optional(),
-  status: z.enum(["scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused"]).optional(),
+  status: z.enum(["scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking"]).optional(),
   dependencies: z.array(z.string()).optional(),
   precedents: z.array(z.string()).optional(),
   startTime: z.date().nullable().optional(),
   endTime: z.date().nullable().optional(),
   elapsedTime: z.number().optional(),
+  pickingStartTime: z.date().nullable().optional(),
   position: z.number().nullable().optional(),
 });
 

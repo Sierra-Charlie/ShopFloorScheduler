@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Package, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
@@ -38,6 +38,7 @@ interface MaterialCardProps {
 function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const [pickingElapsed, setPickingElapsed] = useState(0);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "material-card",
@@ -48,7 +49,43 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   }), [card.id, index]);
 
   const isReady = card.status === "ready_for_build";
-  const phaseClass = isReady ? getPhaseClass(card.phase) : "bg-gray-400";
+  const isPicking = card.status === "picking";
+  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : "bg-gray-400";
+
+  // Timer for picking status
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPicking && card.pickingStartTime) {
+      const startTime = new Date(card.pickingStartTime);
+      // Update immediately
+      setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      
+      interval = setInterval(() => {
+        setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPicking, card.pickingStartTime]);
+
+  const handleStartPicking = async () => {
+    try {
+      await updateCardMutation.mutateAsync({
+        id: card.id,
+        status: "picking",
+      });
+      onStatusChange(card.id);
+      toast({
+        title: "Picking started",
+        description: `Started picking materials for ${card.cardNumber}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to start picking",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleReadyForBuild = async () => {
     try {
@@ -70,6 +107,13 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
     <div
       ref={drag}
@@ -81,7 +125,14 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       data-testid={`material-card-${card.cardNumber}`}
     >
       <div className="flex items-center justify-between mb-2">
-        <span className="font-bold text-lg">{card.cardNumber}</span>
+        <div className="flex items-center space-x-2">
+          <span className="font-bold text-lg">{card.cardNumber}</span>
+          {isPicking && (
+            <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
+              P
+            </div>
+          )}
+        </div>
         <div className="text-xs bg-black text-white px-2 py-1 rounded">
           Phase {card.phase}
         </div>
@@ -93,7 +144,28 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         {card.duration} hrs • {getSequenceTypeLabel(card.type)}
       </div>
       
-      {!isReady ? (
+      {isPicking && (
+        <div className="text-center mb-3">
+          <div className="text-sm font-medium text-green-800">Picking in progress</div>
+          <div className="text-lg font-mono font-bold text-green-600">
+            {formatTime(pickingElapsed)}
+          </div>
+        </div>
+      )}
+      
+      {card.status === "scheduled" && (
+        <Button
+          onClick={handleStartPicking}
+          size="sm"
+          className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+          data-testid={`button-picking-${card.cardNumber}`}
+        >
+          <Package className="mr-2 h-4 w-4" />
+          Start Picking
+        </Button>
+      )}
+      
+      {isPicking && (
         <Button
           onClick={handleReadyForBuild}
           size="sm"
@@ -103,7 +175,9 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
           <Package className="mr-2 h-4 w-4" />
           Ready for Build
         </Button>
-      ) : (
+      )}
+      
+      {isReady && (
         <div className="text-center text-sm font-medium text-green-800">
           ✓ Ready for Build
         </div>

@@ -51,6 +51,7 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     card.status === "ready_for_build" ? getPhaseClass(card.phase) :
     card.status === "assembling" ? "bg-blue-500" :
     card.status === "completed" ? "bg-green-500" :
+    card.status === "picking" ? getPhaseClass(card.phase) :
     "bg-gray-400";
   // Calculate width reactively - this will update when card.duration changes
   const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
@@ -89,6 +90,12 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
         {card.name}
       </div>
       <div className="text-xs opacity-80">{card.duration} hrs</div>
+      {/* Large green P indicator for picking status */}
+      {card.status === "picking" && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center z-10">
+          <span className="text-white font-bold text-2xl">P</span>
+        </div>
+      )}
       {hasWarning && (
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-warning rounded-full warning-indicator">
           <AlertTriangle className="h-2 w-2 text-white absolute top-0.5 left-0.5" />
