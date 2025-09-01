@@ -28,6 +28,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   status: text("status").notNull().default("scheduled"), // "scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   precedents: text("precedents").array().notNull().default([]), // array of card numbers that depend on this one
+  gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   elapsedTime: integer("elapsed_time").default(0), // accumulated elapsed seconds when paused
@@ -72,6 +73,7 @@ export const updateAssemblyCardSchema = z.object({
   status: z.enum(["scheduled", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking"]).optional(),
   dependencies: z.array(z.string()).optional(),
   precedents: z.array(z.string()).optional(),
+  gembaDocLink: z.string().url().nullable().optional(),
   startTime: z.date().nullable().optional(),
   endTime: z.date().nullable().optional(),
   elapsedTime: z.number().optional(),

@@ -208,8 +208,8 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
 
   const handleGembaDocClick = () => {
     if (currentCard) {
-      // Generate Gemba doc URL based on card number
-      const gembaUrl = `https://gembadocs.com/view-standard-operation/${currentCard.cardNumber.toLowerCase()}-assembly-instructions`;
+      // Use the gembaDocLink field if available, otherwise fallback to generated URL
+      const gembaUrl = currentCard.gembaDocLink || `https://gembadocs.com/view-standard-operation/${currentCard.cardNumber.toLowerCase()}-assembly-instructions`;
       window.open(gembaUrl, '_blank');
     }
   };

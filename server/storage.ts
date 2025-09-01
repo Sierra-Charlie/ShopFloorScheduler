@@ -183,7 +183,8 @@ export class MemStorage implements IStorage {
         endTime: card.endTime || null,
         elapsedTime: card.elapsedTime || 0,
         pickingStartTime: null as Date | null,
-        actualDuration: null
+        actualDuration: null,
+        gembaDocLink: null
       });
     });
   }
@@ -245,7 +246,8 @@ export class MemStorage implements IStorage {
       endTime: card.endTime || null,
       elapsedTime: card.elapsedTime || 0,
       pickingStartTime: card.pickingStartTime || null,
-      actualDuration: card.actualDuration || null
+      actualDuration: card.actualDuration || null,
+      gembaDocLink: card.gembaDocLink || null
     };
     this.assemblyCards.set(id, newCard);
     return newCard;

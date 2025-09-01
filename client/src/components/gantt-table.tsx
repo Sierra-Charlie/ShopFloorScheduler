@@ -67,6 +67,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.status !== undefined) updateData.status = editValues.status;
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
       if (editValues.precedents !== undefined) updateData.precedents = editValues.precedents;
+      if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
       
       console.log("Cleaned update data:", updateData);
       
@@ -181,6 +182,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Status
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Gemba Doc Link
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Actions
@@ -438,6 +442,34 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     <Badge variant={statusBadge.variant} data-testid={`badge-status-${card.cardNumber}`}>
                       {statusBadge.label}
                     </Badge>
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Input
+                        type="url"
+                        value={editValues.gembaDocLink || card.gembaDocLink || ""}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, gembaDocLink: e.target.value || null }))}
+                        placeholder="https://..."  
+                        className="w-40"
+                        data-testid={`input-gemba-link-${card.cardNumber}`}
+                      />
+                    ) : (
+                      <span className="text-sm" data-testid={`text-gemba-link-${card.cardNumber}`}>
+                        {card.gembaDocLink ? (
+                          <a 
+                            href={card.gembaDocLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline"
+                          >
+                            View Doc
+                          </a>
+                        ) : (
+                          "None"
+                        )}
+                      </span>
+                    )}
                   </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium">
