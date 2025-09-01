@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,7 @@ import { Calendar, Table, Save, Package, AlertTriangle } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser, canAccess } from "@/contexts/user-context";
+import { useToast } from "@/hooks/use-toast";
 import SwimLane from "@/components/swim-lane";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
@@ -22,9 +23,75 @@ export default function Scheduler() {
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
   const [startDate, setStartDate] = useState("2025-09-08");
   const [startTime, setStartTime] = useState("08:00");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const { toast } = useToast();
+  
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timer);
+  }, []);
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  
+  // Utility function to get current time in Central Time Zone
+  const getCurrentCentralTime = () => {
+    return new Date(currentTime.toLocaleString("en-US", {timeZone: "America/Chicago"}));
+  };
+  
+  // Calculate position of current time line
+  const getCurrentTimePosition = () => {
+    const centralTime = getCurrentCentralTime();
+    const currentDate = new Date(centralTime.getFullYear(), centralTime.getMonth(), centralTime.getDate());
+    const startDateObj = new Date(startDate);
+    
+    // Calculate which day we're in relative to start date
+    const daysDiff = Math.floor((currentDate.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // If we're before start date or after our visible days, don't show line
+    if (daysDiff < 0 || daysDiff >= 5) {
+      return null;
+    }
+    
+    // Calculate time position within the day (6am = 0px, each hour = 60px)
+    const currentHour = centralTime.getHours();
+    const currentMinutes = centralTime.getMinutes();
+    const timeOffset = Math.max(0, (currentHour - 6) * 60 + currentMinutes); // 60px per hour
+    
+    // Calculate total position (day offset + time offset)
+    const dayOffset = daysDiff * 540; // 540px per day
+    return dayOffset + timeOffset;
+  };
+  
+  // Check if assembly card is overdue
+  const isCardOverdue = (card: AssemblyCard) => {
+    if (card.status === 'completed') return false;
+    
+    const centralTime = getCurrentCentralTime();
+    const currentTimePosition = getCurrentTimePosition();
+    
+    if (currentTimePosition === null || !card.startTime || !card.duration) return false;
+    
+    // Calculate card's expected end position
+    const cardStart = new Date(card.startTime);
+    const cardStartPosition = getCardTimePosition(cardStart);
+    const cardEndPosition = cardStartPosition + (card.duration * 60); // duration in hours * 60px
+    
+    // Card is overdue if current time has passed its expected end
+    return currentTimePosition > cardEndPosition;
+  };
+  
+  // Helper to get time position for a given date
+  const getCardTimePosition = (date: Date) => {
+    const startDateObj = new Date(startDate);
+    const daysDiff = Math.floor((date.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    const timeOffset = Math.max(0, (date.getHours() - 6) * 60 + date.getMinutes());
+    return daysDiff * 540 + timeOffset;
+  };
 
   // Calculate business days (Mon-Fri) from start date
   const getBusinessDay = (startDateStr: string, dayOffset: number) => {
@@ -77,6 +144,21 @@ export default function Scheduler() {
     setSelectedDetailCard(card);
     setIsDetailViewOpen(true);
   };
+  
+  // Check for overdue cards and send alerts
+  useEffect(() => {
+    const overdueCards = assemblyCards.filter(isCardOverdue);
+    
+    if (overdueCards.length > 0 && currentUser?.role === 'production_supervisor') {
+      const overdueCardNumbers = overdueCards.map(card => card.cardNumber).join(', ');
+      toast({
+        title: "Assembly Cards Behind Schedule",
+        description: `Cards ${overdueCardNumbers} are overdue and need attention`,
+        variant: "destructive",
+        duration: 10000,
+      });
+    }
+  }, [assemblyCards, currentTime, toast, currentUser]);
 
   const handleModalClose = () => {
     setIsModalOpen(false);
@@ -164,18 +246,48 @@ export default function Scheduler() {
               </div>
 
               {/* Swim Lanes Container */}
-              <div className="time-grid">
+              <div className="time-grid relative">
                 {assemblers.map((assembler) => (
                   <SwimLane
                     key={assembler.id}
                     assembler={assembler}
-                    assemblyCards={assemblyCards.filter(card => card.assignedTo === assembler.id)}
+                    assemblyCards={assemblyCards.filter(card => {
+                      const baseCards = card.assignedTo === assembler.id;
+                      return baseCards;
+                    })}
                     onCardEdit={handleCardEdit}
                     onCardView={handleCardView}
                     startTimeOffset={getStartTimeOffset()}
+                    isCardOverdue={isCardOverdue}
                     data-testid={`swim-lane-${assembler.id}`}
                   />
                 ))}
+                
+                {/* Current Time Progress Line */}
+                {(() => {
+                  const timePosition = getCurrentTimePosition();
+                  if (timePosition === null) return null;
+                  
+                  return (
+                    <div
+                      className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
+                      style={{
+                        left: `${240 + timePosition}px`, // 240px for assembler column width
+                        boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
+                      }}
+                      data-testid="current-time-line"
+                    >
+                      {/* Time indicator tooltip */}
+                      <div className="absolute -top-6 -left-8 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
+                        {getCurrentCentralTime().toLocaleTimeString('en-US', {
+                          hour: 'numeric',
+                          minute: '2-digit',
+                          timeZone: 'America/Chicago'
+                        })} CT
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

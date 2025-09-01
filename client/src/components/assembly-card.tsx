@@ -10,6 +10,7 @@ interface AssemblyCardProps {
   onView?: (card: AssemblyCard) => void;
   hasWarning?: boolean;
   conflictDetails?: string | null;
+  isOverdue?: boolean;
 }
 
 const getPhaseClass = (phase: number) => {
@@ -33,7 +34,7 @@ const getSequenceTypeLabel = (type: string) => {
   }
 };
 
-export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning, conflictDetails }: AssemblyCardProps) {
+export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning, conflictDetails, isOverdue }: AssemblyCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "assembly-card",
     item: { 
@@ -48,6 +49,7 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
   }), [card.id, card.position, card.assignedTo]);
 
   const phaseClass = 
+    isOverdue ? "bg-red-500" : // Override all other colors when overdue
     card.status === "ready_for_build" ? getPhaseClass(card.phase) :
     card.status === "assembling" ? "bg-blue-500" :
     card.status === "completed" ? "bg-green-500" :
@@ -64,7 +66,8 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
         "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative cursor-grab active:cursor-grabbing border border-black",
         phaseClass,
         isDragging && "opacity-50",
-        hasWarning && "border-2 border-warning"
+        hasWarning && "border-2 border-warning",
+        isOverdue && "border-2 border-red-700 shadow-lg animate-pulse"
       )}
       style={{ width: `${width}px` }}
       onClick={() => onView?.(card)}

@@ -11,6 +11,7 @@ interface SwimLaneProps {
   onCardEdit: (card: AssemblyCard) => void;
   onCardView?: (card: AssemblyCard) => void;
   startTimeOffset?: number;
+  isCardOverdue?: (card: AssemblyCard) => boolean;
 }
 
 const getStatusColor = (status: string) => {
@@ -22,7 +23,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardView, startTimeOffset = 0 }: SwimLaneProps) {
+export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardView, startTimeOffset = 0, isCardOverdue }: SwimLaneProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
 
@@ -202,6 +203,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardV
               onView={onCardView}
               hasWarning={getCardWarnings(card)}
               conflictDetails={getDependencyConflictDetails(card)}
+              isOverdue={isCardOverdue ? isCardOverdue(card) : false}
             />
           ))}
       </div>
