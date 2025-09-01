@@ -59,9 +59,7 @@ export default function MainHeader() {
           <nav className="flex items-center space-x-1">
             {allowedNavItems.map((item) => {
               const Icon = item.icon;
-              const isActive = location === item.href || 
-                (item.href === "/" && location === "/") ||
-                (item.href === "/gantt" && location === "/");
+              const isActive = location === item.href;
               
               return (
                 <Link key={item.href} href={item.href}>
