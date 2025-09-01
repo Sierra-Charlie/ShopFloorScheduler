@@ -153,7 +153,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         </div>
       )}
       
-      {card.status === "scheduled" && (
+      {!isPicking && !isReady && card.status !== "completed" && card.status !== "assembling" && (
         <Button
           onClick={handleStartPicking}
           size="sm"
