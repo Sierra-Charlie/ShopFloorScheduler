@@ -254,24 +254,34 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 </Alert>
               )}
 
+              {card.status !== "ready_for_build" && card.status !== "assembling" && card.status !== "completed" && (
+                <Alert className="mb-4">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    Card must be marked "Ready for Build" by Material Handler before assembly can begin
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <div className="flex space-x-2">
                 {!isTimerRunning ? (
                   <Button 
                     onClick={handleStartTimer}
                     className="bg-green-600 hover:bg-green-700"
-                    data-testid="button-start-timer"
+                    disabled={card.status !== "ready_for_build"}
+                    data-testid="button-start-build"
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    Start Timer
+                    Start Build
                   </Button>
                 ) : (
                   <Button 
                     onClick={handleStopTimer}
                     variant="destructive"
-                    data-testid="button-stop-timer"
+                    data-testid="button-stop-build"
                   >
                     <Pause className="mr-2 h-4 w-4" />
-                    Stop Timer
+                    Stop Build
                   </Button>
                 )}
                 <Button 
