@@ -186,15 +186,15 @@ export default function AndonIssues({ userRole = "production_supervisor" }: Ando
                   <div>
                     <p className="text-sm font-medium mb-1">Assigned To:</p>
                     <Select
-                      value={issue.assignedTo || ""}
-                      onValueChange={(value) => handleAssignUser(issue.id, value || null)}
+                      value={issue.assignedTo || "unassigned"}
+                      onValueChange={(value) => handleAssignUser(issue.id, value === "unassigned" ? null : value)}
                       disabled={updateIssueMutation.isPending}
                     >
                       <SelectTrigger className="h-8" data-testid={`select-assigned-${issue.id}`}>
                         <SelectValue placeholder="Unassigned" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
                         {users
                           .filter((user: UserType) => user.role === "production_supervisor" || user.role === "admin")
                           .map((user: UserType) => (
