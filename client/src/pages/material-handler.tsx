@@ -308,10 +308,6 @@ export default function MaterialHandler() {
       <header className="bg-card border-b border-border px-6 py-4 sticky top-0 z-40">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-              <Button variant="outline" size="sm" data-testid="button-back-scheduler">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Scheduler
-              </Button>
             <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
               Material Handler View
             </h1>
