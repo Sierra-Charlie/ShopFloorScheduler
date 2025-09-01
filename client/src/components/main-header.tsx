@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle } from "lucide-react";
+import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart } from "lucide-react";
 import { useUser, canAccess } from "@/contexts/user-context";
 import UserRoleSelector from "@/components/user-role-selector";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,12 @@ export default function MainHeader() {
       label: "Schedule View",
       icon: Calendar,
       permission: "schedule_view"
+    },
+    {
+      href: "/dashboard",
+      label: "Dashboard",
+      icon: PieChart,
+      permission: "dashboard"
     },
     {
       href: "/gantt",

@@ -9,6 +9,7 @@ import { TouchBackend } from "react-dnd-touch-backend";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { UserProvider } from "@/contexts/user-context";
 import Scheduler from "@/pages/scheduler";
+import Dashboard from "@/pages/dashboard";
 import GanttView from "@/pages/gantt-view";
 import MaterialHandler from "@/pages/material-handler";
 import AssemblerView from "@/pages/assembler-view";
@@ -23,6 +24,7 @@ function Router() {
       <main>
         <Switch>
           <Route path="/" component={Scheduler} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/gantt" component={GanttView} />
           <Route path="/material-handler" component={MaterialHandler} />
           <Route path="/assembler" component={AssemblerView} />

@@ -44,7 +44,8 @@ const formatStatusLabel = (status: string) => {
   return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
-export default function AndonIssues({ userRole = "production_supervisor" }: AndonIssuesProps) {
+export default function AndonIssues() {
+  const userRole = "production_supervisor"; // Default role
   const [selectedIssue, setSelectedIssue] = useState<AndonIssue | null>(null);
   const [showPhotoDialog, setShowPhotoDialog] = useState(false);
   const { toast } = useToast();
