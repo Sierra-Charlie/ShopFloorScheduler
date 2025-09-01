@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Table, Save } from "lucide-react";
+import { Calendar, Table, Save, Package } from "lucide-react";
+import { Link } from "wouter";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import SwimLane from "@/components/swim-lane";
@@ -124,6 +125,12 @@ export default function Scheduler() {
               <Table className="mr-2 h-4 w-4" />
               Gantt View
             </Button>
+            <Link href="/material-handler">
+              <Button variant="outline" className="font-medium" data-testid="button-material-handler">
+                <Package className="mr-2 h-4 w-4" />
+                Material Handler
+              </Button>
+            </Link>
             <Button className="bg-success hover:bg-success/90 text-white font-medium" data-testid="button-save">
               <Save className="mr-2 h-4 w-4" />
               Save Changes

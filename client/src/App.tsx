@@ -8,12 +8,14 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { useIsMobile } from "@/hooks/use-mobile";
 import Scheduler from "@/pages/scheduler";
+import MaterialHandler from "@/pages/material-handler";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Scheduler} />
+      <Route path="/material-handler" component={MaterialHandler} />
       <Route component={NotFound} />
     </Switch>
   );
