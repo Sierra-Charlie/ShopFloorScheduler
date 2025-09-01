@@ -1,7 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Package, Users, BarChart3, Settings } from "lucide-react";
+import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle } from "lucide-react";
 import { useUser, canAccess } from "@/contexts/user-context";
 import UserRoleSelector from "@/components/user-role-selector";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,12 @@ export default function MainHeader() {
       label: "Assembler View",
       icon: Users,
       permission: "assembler_view"
+    },
+    {
+      href: "/andon-issues",
+      label: "Andon Issues",
+      icon: AlertTriangle,
+      permission: "andon_issues_view"
     }
   ];
 

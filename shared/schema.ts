@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -34,6 +34,19 @@ export const assemblyCards = pgTable("assembly_cards", {
   pickingStartTime: timestamp("picking_start_time"), // when picking started
   actualDuration: integer("actual_duration"), // actual time taken in hours when completed
   position: integer("position").default(0), // horizontal position in timeline
+});
+
+export const andonIssues = pgTable("andon_issues", {
+  id: serial("id").primaryKey(),
+  issueNumber: varchar("issue_number").notNull().unique(), // Auto-generated issue number like "AI-001"
+  assemblyCardNumber: text("assembly_card_number").notNull(),
+  description: text("description").notNull(),
+  photoPath: text("photo_path"), // Path to photo in object storage
+  submittedBy: text("submitted_by").notNull(), // Name of assembler who submitted
+  assignedTo: varchar("assigned_to").references(() => users.id), // Assigned user for resolution
+  status: text("status").notNull().default("unresolved"), // "unresolved", "being_worked_on", "resolved"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).omit({
@@ -73,6 +86,22 @@ export type User = typeof users.$inferSelect;
 export type InsertAssembler = z.infer<typeof insertAssemblerSchema>;
 export type Assembler = typeof assemblers.$inferSelect;
 
+export const insertAndonIssueSchema = createInsertSchema(andonIssues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateAndonIssueSchema = z.object({
+  id: z.number(),
+  assignedTo: z.string().nullable().optional(),
+  status: z.enum(["unresolved", "being_worked_on", "resolved"]).optional(),
+});
+
 export type InsertAssemblyCard = z.infer<typeof insertAssemblyCardSchema>;
 export type AssemblyCard = typeof assemblyCards.$inferSelect;
 export type UpdateAssemblyCard = z.infer<typeof updateAssemblyCardSchema>;
+
+export type InsertAndonIssue = z.infer<typeof insertAndonIssueSchema>;
+export type AndonIssue = typeof andonIssues.$inferSelect;
+export type UpdateAndonIssue = z.infer<typeof updateAndonIssueSchema>;

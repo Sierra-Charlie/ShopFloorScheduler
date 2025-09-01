@@ -280,15 +280,36 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     }
 
     try {
-      // In a real app, this would send an alert to supervisors
-      toast({
-        title: "Andon Alert Sent",
-        description: `Production supervisor notified about issue with ${currentCard?.cardNumber}${photoPath ? " (with photo)" : ""}`,
+      // Create Andon issue in database
+      const response = await fetch("/api/andon-issues", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assemblyCardNumber: currentCard?.cardNumber,
+          description: andonIssue,
+          photoPath,
+          submittedBy: "Current Assembler", // In real app, get from auth
+          status: "unresolved",
+        }),
       });
+      
+      if (response.ok) {
+        const createdIssue = await response.json();
+        toast({
+          title: "Andon Alert Sent!",
+          description: `Issue ${createdIssue.issueNumber} created for ${currentCard?.cardNumber}${photoPath ? " with photo" : ""}`,
+        });
+      } else {
+        throw new Error("Failed to create issue");
+      }
+      
       setShowAndonDialog(false);
       setAndonIssue("");
       setAttachedPhoto(null);
     } catch (error) {
+      console.error("Error creating andon issue:", error);
       toast({
         title: "Failed to send alert",
         description: "Please try again",

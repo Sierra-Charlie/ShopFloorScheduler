@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard } from "@shared/schema";
+import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -25,17 +25,27 @@ export interface IStorage {
   
   // Dependency validation
   validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }>;
+  
+  // Andon Issues
+  getAndonIssues(): Promise<AndonIssue[]>;
+  getAndonIssue(id: number): Promise<AndonIssue | undefined>;
+  createAndonIssue(issue: InsertAndonIssue): Promise<AndonIssue>;
+  updateAndonIssue(update: UpdateAndonIssue): Promise<AndonIssue | undefined>;
+  deleteAndonIssue(id: number): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private assemblers: Map<string, Assembler>;
   private assemblyCards: Map<string, AssemblyCard>;
+  private andonIssues: Map<number, AndonIssue>;
+  private nextIssueId: number = 1;
 
   constructor() {
     this.users = new Map();
     this.assemblers = new Map();
     this.assemblyCards = new Map();
+    this.andonIssues = new Map();
     this.initializeData();
   }
 
@@ -379,6 +389,50 @@ export class MemStorage implements IStorage {
     const updated: User = { ...existing, ...user };
     this.users.set(id, updated);
     return updated;
+  }
+
+  // Andon Issues
+  async getAndonIssues(): Promise<AndonIssue[]> {
+    return Array.from(this.andonIssues.values());
+  }
+
+  async getAndonIssue(id: number): Promise<AndonIssue | undefined> {
+    return this.andonIssues.get(id);
+  }
+
+  async createAndonIssue(issue: InsertAndonIssue): Promise<AndonIssue> {
+    const id = this.nextIssueId++;
+    const issueNumber = `AI-${id.toString().padStart(3, '0')}`;
+    const now = new Date();
+    
+    const newIssue: AndonIssue = {
+      ...issue,
+      id,
+      issueNumber,
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    this.andonIssues.set(id, newIssue);
+    return newIssue;
+  }
+
+  async updateAndonIssue(update: UpdateAndonIssue): Promise<AndonIssue | undefined> {
+    const existing = this.andonIssues.get(update.id);
+    if (!existing) return undefined;
+    
+    const updated: AndonIssue = {
+      ...existing,
+      ...update,
+      updatedAt: new Date(),
+    };
+    
+    this.andonIssues.set(update.id, updated);
+    return updated;
+  }
+
+  async deleteAndonIssue(id: number): Promise<boolean> {
+    return this.andonIssues.delete(id);
   }
 }
 

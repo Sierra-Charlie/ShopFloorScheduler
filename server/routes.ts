@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema } from "@shared/schema";
+import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService } from "./objectStorage";
 
@@ -186,6 +186,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to validate dependencies" });
+    }
+  });
+
+  // Andon Issues routes
+  app.get("/api/andon-issues", async (req, res) => {
+    try {
+      const issues = await storage.getAndonIssues();
+      res.json(issues);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch andon issues" });
+    }
+  });
+
+  app.get("/api/andon-issues/:id", async (req, res) => {
+    try {
+      const issue = await storage.getAndonIssue(parseInt(req.params.id));
+      if (!issue) {
+        return res.status(404).json({ message: "Andon issue not found" });
+      }
+      res.json(issue);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch andon issue" });
+    }
+  });
+
+  app.post("/api/andon-issues", async (req, res) => {
+    try {
+      const validatedData = insertAndonIssueSchema.parse(req.body);
+      const issue = await storage.createAndonIssue(validatedData);
+      res.status(201).json(issue);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create andon issue" });
+    }
+  });
+
+  app.patch("/api/andon-issues/:id", async (req, res) => {
+    try {
+      const updateData = updateAndonIssueSchema.parse({
+        id: parseInt(req.params.id),
+        ...req.body
+      });
+      const issue = await storage.updateAndonIssue(updateData);
+      if (!issue) {
+        return res.status(404).json({ message: "Andon issue not found" });
+      }
+      res.json(issue);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update andon issue" });
+    }
+  });
+
+  app.delete("/api/andon-issues/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteAndonIssue(parseInt(req.params.id));
+      if (!success) {
+        return res.status(404).json({ message: "Andon issue not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete andon issue" });
     }
   });
 

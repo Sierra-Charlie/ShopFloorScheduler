@@ -61,10 +61,10 @@ export function canAccess(user: User | null, feature: string): boolean {
   // Define role permissions
   const permissions: Record<string, string[]> = {
     // Admin can access everything
-    admin: ['schedule_view', 'gantt_view', 'material_handler_view', 'assembler_view', 'edit_cards', 'create_cards', 'delete_cards', 'andon_alerts'],
+    admin: ['schedule_view', 'gantt_view', 'material_handler_view', 'assembler_view', 'edit_cards', 'create_cards', 'delete_cards', 'andon_alerts', 'andon_issues_view'],
     
     // Production Supervisor can manage scheduling and view all data
-    production_supervisor: ['schedule_view', 'gantt_view', 'material_handler_view', 'edit_cards', 'create_cards', 'andon_alerts'],
+    production_supervisor: ['schedule_view', 'gantt_view', 'material_handler_view', 'edit_cards', 'create_cards', 'andon_alerts', 'andon_issues_view'],
     
     // Scheduler can manage schedules and view data
     scheduler: ['schedule_view', 'gantt_view', 'edit_cards', 'create_cards'],
