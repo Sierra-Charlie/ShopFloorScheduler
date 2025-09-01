@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Table, Save, Package, AlertTriangle } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser, canAccess } from "@/contexts/user-context";
@@ -22,6 +23,8 @@ export default function Scheduler() {
   const [selectedDetailCard, setSelectedDetailCard] = useState<AssemblyCard | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [activeLanes, setActiveLanes] = useState<string[]>([]); // Track active swim lane assembler IDs
+  const [newLaneAssembler, setNewLaneAssembler] = useState<string>(""); // Selected assembler for new lane
   const { toast } = useToast();
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
@@ -36,6 +39,33 @@ export default function Scheduler() {
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  
+  // Initialize active lanes with all assemblers when data is loaded
+  useEffect(() => {
+    if (assemblers.length > 0 && activeLanes.length === 0) {
+      setActiveLanes(assemblers.map(a => a.id));
+    }
+  }, [assemblers, activeLanes.length]);
+  
+  // Functions to manage swim lanes
+  const addSwimLane = () => {
+    if (newLaneAssembler && !activeLanes.includes(newLaneAssembler)) {
+      setActiveLanes([...activeLanes, newLaneAssembler]);
+      setNewLaneAssembler("");
+      toast({
+        title: "Swim Lane Added",
+        description: "New swim lane has been added to the schedule.",
+      });
+    }
+  };
+  
+  const removeSwimLane = (assemblerId: string) => {
+    setActiveLanes(activeLanes.filter(id => id !== assemblerId));
+    toast({
+      title: "Swim Lane Removed",
+      description: "Swim lane has been removed from the schedule.",
+    });
+  };
   
   // Utility function to get current time in Central Time Zone
   const getCurrentCentralTime = () => {
@@ -218,6 +248,34 @@ export default function Scheduler() {
             <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
+            {/* Swim Lane Management */}
+            <div className="flex items-center space-x-2 border-r border-border pr-3">
+              <Label className="text-sm font-medium">Add Lane:</Label>
+              <Select value={newLaneAssembler} onValueChange={setNewLaneAssembler}>
+                <SelectTrigger className="w-40" data-testid="select-new-lane-assembler">
+                  <SelectValue placeholder="Select assembler" />
+                </SelectTrigger>
+                <SelectContent>
+                  {assemblers
+                    .filter(assembler => !activeLanes.includes(assembler.id))
+                    .map(assembler => (
+                      <SelectItem key={assembler.id} value={assembler.id}>
+                        {assembler.name}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button 
+                size="sm" 
+                onClick={addSwimLane}
+                disabled={!newLaneAssembler}
+                data-testid="button-add-lane"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Add Lane
+              </Button>
+            </div>
+            
             <Button className="bg-success hover:bg-success/90 text-white font-medium" data-testid="button-save">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
@@ -253,21 +311,37 @@ export default function Scheduler() {
 
               {/* Swim Lanes Container */}
               <div className="time-grid relative">
-                {assemblers.map((assembler) => (
-                  <SwimLane
-                    key={assembler.id}
-                    assembler={assembler}
-                    assemblyCards={assemblyCards.filter(card => {
-                      const baseCards = card.assignedTo === assembler.id;
-                      return baseCards;
-                    })}
-                    onCardEdit={handleCardEdit}
-                    onCardView={handleCardView}
-                    startTimeOffset={getStartTimeOffset()}
-                    isCardOverdue={isCardOverdue}
-                    data-testid={`swim-lane-${assembler.id}`}
-                  />
-                ))}
+                {activeLanes.map((assemblerId) => {
+                  const assembler = assemblers.find(a => a.id === assemblerId);
+                  if (!assembler) return null;
+                  
+                  return (
+                    <div key={assembler.id} className="relative group">
+                      <SwimLane
+                        assembler={assembler}
+                        assemblyCards={assemblyCards.filter(card => {
+                          const baseCards = card.assignedTo === assembler.id;
+                          return baseCards;
+                        })}
+                        onCardEdit={handleCardEdit}
+                        onCardView={handleCardView}
+                        startTimeOffset={getStartTimeOffset()}
+                        isCardOverdue={isCardOverdue}
+                        data-testid={`swim-lane-${assembler.id}`}
+                      />
+                      {/* Delete Lane Button */}
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-700 z-20"
+                        onClick={() => removeSwimLane(assembler.id)}
+                        data-testid={`button-delete-lane-${assembler.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
                 
                 {/* Current Time Progress Line */}
                 {(() => {

@@ -66,14 +66,14 @@ export class MemStorage implements IStorage {
 
     // Initialize assemblers
     const defaultAssemblers: InsertAssembler[] = [
-      { name: "Mechanical Assembler 1", type: "mechanical", status: "available" },
-      { name: "Mechanical Assembler 2", type: "mechanical", status: "available" },
-      { name: "Mechanical Assembler 3", type: "mechanical", status: "available" },
-      { name: "Mechanical Assembler 4", type: "mechanical", status: "available" },
-      { name: "Electrical Assembler 1", type: "electrical", status: "available" },
-      { name: "Electrical Assembler 2", type: "electrical", status: "available" },
-      { name: "Electrical Assembler 3", type: "electrical", status: "available" },
-      { name: "Electrical Assembler 4", type: "electrical", status: "available" },
+      { name: "Mech Assy 1", type: "mechanical", status: "available" },
+      { name: "Mech Assy 2", type: "mechanical", status: "available" },
+      { name: "Mech Assy 3", type: "mechanical", status: "available" },
+      { name: "Mech Assy 4", type: "mechanical", status: "available" },
+      { name: "Elec Assy 1", type: "electrical", status: "available" },
+      { name: "Elec Assy 2", type: "electrical", status: "available" },
+      { name: "Elec Assy 3", type: "electrical", status: "available" },
+      { name: "Elec Assy 4", type: "electrical", status: "available" },
       { name: "Run-in", type: "final", status: "available" },
     ];
 
@@ -83,8 +83,8 @@ export class MemStorage implements IStorage {
     });
 
     // Initialize assembly cards
-    const mechanicalAssembler1Id = Array.from(this.assemblers.values()).find(a => a.name === "Mechanical Assembler 1")?.id;
-    const electricalAssembler1Id = Array.from(this.assemblers.values()).find(a => a.name === "Electrical Assembler 1")?.id;
+    const mechanicalAssembler1Id = Array.from(this.assemblers.values()).find(a => a.name === "Mech Assy 1")?.id;
+    const electricalAssembler1Id = Array.from(this.assemblers.values()).find(a => a.name === "Elec Assy 1")?.id;
     const runinId = Array.from(this.assemblers.values()).find(a => a.name === "Run-in")?.id;
 
     const defaultCards: InsertAssemblyCard[] = [
