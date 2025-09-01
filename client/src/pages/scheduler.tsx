@@ -109,6 +109,23 @@ export default function Scheduler() {
       moveSwimLane(index, index + 1);
     }
   };
+
+  // Save swim lane configuration
+  const saveSwimLaneConfiguration = () => {
+    if (activeLanes.length > 0) {
+      localStorage.setItem('swimLanes', JSON.stringify(activeLanes));
+      toast({
+        title: "Configuration Saved",
+        description: "Your swim lane configuration has been saved and will persist when you reload the app.",
+      });
+    } else {
+      toast({
+        title: "No Configuration to Save",
+        description: "Please add some swim lanes before saving.",
+        variant: "destructive"
+      });
+    }
+  };
   
   // Utility function to get current time in Central Time Zone
   const getCurrentCentralTime = () => {
@@ -319,7 +336,11 @@ export default function Scheduler() {
               </Button>
             </div>
             
-            <Button className="bg-success hover:bg-success/90 text-white font-medium" data-testid="button-save">
+            <Button 
+              className="bg-success hover:bg-success/90 text-white font-medium" 
+              onClick={saveSwimLaneConfiguration}
+              data-testid="button-save"
+            >
               <Save className="mr-2 h-4 w-4" />
               Save Changes
             </Button>
