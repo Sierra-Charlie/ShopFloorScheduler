@@ -300,7 +300,21 @@ export default function Scheduler() {
           {/* Gantt Header with Start Date Input */}
           <div className="bg-card border-b border-border p-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">Assembly Card Details Editor</h2>
+              <div className="flex flex-col">
+                <h2 className="text-xl font-semibold">Assembly Card Details Editor</h2>
+                <div className="text-sm text-muted-foreground mt-1">
+                  Current Time: {getCurrentCentralTime().toLocaleString('en-US', {
+                    timeZone: 'America/Chicago',
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    timeZoneName: 'short'
+                  })}
+                </div>
+              </div>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
                   <Label htmlFor="start-date" className="text-sm font-medium">
