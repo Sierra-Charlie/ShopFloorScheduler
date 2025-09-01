@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Table, Save, Package } from "lucide-react";
+import { Calendar, Table, Save, Package, Filter } from "lucide-react";
 import { Link } from "wouter";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
@@ -108,6 +108,10 @@ export default function GanttView() {
           <Button onClick={() => setIsModalOpen(true)} data-testid="button-add-card">
             <Package className="h-4 w-4 mr-2" />
             Add Card
+          </Button>
+          <Button variant="secondary" data-testid="button-filter">
+            <Filter className="h-4 w-4 mr-2" />
+            Filter
           </Button>
         </div>
 
