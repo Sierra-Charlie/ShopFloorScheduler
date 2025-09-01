@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, GripVertical } from "lucide-react";
+import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser, canAccess } from "@/contexts/user-context";
@@ -385,7 +385,7 @@ export default function Scheduler() {
                             data-testid={`button-move-up-${assembler.id}`}
                             title="Move lane up"
                           >
-                            <GripVertical className="h-3 w-3 rotate-90" />
+                            <ChevronUp className="h-3 w-3" />
                           </Button>
                         )}
                         
@@ -399,7 +399,7 @@ export default function Scheduler() {
                             data-testid={`button-move-down-${assembler.id}`}
                             title="Move lane down"
                           >
-                            <GripVertical className="h-3 w-3 rotate-90 transform scale-y-[-1]" />
+                            <ChevronDown className="h-3 w-3" />
                           </Button>
                         )}
                         
