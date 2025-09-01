@@ -261,8 +261,8 @@ export class MemStorage implements IStorage {
           if (existing.status === "paused" && existing.elapsedTime) {
             // Resuming from pause - adjust startTime to account for elapsed time
             updated.startTime = new Date(Date.now() - (existing.elapsedTime * 1000));
-          } else if (!existing.startTime) {
-            // Starting fresh
+          } else {
+            // Starting fresh - always override existing startTime (including future times from initial setup)
             updated.startTime = new Date();
             updated.elapsedTime = 0;
           }
