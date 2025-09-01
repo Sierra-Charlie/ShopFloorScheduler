@@ -113,7 +113,7 @@
   
   .time-grid {
     background-image: 
-        linear-gradient(to right, var(--border) 1px, transparent 1px);
+        linear-gradient(to right, hsl(0, 0%, 60%) 1px, transparent 1px);
     background-size: 60px 100%;
     background-position: 216px 0; /* First line aligned with 6a text start */
   }
