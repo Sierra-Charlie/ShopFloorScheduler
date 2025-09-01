@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
@@ -58,9 +58,11 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   }, [isTimerRunning, startTime]);
 
   const handleStartTimer = () => {
-    setStartTime(new Date());
+    // If there's already elapsed time, calculate the new start time to continue from where we left off
+    const now = new Date();
+    const adjustedStartTime = new Date(now.getTime() - (elapsedTime * 1000));
+    setStartTime(adjustedStartTime);
     setIsTimerRunning(true);
-    setElapsedTime(0);
   };
 
   const handleStopTimer = () => {
@@ -133,6 +135,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 Phase {card.phase}
               </div>
             </DialogTitle>
+            <DialogDescription>
+              View and manage assembly card {card.cardNumber} - {card.name}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -278,6 +283,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               <AlertTriangle className="mr-2 h-5 w-5" />
               Andon Alert - {card.cardNumber}
             </DialogTitle>
+            <DialogDescription>
+              Report an issue or request supervisor assistance for assembly card {card.cardNumber}
+            </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
