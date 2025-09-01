@@ -7,17 +7,28 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { TouchBackend } from "react-dnd-touch-backend";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { UserProvider } from "@/contexts/user-context";
 import Scheduler from "@/pages/scheduler";
+import GanttView from "@/pages/gantt-view";
 import MaterialHandler from "@/pages/material-handler";
+import AssemblerView from "@/pages/assembler-view";
 import NotFound from "@/pages/not-found";
+import MainHeader from "@/components/main-header";
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/" component={Scheduler} />
-      <Route path="/material-handler" component={MaterialHandler} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="min-h-screen bg-background">
+      <MainHeader />
+      <main>
+        <Switch>
+          <Route path="/" component={Scheduler} />
+          <Route path="/gantt" component={GanttView} />
+          <Route path="/material-handler" component={MaterialHandler} />
+          <Route path="/assembler" component={AssemblerView} />
+          <Route component={NotFound} />
+        </Switch>
+      </main>
+    </div>
   );
 }
 
@@ -26,12 +37,14 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <DndProvider backend={isMobile ? TouchBackend : HTML5Backend}>
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
-      </DndProvider>
+      <UserProvider>
+        <DndProvider backend={isMobile ? TouchBackend : HTML5Backend}>
+          <TooltipProvider>
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </DndProvider>
+      </UserProvider>
     </QueryClientProvider>
   );
 }

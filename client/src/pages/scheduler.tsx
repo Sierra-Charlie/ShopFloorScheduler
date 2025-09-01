@@ -2,20 +2,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Table, Save, Package } from "lucide-react";
-import { Link } from "wouter";
+import { Calendar, Table, Save, Package, AlertTriangle } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
+import { useUser, canAccess } from "@/contexts/user-context";
 import SwimLane from "@/components/swim-lane";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
+import AssemblyDetailView from "@/components/assembly-detail-view";
 import DependencyLegend from "@/components/dependency-legend";
 import { AssemblyCard } from "@shared/schema";
 
 export default function Scheduler() {
+  const { currentUser } = useUser();
   const [currentView, setCurrentView] = useState<"schedule" | "gantt">("schedule");
   const [selectedCard, setSelectedCard] = useState<AssemblyCard | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDetailCard, setSelectedDetailCard] = useState<AssemblyCard | null>(null);
+  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
   const [startDate, setStartDate] = useState("2025-09-08");
   const [startTime, setStartTime] = useState("08:00");
   
@@ -67,14 +71,37 @@ export default function Scheduler() {
     setIsModalOpen(true);
   };
 
+  const handleCardView = (card: AssemblyCard) => {
+    setSelectedDetailCard(card);
+    setIsDetailViewOpen(true);
+  };
+
   const handleModalClose = () => {
     setIsModalOpen(false);
     setSelectedCard(null);
   };
 
+  const handleDetailViewClose = () => {
+    setIsDetailViewOpen(false);
+    setSelectedDetailCard(null);
+  };
+
+  // Check if user has permission to access this view
+  if (!currentUser || (!canAccess(currentUser, 'schedule_view') && !canAccess(currentUser, 'gantt_view'))) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have permission to access the Scheduler.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (cardsLoading || assemblersLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
           <p className="text-muted-foreground">Loading scheduler...</p>
@@ -84,13 +111,7 @@ export default function Scheduler() {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-auto">
-      {/* Header */}
-      <header className="bg-card border-b border-border px-6 py-4 sticky top-0 z-40">
-        <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
-          Manufacturing Shop Floor Scheduler
-        </h1>
-      </header>
+    <div className="flex-1 p-6 overflow-x-auto">
 
       {/* Toolbar */}
       <div className="bg-card border-b border-border px-6 py-4">
@@ -125,12 +146,6 @@ export default function Scheduler() {
               <Table className="mr-2 h-4 w-4" />
               Gantt View
             </Button>
-            <Link href="/material-handler">
-              <Button variant="outline" className="font-medium" data-testid="button-material-handler">
-                <Package className="mr-2 h-4 w-4" />
-                Material Handler
-              </Button>
-            </Link>
             <Button className="bg-success hover:bg-success/90 text-white font-medium" data-testid="button-save">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
@@ -172,6 +187,7 @@ export default function Scheduler() {
                     assembler={assembler}
                     assemblyCards={assemblyCards.filter(card => card.assignedTo === assembler.id)}
                     onCardEdit={handleCardEdit}
+                    onCardView={handleCardView}
                     startTimeOffset={getStartTimeOffset()}
                     data-testid={`swim-lane-${assembler.id}`}
                   />
@@ -222,6 +238,7 @@ export default function Scheduler() {
               assemblyCards={assemblyCards}
               assemblers={assemblers}
               onCardEdit={handleCardEdit}
+              onCardView={handleCardView}
             />
           </div>
         </div>
@@ -233,6 +250,13 @@ export default function Scheduler() {
         assemblers={assemblers}
         isOpen={isModalOpen}
         onClose={handleModalClose}
+      />
+
+      {/* Assembly Detail View */}
+      <AssemblyDetailView
+        card={selectedDetailCard}
+        isOpen={isDetailViewOpen}
+        onClose={handleDetailViewClose}
       />
 
       {/* Dependency Legend */}

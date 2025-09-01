@@ -13,6 +13,7 @@ interface GanttTableProps {
   assemblyCards: AssemblyCard[];
   assemblers: Assembler[];
   onCardEdit: (card: AssemblyCard) => void;
+  onCardView?: (card: AssemblyCard) => void;
 }
 
 const getPhaseColor = (phase: number) => {
@@ -35,7 +36,7 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: GanttTableProps) {
+export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCardView }: GanttTableProps) {
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<AssemblyCard>>({});
   
@@ -197,9 +198,10 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit }: Ga
                 <tr
                   key={card.id}
                   className={cn(
-                    "hover:bg-accent/30 transition-colors",
+                    "hover:bg-accent/30 transition-colors cursor-pointer",
                     hasIssues && "bg-accent/10"
                   )}
+                  onClick={() => !isEditing && onCardView?.(card)}
                   data-testid={`gantt-row-${card.cardNumber}`}
                 >
                   <td className="px-4 py-4 whitespace-nowrap">

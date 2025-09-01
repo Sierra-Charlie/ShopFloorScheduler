@@ -1,7 +1,14 @@
-import { type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard } from "@shared/schema";
+import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
+  // Users
+  getUsers(): Promise<User[]>;
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  
   // Assemblers
   getAssemblers(): Promise<Assembler[]>;
   getAssembler(id: string): Promise<Assembler | undefined>;
@@ -21,16 +28,32 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
+  private users: Map<string, User>;
   private assemblers: Map<string, Assembler>;
   private assemblyCards: Map<string, AssemblyCard>;
 
   constructor() {
+    this.users = new Map();
     this.assemblers = new Map();
     this.assemblyCards = new Map();
     this.initializeData();
   }
 
   private initializeData() {
+    // Initialize users
+    const defaultUsers: InsertUser[] = [
+      { name: "John Smith", role: "production_supervisor", email: "john.smith@company.com" },
+      { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@company.com" },
+      { name: "Mike Wilson", role: "assembler", email: "mike.wilson@company.com" },
+      { name: "Emily Chen", role: "scheduler", email: "emily.chen@company.com" },
+      { name: "David Brown", role: "admin", email: "david.brown@company.com" },
+    ];
+
+    defaultUsers.forEach(user => {
+      const id = randomUUID();
+      this.users.set(id, { ...user, id });
+    });
+
     // Initialize assemblers
     const defaultAssemblers: InsertAssembler[] = [
       { name: "Turbo 505", type: "mechanical", status: "available" },
@@ -253,6 +276,35 @@ export class MemStorage implements IStorage {
     }
 
     return { valid: issues.length === 0, issues };
+  }
+
+  // Users
+  async getUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    return this.users.get(id);
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const id = randomUUID();
+    const newUser: User = { ...user, id };
+    this.users.set(id, newUser);
+    return newUser;
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    const existing = this.users.get(id);
+    if (!existing) return undefined;
+    
+    const updated: User = { ...existing, ...user };
+    this.users.set(id, updated);
+    return updated;
   }
 }
 

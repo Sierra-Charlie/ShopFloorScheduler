@@ -9,6 +9,7 @@ interface SwimLaneProps {
   assembler: Assembler;
   assemblyCards: AssemblyCard[];
   onCardEdit: (card: AssemblyCard) => void;
+  onCardView?: (card: AssemblyCard) => void;
   startTimeOffset?: number;
 }
 
@@ -21,7 +22,7 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function SwimLane({ assembler, assemblyCards, onCardEdit, startTimeOffset = 0 }: SwimLaneProps) {
+export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardView, startTimeOffset = 0 }: SwimLaneProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
 
@@ -198,6 +199,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit, startTi
               key={`${card.id}-${card.duration}-${card.name}`}
               card={card}
               onEdit={onCardEdit}
+              onView={onCardView}
               hasWarning={getCardWarnings(card)}
               conflictDetails={getDependencyConflictDetails(card)}
             />

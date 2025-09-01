@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 interface AssemblyCardProps {
   card: AssemblyCard;
   onEdit: (card: AssemblyCard) => void;
+  onView?: (card: AssemblyCard) => void;
   hasWarning?: boolean;
   conflictDetails?: string | null;
 }
@@ -32,7 +33,7 @@ const getSequenceTypeLabel = (type: string) => {
   }
 };
 
-export default function AssemblyCardComponent({ card, onEdit, hasWarning, conflictDetails }: AssemblyCardProps) {
+export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning, conflictDetails }: AssemblyCardProps) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "assembly-card",
     item: { 
@@ -60,6 +61,7 @@ export default function AssemblyCardComponent({ card, onEdit, hasWarning, confli
         hasWarning && "border-2 border-warning"
       )}
       style={{ width: `${width}px` }}
+      onClick={() => onView?.(card)}
       onDoubleClick={() => onEdit(card)}
       data-testid={`assembly-card-${card.cardNumber}`}
     >

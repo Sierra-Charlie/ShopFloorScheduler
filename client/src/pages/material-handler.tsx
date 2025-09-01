@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowLeft } from "lucide-react";
-import { Link } from "wouter";
+import { Package, ArrowLeft, AlertTriangle } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
+import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
@@ -145,6 +145,7 @@ function DropZone({ onDrop, index, children }: DropZoneProps) {
 }
 
 export default function MaterialHandler() {
+  const { currentUser } = useUser();
   const { data: assemblyCards = [], isLoading } = useAssemblyCards();
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
@@ -197,6 +198,19 @@ export default function MaterialHandler() {
     // The UI will automatically update due to React Query refetching
   };
 
+  // Check if user has permission to access this view
+  if (!currentUser || !canAccess(currentUser, 'material_handler_view')) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
+          <p className="text-muted-foreground">You don't have permission to access the Material Handler View.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -220,12 +234,10 @@ export default function MaterialHandler() {
       <header className="bg-card border-b border-border px-6 py-4 sticky top-0 z-40">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Link href="/">
               <Button variant="outline" size="sm" data-testid="button-back-scheduler">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Scheduler
               </Button>
-            </Link>
             <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
               Material Handler View
             </h1>
