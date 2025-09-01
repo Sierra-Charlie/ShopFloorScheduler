@@ -55,7 +55,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
         // Card is already being assembled, restore timer state
         const startTime = new Date(card.startTime);
         const now = new Date();
-        const elapsed = Math.floor((now.getTime() - startTime.getTime()) / 1000);
+        const elapsed = Math.max(0, Math.floor((now.getTime() - startTime.getTime()) / 1000));
         setStartTime(startTime);
         setElapsedTime(elapsed);
         setIsTimerRunning(true);
@@ -73,7 +73,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     let interval: NodeJS.Timeout;
     if (isTimerRunning && startTime) {
       interval = setInterval(() => {
-        setElapsedTime(Math.floor((Date.now() - startTime.getTime()) / 1000));
+        setElapsedTime(Math.max(0, Math.floor((Date.now() - startTime.getTime()) / 1000)));
       }, 1000);
     }
     return () => clearInterval(interval);
