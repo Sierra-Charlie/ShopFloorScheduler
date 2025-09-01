@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,23 @@ export default function GanttView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDetailCard, setSelectedDetailCard] = useState<AssemblyCard | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
+  const [startDate, setStartDate] = useState("2025-09-08");
+  const [startTime, setStartTime] = useState("08:00");
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  // Utility function to get current time in Central Time Zone
+  const getCurrentCentralTime = () => {
+    return new Date(currentTime.toLocaleString("en-US", {timeZone: "America/Chicago"}));
+  };
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
@@ -48,8 +65,46 @@ export default function GanttView() {
             <p className="text-muted-foreground">
               Table view of all assembly cards with detailed information
             </p>
+            <div className="text-sm text-muted-foreground mt-2">
+              Current Time: {getCurrentCentralTime().toLocaleString('en-US', {
+                timeZone: 'America/Chicago',
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                timeZoneName: 'short'
+              })}
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="start-date" className="text-sm font-medium">
+                Assembly Build Start Date:
+              </Label>
+              <Input
+                id="start-date"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-40"
+                data-testid="input-start-date"
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="start-time" className="text-sm font-medium">
+                Start Time:
+              </Label>
+              <Input
+                id="start-time"
+                type="time"
+                value={startTime}
+                onChange={(e) => setStartTime(e.target.value)}
+                className="w-24"
+                data-testid="input-start-time"
+              />
+            </div>
             <Button onClick={() => setIsModalOpen(true)} data-testid="button-add-card">
               <Package className="h-4 w-4 mr-2" />
               Add Card
