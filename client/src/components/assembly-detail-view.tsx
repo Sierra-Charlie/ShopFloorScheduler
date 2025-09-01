@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Play, Pause, Square, ExternalLink, AlertTriangle, FileText, CheckCircle } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
+import { useUpdateAssemblyCard, useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { cn } from "@/lib/utils";
 
 interface AssemblyDetailViewProps {
@@ -47,13 +47,17 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const [andonIssue, setAndonIssue] = useState("");
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const { data: assemblyCards = [] } = useAssemblyCards();
+  
+  // Get the current card data from the server (refreshes automatically after mutations)
+  const currentCard = card ? assemblyCards.find(c => c.id === card.id) || card : null;
 
   // Initialize timer state based on card status when dialog opens
   useEffect(() => {
-    if (isOpen && card) {
-      if (card.status === "assembling" && card.startTime) {
+    if (isOpen && currentCard) {
+      if (currentCard.status === "assembling" && currentCard.startTime) {
         // Card is already being assembled, use server's startTime
-        const serverStartTime = new Date(card.startTime);
+        const serverStartTime = new Date(currentCard.startTime);
         setStartTime(serverStartTime);
         setIsTimerRunning(true);
       } else {
@@ -63,31 +67,31 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
         setStartTime(null);
       }
     }
-  }, [isOpen, card]);
+  }, [isOpen, currentCard]);
 
   // Timer effect - always calculate from server's startTime if available
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (card?.status === "assembling" && card.startTime) {
-      const serverStartTime = new Date(card.startTime);
+    if (currentCard?.status === "assembling" && currentCard.startTime) {
+      const serverStartTime = new Date(currentCard.startTime);
       // Update elapsed time immediately
       setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
       
       interval = setInterval(() => {
         setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
       }, 1000);
-    } else if (card?.status !== "assembling") {
+    } else if (currentCard?.status !== "assembling") {
       setElapsedTime(0);
     }
     return () => clearInterval(interval);
-  }, [card?.status, card?.startTime]);
+  }, [currentCard?.status, currentCard?.startTime]);
 
   const handleStartTimer = async () => {
     try {
       // Update card status to assembling (server will set startTime automatically)
-      if (card) {
+      if (currentCard) {
         await updateCardMutation.mutateAsync({
-          id: card.id,
+          id: currentCard.id,
           status: "assembling",
         });
       }
@@ -102,9 +106,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
 
   const handleStopTimer = async () => {
     try {
-      if (card) {
+      if (currentCard) {
         await updateCardMutation.mutateAsync({
-          id: card.id,
+          id: currentCard.id,
           status: "ready_for_build",
         });
       }
@@ -119,9 +123,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
 
   const handleResetTimer = async () => {
     try {
-      if (card) {
+      if (currentCard) {
         await updateCardMutation.mutateAsync({
-          id: card.id,
+          id: currentCard.id,
           status: "ready_for_build",
           startTime: null,
         });
@@ -143,9 +147,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       setIsTimerRunning(false);
       
       // Update card status to completed and record duration
-      if (card) {
+      if (currentCard) {
         await updateCardMutation.mutateAsync({
-          id: card.id,
+          id: currentCard.id,
           status: "completed",
           duration: Math.max(Math.round(actualDurationHours * 100) / 100, 1), // Round to 2 decimal places, minimum 1 hour
         });
@@ -153,7 +157,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       
       toast({
         title: "Assembly Complete!",
-        description: `${card?.cardNumber} completed in ${formatTime(elapsedTime)}`,
+        description: `${currentCard?.cardNumber} completed in ${formatTime(elapsedTime)}`,
       });
     } catch (error) {
       toast({
@@ -172,9 +176,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   };
 
   const handleGembaDocClick = () => {
-    if (card) {
+    if (currentCard) {
       // Generate Gemba doc URL based on card number
-      const gembaUrl = `https://gembadocs.com/view-standard-operation/${card.cardNumber.toLowerCase()}-assembly-instructions`;
+      const gembaUrl = `https://gembadocs.com/view-standard-operation/${currentCard.cardNumber.toLowerCase()}-assembly-instructions`;
       window.open(gembaUrl, '_blank');
     }
   };
@@ -193,7 +197,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       // In a real app, this would send an alert to supervisors
       toast({
         title: "Andon Alert Sent",
-        description: `Production supervisor notified about issue with ${card?.cardNumber}`,
+        description: `Production supervisor notified about issue with ${currentCard?.cardNumber}`,
       });
       setShowAndonDialog(false);
       setAndonIssue("");
@@ -206,9 +210,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
     }
   };
 
-  if (!card) return null;
+  if (!currentCard) return null;
 
-  const expectedHours = card.duration || 1;
+  const expectedHours = currentCard.duration || 1;
   const expectedSeconds = expectedHours * 3600;
   const isOvertime = elapsedTime > expectedSeconds;
 
@@ -220,18 +224,18 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
             <DialogTitle className="flex items-center space-x-3">
               <div className={cn(
                 "w-4 h-4 rounded",
-                card.status === "ready_for_build" ? getPhaseClass(card.phase) :
-                card.status === "assembling" ? "bg-blue-500" :
-                card.status === "completed" ? "bg-green-500" :
+                currentCard.status === "ready_for_build" ? getPhaseClass(currentCard.phase) :
+                currentCard.status === "assembling" ? "bg-blue-500" :
+                currentCard.status === "completed" ? "bg-green-500" :
                 "bg-gray-400"
               )}></div>
-              <span>Assembly Card {card.cardNumber}</span>
+              <span>Assembly Card {currentCard.cardNumber}</span>
               <div className="text-sm bg-black text-white px-2 py-1 rounded">
-                Phase {card.phase}
+                Phase {currentCard.phase}
               </div>
             </DialogTitle>
             <DialogDescription>
-              View and manage assembly card {card.cardNumber} - {card.name}
+              View and manage assembly card {currentCard.cardNumber} - {currentCard.name}
             </DialogDescription>
           </DialogHeader>
 
@@ -240,24 +244,24 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
             <div className="grid grid-cols-2 gap-4 p-4 bg-muted rounded-lg">
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Assembly Name</Label>
-                <p className="font-semibold">{card.name}</p>
+                <p className="font-semibold">{currentCard.name}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Type</Label>
-                <p className="font-semibold">{getSequenceTypeLabel(card.type)}</p>
+                <p className="font-semibold">{getSequenceTypeLabel(currentCard.type)}</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Expected Duration</Label>
-                <p className="font-semibold">{card.duration} hours</p>
+                <p className="font-semibold">{currentCard.duration} hours</p>
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-                <p className="font-semibold capitalize">{card.status?.replace('_', ' ')}</p>
+                <p className="font-semibold capitalize">{currentCard.status?.replace('_', ' ')}</p>
               </div>
-              {card.dependencies && card.dependencies.length > 0 && (
+              {currentCard.dependencies && currentCard.dependencies.length > 0 && (
                 <div className="col-span-2">
                   <Label className="text-sm font-medium text-muted-foreground">Dependencies</Label>
-                  <p className="font-semibold">{card.dependencies.join(', ')}</p>
+                  <p className="font-semibold">{currentCard.dependencies.join(', ')}</p>
                 </div>
               )}
             </div>
@@ -296,7 +300,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 </Alert>
               )}
 
-              {card.status !== "ready_for_build" && card.status !== "assembling" && card.status !== "completed" && (
+              {currentCard.status !== "ready_for_build" && currentCard.status !== "assembling" && currentCard.status !== "completed" && (
                 <Alert className="mb-4">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
@@ -306,11 +310,11 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               )}
 
               <div className="flex space-x-2">
-                {card.status !== "assembling" ? (
+                {currentCard.status !== "assembling" ? (
                   <Button 
                     onClick={handleStartTimer}
                     className="bg-green-600 hover:bg-green-700"
-                    disabled={card.status !== "ready_for_build"}
+                    disabled={currentCard.status !== "ready_for_build"}
                     data-testid="button-start-build"
                   >
                     <Play className="mr-2 h-4 w-4" />
@@ -334,7 +338,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                   <Square className="mr-2 h-4 w-4" />
                   Reset
                 </Button>
-                {card.status === "assembling" && (
+                {currentCard.status === "assembling" && (
                   <Button 
                     onClick={handleBuildComplete}
                     className="bg-blue-600 hover:bg-blue-700"
@@ -396,10 +400,10 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
           <DialogHeader>
             <DialogTitle className="text-red-600 flex items-center">
               <AlertTriangle className="mr-2 h-5 w-5" />
-              Andon Alert - {card.cardNumber}
+              Andon Alert - {currentCard?.cardNumber}
             </DialogTitle>
             <DialogDescription>
-              Report an issue or request supervisor assistance for assembly card {card.cardNumber}
+              Report an issue or request supervisor assistance for assembly card {currentCard?.cardNumber}
             </DialogDescription>
           </DialogHeader>
           
