@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, GripVertical } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser, canAccess } from "@/contexts/user-context";
@@ -40,12 +40,33 @@ export default function Scheduler() {
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
   
-  // Initialize active lanes with all assemblers when data is loaded
+  // Initialize active lanes with all assemblers when data is loaded (only once)
   useEffect(() => {
     if (assemblers.length > 0 && activeLanes.length === 0) {
-      setActiveLanes(assemblers.map(a => a.id));
+      // Only initialize if we don't have any saved configuration
+      const savedLanes = localStorage.getItem('swimLanes');
+      if (savedLanes) {
+        try {
+          const parsed = JSON.parse(savedLanes);
+          // Filter to only include assemblers that still exist
+          const validLanes = parsed.filter((id: string) => assemblers.some(a => a.id === id));
+          setActiveLanes(validLanes);
+        } catch {
+          // If parsing fails, fall back to all assemblers
+          setActiveLanes(assemblers.map(a => a.id));
+        }
+      } else {
+        setActiveLanes(assemblers.map(a => a.id));
+      }
     }
-  }, [assemblers, activeLanes.length]);
+  }, [assemblers]);
+
+  // Save active lanes to localStorage whenever they change
+  useEffect(() => {
+    if (activeLanes.length > 0) {
+      localStorage.setItem('swimLanes', JSON.stringify(activeLanes));
+    }
+  }, [activeLanes]);
   
   // Functions to manage swim lanes
   const addSwimLane = () => {
@@ -65,6 +86,28 @@ export default function Scheduler() {
       title: "Swim Lane Removed",
       description: "Swim lane has been removed from the schedule.",
     });
+  };
+
+  // Reordering functions
+  const moveSwimLane = (fromIndex: number, toIndex: number) => {
+    const newLanes = [...activeLanes];
+    const [removed] = newLanes.splice(fromIndex, 1);
+    newLanes.splice(toIndex, 0, removed);
+    setActiveLanes(newLanes);
+  };
+
+  const moveSwimLaneUp = (assemblerId: string) => {
+    const index = activeLanes.indexOf(assemblerId);
+    if (index > 0) {
+      moveSwimLane(index, index - 1);
+    }
+  };
+
+  const moveSwimLaneDown = (assemblerId: string) => {
+    const index = activeLanes.indexOf(assemblerId);
+    if (index < activeLanes.length - 1) {
+      moveSwimLane(index, index + 1);
+    }
   };
   
   // Utility function to get current time in Central Time Zone
@@ -311,7 +354,7 @@ export default function Scheduler() {
 
               {/* Swim Lanes Container */}
               <div className="time-grid relative">
-                {activeLanes.map((assemblerId) => {
+                {activeLanes.map((assemblerId, index) => {
                   const assembler = assemblers.find(a => a.id === assemblerId);
                   if (!assembler) return null;
                   
@@ -329,16 +372,49 @@ export default function Scheduler() {
                         isCardOverdue={isCardOverdue}
                         data-testid={`swim-lane-${assembler.id}`}
                       />
-                      {/* Delete Lane Button */}
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-700 z-20"
-                        onClick={() => removeSwimLane(assembler.id)}
-                        data-testid={`button-delete-lane-${assembler.id}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      
+                      {/* Lane Controls - visible on hover */}
+                      <div className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col space-y-1">
+                        {/* Reorder Up Button */}
+                        {index > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 bg-white/80 hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                            onClick={() => moveSwimLaneUp(assembler.id)}
+                            data-testid={`button-move-up-${assembler.id}`}
+                            title="Move lane up"
+                          >
+                            <GripVertical className="h-3 w-3 rotate-90" />
+                          </Button>
+                        )}
+                        
+                        {/* Reorder Down Button */}
+                        {index < activeLanes.length - 1 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 bg-white/80 hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                            onClick={() => moveSwimLaneDown(assembler.id)}
+                            data-testid={`button-move-down-${assembler.id}`}
+                            title="Move lane down"
+                          >
+                            <GripVertical className="h-3 w-3 rotate-90 transform scale-y-[-1]" />
+                          </Button>
+                        )}
+                        
+                        {/* Delete Lane Button */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-700"
+                          onClick={() => removeSwimLane(assembler.id)}
+                          data-testid={`button-delete-lane-${assembler.id}`}
+                          title="Remove lane"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
