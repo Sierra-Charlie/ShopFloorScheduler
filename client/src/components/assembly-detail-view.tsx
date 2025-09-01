@@ -56,12 +56,16 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   useEffect(() => {
     if (isOpen && currentCard) {
       if (currentCard.status === "assembling" && currentCard.startTime) {
-        // Card is already being assembled, use server's startTime
+        // Card is actively being assembled, use server's startTime
         const serverStartTime = new Date(currentCard.startTime);
         setStartTime(serverStartTime);
         setIsTimerRunning(true);
+      } else if (currentCard.status === "paused") {
+        // Card is paused, show accumulated time but don't run timer
+        setIsTimerRunning(false);
+        setElapsedTime(currentCard.elapsedTime || 0);
       } else {
-        // Reset timer state for non-assembling cards
+        // Reset timer state for other statuses
         setIsTimerRunning(false);
         setElapsedTime(0);
         setStartTime(null);
@@ -80,11 +84,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       interval = setInterval(() => {
         setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
       }, 1000);
-    } else if (currentCard?.status !== "assembling") {
+    } else if (currentCard?.status === "paused") {
+      // Show accumulated elapsed time when paused
+      setElapsedTime(currentCard.elapsedTime || 0);
+    } else if (currentCard?.status !== "assembling" && currentCard?.status !== "paused") {
       setElapsedTime(0);
     }
     return () => clearInterval(interval);
-  }, [currentCard?.status, currentCard?.startTime]);
+  }, [currentCard?.status, currentCard?.startTime, currentCard?.elapsedTime]);
 
   const handleStartTimer = async () => {
     try {
@@ -107,14 +114,15 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const handleStopTimer = async () => {
     try {
       if (currentCard) {
+        // Pause the timer by switching to paused status
         await updateCardMutation.mutateAsync({
           id: currentCard.id,
-          status: "ready_for_build",
+          status: "paused",
         });
       }
     } catch (error) {
       toast({
-        title: "Failed to stop assembly",
+        title: "Failed to pause assembly",
         description: "Please try again",
         variant: "destructive",
       });
@@ -256,7 +264,15 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               </div>
               <div>
                 <Label className="text-sm font-medium text-muted-foreground">Status</Label>
-                <p className="font-semibold capitalize">{currentCard.status?.replace('_', ' ')}</p>
+                <p className={cn(
+                  "font-semibold capitalize",
+                  currentCard.status === "completed" ? "text-green-600" : 
+                  currentCard.status === "assembling" ? "text-blue-600" :
+                  currentCard.status === "paused" ? "text-orange-600" :
+                  currentCard.status === "ready_for_build" ? "text-orange-600" : "text-gray-600"
+                )}>
+                  {currentCard.status?.replace('_', ' ')}
+                </p>
               </div>
               {currentCard.dependencies && currentCard.dependencies.length > 0 && (
                 <div className="col-span-2">
@@ -300,7 +316,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 </Alert>
               )}
 
-              {currentCard.status !== "ready_for_build" && currentCard.status !== "assembling" && currentCard.status !== "completed" && (
+              {currentCard.status !== "ready_for_build" && currentCard.status !== "assembling" && currentCard.status !== "completed" && currentCard.status !== "paused" && (
                 <Alert className="mb-4">
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
@@ -314,11 +330,11 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                   <Button 
                     onClick={handleStartTimer}
                     className="bg-green-600 hover:bg-green-700"
-                    disabled={currentCard.status !== "ready_for_build"}
+                    disabled={currentCard.status !== "ready_for_build" && currentCard.status !== "paused"}
                     data-testid="button-start-build"
                   >
                     <Play className="mr-2 h-4 w-4" />
-                    Start Build
+                    {currentCard.status === "paused" ? "Resume Build" : "Start Build"}
                   </Button>
                 ) : (
                   <Button 
@@ -327,7 +343,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                     data-testid="button-stop-build"
                   >
                     <Pause className="mr-2 h-4 w-4" />
-                    Stop Build
+                    Pause Build
                   </Button>
                 )}
                 <Button 

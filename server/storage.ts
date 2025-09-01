@@ -170,7 +170,8 @@ export class MemStorage implements IStorage {
         position: card.position || 0,
         assignedTo: card.assignedTo || null,
         startTime: card.startTime || null,
-        endTime: card.endTime || null
+        endTime: card.endTime || null,
+        elapsedTime: card.elapsedTime || 0
       });
     });
   }
@@ -229,7 +230,8 @@ export class MemStorage implements IStorage {
       position: card.position || 0,
       assignedTo: card.assignedTo || null,
       startTime: card.startTime || null,
-      endTime: card.endTime || null
+      endTime: card.endTime || null,
+      elapsedTime: card.elapsedTime || 0
     };
     this.assemblyCards.set(id, newCard);
     return newCard;
@@ -246,14 +248,35 @@ export class MemStorage implements IStorage {
       updated.startTime = update.startTime ?? null;
     }
     
-    // Automatically set startTime when status changes to assembling (only if not explicitly set)
-    if (update.status === "assembling" && !('startTime' in update) && !existing.startTime) {
-      updated.startTime = new Date();
+    // Handle explicit elapsedTime updates
+    if ('elapsedTime' in update) {
+      updated.elapsedTime = update.elapsedTime ?? 0;
     }
     
-    // Clear startTime when status changes away from assembling (unless explicitly preserving)
-    if (update.status !== "assembling" && update.status !== "completed" && !('startTime' in update)) {
-      updated.startTime = null;
+    // Status change logic
+    if (update.status) {
+      if (update.status === "assembling") {
+        // Starting or resuming assembly
+        if (!('startTime' in update)) {
+          if (existing.status === "paused" && existing.elapsedTime) {
+            // Resuming from pause - adjust startTime to account for elapsed time
+            updated.startTime = new Date(Date.now() - (existing.elapsedTime * 1000));
+          } else if (!existing.startTime) {
+            // Starting fresh
+            updated.startTime = new Date();
+            updated.elapsedTime = 0;
+          }
+        }
+      } else if (update.status === "paused") {
+        // Pausing - calculate and store elapsed time
+        if (existing.startTime && existing.status === "assembling") {
+          const currentElapsed = Math.floor((Date.now() - new Date(existing.startTime).getTime()) / 1000);
+          updated.elapsedTime = Math.max(currentElapsed, existing.elapsedTime || 0);
+        }
+        // Keep startTime for reference but timer will be paused
+      } else if (update.status === "ready_for_build" && !('startTime' in update) && !('elapsedTime' in update)) {
+        // Only reset if explicitly requested
+      }
     }
     
     // Automatically set endTime when status changes to completed
