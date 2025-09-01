@@ -59,57 +59,56 @@ export default function GanttView() {
   return (
     <div className="flex-1 p-6">
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Gantt Chart View</h1>
-            <p className="text-muted-foreground">
-              Table view of all assembly cards with detailed information
-            </p>
-            <div className="text-sm text-muted-foreground mt-2">
-              Current Time: {getCurrentCentralTime().toLocaleString('en-US', {
-                timeZone: 'America/Chicago',
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-                timeZoneName: 'short'
-              })}
-            </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Gantt Chart View</h1>
+          <p className="text-muted-foreground">
+            Table view of all assembly cards with detailed information
+          </p>
+          <div className="text-sm text-muted-foreground mt-2">
+            Current Time: {getCurrentCentralTime().toLocaleString('en-US', {
+              timeZone: 'America/Chicago',
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              timeZoneName: 'short'
+            })}
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="start-date" className="text-sm font-medium">
-                Assembly Build Start Date:
-              </Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="w-40"
-                data-testid="input-start-date"
-              />
-            </div>
-            <div className="flex items-center space-x-2">
-              <Label htmlFor="start-time" className="text-sm font-medium">
-                Start Time:
-              </Label>
-              <Input
-                id="start-time"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-24"
-                data-testid="input-start-time"
-              />
-            </div>
-            <Button onClick={() => setIsModalOpen(true)} data-testid="button-add-card">
-              <Package className="h-4 w-4 mr-2" />
-              Add Card
-            </Button>
+        </div>
+
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="start-date" className="text-sm font-medium">
+              Assembly Build Start Date:
+            </Label>
+            <Input
+              id="start-date"
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-40"
+              data-testid="input-start-date"
+            />
           </div>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="start-time" className="text-sm font-medium">
+              Start Time:
+            </Label>
+            <Input
+              id="start-time"
+              type="time"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-24"
+              data-testid="input-start-time"
+            />
+          </div>
+          <Button onClick={() => setIsModalOpen(true)} data-testid="button-add-card">
+            <Package className="h-4 w-4 mr-2" />
+            Add Card
+          </Button>
         </div>
 
         <DependencyLegend />
