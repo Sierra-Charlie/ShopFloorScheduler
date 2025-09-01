@@ -387,6 +387,7 @@ export default function Scheduler() {
                           const baseCards = card.assignedTo === assembler.id;
                           return baseCards;
                         })}
+                        allAssemblyCards={assemblyCards}
                         onCardEdit={handleCardEdit}
                         onCardView={handleCardView}
                         startTimeOffset={getStartTimeOffset()}

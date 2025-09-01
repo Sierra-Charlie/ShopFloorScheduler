@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 interface SwimLaneProps {
   assembler: Assembler;
-  assemblyCards: AssemblyCard[];
+  assemblyCards: AssemblyCard[]; // Cards for this specific assembler
+  allAssemblyCards?: AssemblyCard[]; // All cards for type validation
   onCardEdit: (card: AssemblyCard) => void;
   onCardView?: (card: AssemblyCard) => void;
   startTimeOffset?: number;
@@ -23,15 +24,63 @@ const getStatusColor = (status: string) => {
   }
 };
 
-export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardView, startTimeOffset = 0, isCardOverdue }: SwimLaneProps) {
+// Validate if an assembly card type can be placed in an assembler
+const canCardBeAssignedToAssembler = (cardType: string, assemblerName: string): boolean => {
+  // Mechanical assembly cards (M, S, P) can only go to Mech Assy 1-4
+  if (["M", "S", "P"].includes(cardType)) {
+    return assemblerName.startsWith("Mech Assy");
+  }
+  
+  // Electrical assembly cards (E) can only go to Elec Assy 1-4
+  if (cardType === "E") {
+    return assemblerName.startsWith("Elec Assy");
+  }
+  
+  // Run-in doesn't have type restrictions yet - allow all for now
+  if (assemblerName === "Run-in") {
+    return true;
+  }
+  
+  // For other card types (KB, etc.) or assemblers, allow for now
+  return true;
+};
+
+export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, onCardEdit, onCardView, startTimeOffset = 0, isCardOverdue }: SwimLaneProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
 
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: "assembly-card",
+    canDrop: (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string }) => {
+      // Find the dragged card from all assembly cards
+      const allCards = allAssemblyCards || assemblyCards;
+      const draggedCard = allCards.find(c => c.id === item.id);
+      
+      if (!draggedCard) return false;
+      
+      // Check if card type is compatible with this assembler
+      return canCardBeAssignedToAssembler(draggedCard.type, assembler.name);
+    },
     drop: async (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string }, monitor) => {
       try {
-        const draggedCard = assemblyCards.find(c => c.id === item.id);
+        // Find the dragged card from all assembly cards
+        const allCards = allAssemblyCards || assemblyCards;
+        const draggedCard = allCards.find(c => c.id === item.id);
+        
+        if (!draggedCard) {
+          throw new Error("Card not found");
+        }
+        
+        // Double-check compatibility before proceeding
+        if (!canCardBeAssignedToAssembler(draggedCard.type, assembler.name)) {
+          toast({
+            title: "Invalid Assignment",
+            description: `${draggedCard.type}-type cards cannot be assigned to ${assembler.name}`,
+            variant: "destructive",
+          });
+          return;
+        }
+        
         const isAlreadyInThisLane = draggedCard?.assignedTo === assembler.id;
         
         if (isAlreadyInThisLane) {
@@ -116,7 +165,7 @@ export default function SwimLane({ assembler, assemblyCards, onCardEdit, onCardV
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-  }), [assembler.id, assemblyCards, updateCardMutation]);
+  }), [assembler.id, assembler.name, assemblyCards, allAssemblyCards, updateCardMutation, toast]);
 
   // Check for dependency warnings and generate conflict details
   const getCardWarnings = (card: AssemblyCard) => {
