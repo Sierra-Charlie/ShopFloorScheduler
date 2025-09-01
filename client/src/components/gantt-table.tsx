@@ -135,21 +135,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="bg-card border-b border-border p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Button size="sm" data-testid="button-add-card">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Card
-            </Button>
-            <Button variant="secondary" size="sm" data-testid="button-filter">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Table */}
       <div className="flex-1 overflow-auto">
