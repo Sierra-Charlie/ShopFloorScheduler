@@ -28,7 +28,9 @@ export default function Scheduler() {
 
   // Calculate business days (Mon-Fri) from start date
   const getBusinessDay = (startDateStr: string, dayOffset: number) => {
-    const start = new Date(startDateStr);
+    // Parse date in local timezone to avoid UTC offset issues
+    const [year, month, day] = startDateStr.split('-').map(Number);
+    const start = new Date(year, month - 1, day);
     
     // For Day 1 (dayOffset 0), return the start date
     if (dayOffset === 0) {
