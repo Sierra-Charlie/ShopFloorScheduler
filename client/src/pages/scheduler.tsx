@@ -21,10 +21,9 @@ export default function Scheduler() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDetailCard, setSelectedDetailCard] = useState<AssemblyCard | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
-  const [startDate, setStartDate] = useState("2025-09-08");
-  const [startTime, setStartTime] = useState("08:00");
   const [currentTime, setCurrentTime] = useState(new Date());
   const { toast } = useToast();
+  const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
   // Update current time every minute
   useEffect(() => {

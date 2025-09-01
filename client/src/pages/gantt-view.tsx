@@ -6,6 +6,7 @@ import { Calendar, Table, Save, Package } from "lucide-react";
 import { Link } from "wouter";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
+import { useUser } from "@/contexts/user-context";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
@@ -17,9 +18,8 @@ export default function GanttView() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDetailCard, setSelectedDetailCard] = useState<AssemblyCard | null>(null);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
-  const [startDate, setStartDate] = useState("2025-09-08");
-  const [startTime, setStartTime] = useState("08:00");
   const [currentTime, setCurrentTime] = useState(new Date());
+  const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
   // Update current time every minute
   useEffect(() => {

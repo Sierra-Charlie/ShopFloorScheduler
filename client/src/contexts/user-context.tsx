@@ -5,6 +5,10 @@ interface UserContextType {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   isLoading: boolean;
+  startDate: string;
+  setStartDate: (date: string) => void;
+  startTime: string;
+  setStartTime: (time: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -12,6 +16,8 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [startDate, setStartDate] = useState("2025-09-08");
+  const [startTime, setStartTime] = useState("08:00");
 
   useEffect(() => {
     // For demo purposes, we'll simulate loading the first user as default
@@ -36,7 +42,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <UserContext.Provider value={{ currentUser, setCurrentUser, isLoading }}>
+    <UserContext.Provider value={{ currentUser, setCurrentUser, isLoading, startDate, setStartDate, startTime, setStartTime }}>
       {children}
     </UserContext.Provider>
   );
