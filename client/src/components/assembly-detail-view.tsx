@@ -72,23 +72,15 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       const serverStartTime = new Date(card.startTime);
       // Update elapsed time immediately
       setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
-      setIsTimerRunning(true);
       
       interval = setInterval(() => {
         setElapsedTime(Math.max(0, Math.floor((Date.now() - serverStartTime.getTime()) / 1000)));
       }, 1000);
-    } else if (card?.status === "completed" && card.startTime && card.endTime) {
-      // Show final elapsed time for completed cards
-      const serverStartTime = new Date(card.startTime);
-      const serverEndTime = new Date(card.endTime);
-      setElapsedTime(Math.max(0, Math.floor((serverEndTime.getTime() - serverStartTime.getTime()) / 1000)));
-      setIsTimerRunning(false);
-    } else {
+    } else if (card?.status !== "assembling") {
       setElapsedTime(0);
-      setIsTimerRunning(false);
     }
     return () => clearInterval(interval);
-  }, [card?.status, card?.startTime, card?.endTime]);
+  }, [card?.status, card?.startTime]);
 
   const handleStartTimer = async () => {
     try {
@@ -111,16 +103,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
   const handleStopTimer = async () => {
     try {
       if (card) {
-        // Pause by changing status but preserve startTime for resuming
         await updateCardMutation.mutateAsync({
           id: card.id,
           status: "ready_for_build",
-          startTime: card.startTime, // Preserve existing startTime
         });
       }
     } catch (error) {
       toast({
-        title: "Failed to pause assembly",
+        title: "Failed to stop assembly",
         description: "Please try again",
         variant: "destructive",
       });
@@ -147,13 +137,17 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
 
   const handleBuildComplete = async () => {
     try {
+      const now = new Date();
+      const actualDurationHours = Math.max(elapsedTime / 3600, 0.01); // Ensure minimum duration
+      
       setIsTimerRunning(false);
       
-      // Update card status to completed (preserve original duration)
+      // Update card status to completed and record duration
       if (card) {
         await updateCardMutation.mutateAsync({
           id: card.id,
           status: "completed",
+          duration: Math.max(Math.round(actualDurationHours * 100) / 100, 1), // Round to 2 decimal places, minimum 1 hour
         });
       }
       
@@ -277,9 +271,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
               
               <div className="flex items-center justify-between mb-4">
                 <div className="text-center">
-                  <Label className="text-sm text-muted-foreground">
-                    {card.status === "completed" ? "Completed Time" : "Actual Time"}
-                  </Label>
+                  <Label className="text-sm text-muted-foreground">Actual Time</Label>
                   <div className={cn(
                     "text-2xl font-mono font-bold",
                     isOvertime ? "text-red-600" : "text-green-600"
@@ -290,7 +282,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
                 <div className="text-center">
                   <Label className="text-sm text-muted-foreground">Expected Time</Label>
                   <div className="text-2xl font-mono font-bold text-blue-600">
-                    {formatTime(card.duration * 3600)}
+                    {formatTime(expectedSeconds)}
                   </div>
                 </div>
               </div>

@@ -251,8 +251,10 @@ export class MemStorage implements IStorage {
       updated.startTime = new Date();
     }
     
-    // Only clear startTime on explicit reset, not when pausing
-    // (startTime preservation is handled by explicit startTime in update)
+    // Clear startTime when status changes away from assembling (unless explicitly preserving)
+    if (update.status !== "assembling" && update.status !== "completed" && !('startTime' in update)) {
+      updated.startTime = null;
+    }
     
     // Automatically set endTime when status changes to completed
     if (update.status === "completed" && !existing.endTime) {
