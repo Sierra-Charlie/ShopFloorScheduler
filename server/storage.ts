@@ -243,7 +243,9 @@ export class MemStorage implements IStorage {
       assignedTo: card.assignedTo || null,
       startTime: card.startTime || null,
       endTime: card.endTime || null,
-      elapsedTime: card.elapsedTime || 0
+      elapsedTime: card.elapsedTime || 0,
+      pickingStartTime: card.pickingStartTime || null,
+      actualDuration: card.actualDuration || null
     };
     this.assemblyCards.set(id, newCard);
     return newCard;
@@ -406,9 +408,14 @@ export class MemStorage implements IStorage {
     const now = new Date();
     
     const newIssue: AndonIssue = {
-      ...issue,
       id,
       issueNumber,
+      assemblyCardNumber: issue.assemblyCardNumber,
+      description: issue.description,
+      photoPath: issue.photoPath || null,
+      submittedBy: issue.submittedBy,
+      assignedTo: issue.assignedTo || null,
+      status: issue.status || "unresolved",
       createdAt: now,
       updatedAt: now,
     };

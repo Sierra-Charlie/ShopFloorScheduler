@@ -88,6 +88,7 @@ export type Assembler = typeof assemblers.$inferSelect;
 
 export const insertAndonIssueSchema = createInsertSchema(andonIssues).omit({
   id: true,
+  issueNumber: true, // Auto-generated
   createdAt: true,
   updatedAt: true,
 });
