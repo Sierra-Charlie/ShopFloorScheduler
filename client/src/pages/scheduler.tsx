@@ -128,24 +128,6 @@ export default function Scheduler() {
             <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
-            <Button
-              onClick={() => setCurrentView("schedule")}
-              variant={currentView === "schedule" ? "default" : "secondary"}
-              className="font-medium"
-              data-testid="button-schedule-view"
-            >
-              <Calendar className="mr-2 h-4 w-4" />
-              Schedule View
-            </Button>
-            <Button
-              onClick={() => setCurrentView("gantt")}
-              variant={currentView === "gantt" ? "default" : "secondary"}
-              className="font-medium"
-              data-testid="button-gantt-view"
-            >
-              <Table className="mr-2 h-4 w-4" />
-              Gantt View
-            </Button>
             <Button className="bg-success hover:bg-success/90 text-white font-medium" data-testid="button-save">
               <Save className="mr-2 h-4 w-4" />
               Save Changes
