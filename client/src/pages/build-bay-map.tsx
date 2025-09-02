@@ -9,7 +9,6 @@ import { useAssemblers } from "@/hooks/use-assemblers";
 import { useToast } from "@/hooks/use-toast";
 import { AssemblyCard } from "@shared/schema";
 import BuildAreaZone from "@/components/build-area-zone";
-import MainHeader from "@/components/main-header";
 import turboImage from "@assets/Turbo 505_1756779347428.png";
 
 // Detect if we're on a touch device
@@ -100,8 +99,6 @@ export default function BuildBayMap() {
   return (
     <DndProvider backend={backend}>
       <div className="min-h-screen bg-background">
-        <MainHeader />
-        
         {/* Page Header */}
         <div className="border-b border-border bg-card/50 backdrop-blur-sm">
           <div className="px-6 py-4">
