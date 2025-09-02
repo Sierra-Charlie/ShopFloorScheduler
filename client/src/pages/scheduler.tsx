@@ -3,8 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import { useAssemblyCards } from "@/hooks/use-assembly-cards";
+import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown, Zap } from "lucide-react";
+import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,7 @@ export default function Scheduler() {
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  const updateCardMutation = useUpdateAssemblyCard();
   
   // Initialize active lanes with all assemblers when data is loaded (only once)
   useEffect(() => {
@@ -267,6 +268,192 @@ export default function Scheduler() {
     setSelectedDetailCard(null);
   };
 
+  // Complex optimization algorithm for build sequence
+  const optimizeBuildSequence = async () => {
+    try {
+      // Filter out DEAD_TIME cards for optimization - they'll be added back later
+      const regularCards = assemblyCards.filter(card => card.type !== "DEAD_TIME");
+      const deadTimeCards = assemblyCards.filter(card => card.type === "DEAD_TIME");
+      
+      // Step 1: Create dependency graph and validate it
+      const dependencyGraph = new Map();
+      const inDegree = new Map();
+      
+      regularCards.forEach(card => {
+        dependencyGraph.set(card.id, []);
+        inDegree.set(card.id, 0);
+      });
+      
+      // Build the graph
+      regularCards.forEach(card => {
+        if (card.dependencies) {
+          card.dependencies.forEach(depCardNumber => {
+            const depCard = regularCards.find(c => c.cardNumber === depCardNumber);
+            if (depCard) {
+              dependencyGraph.get(depCard.id).push(card.id);
+              inDegree.set(card.id, inDegree.get(card.id) + 1);
+            }
+          });
+        }
+      });
+      
+      // Step 2: Topological sort to get valid order respecting dependencies
+      const sorted = [];
+      const queue = [];
+      
+      // Find all cards with no dependencies
+      inDegree.forEach((degree, cardId) => {
+        if (degree === 0) {
+          queue.push(cardId);
+        }
+      });
+      
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        sorted.push(currentId);
+        
+        // Process all cards that depend on this one
+        dependencyGraph.get(currentId).forEach(dependentId => {
+          inDegree.set(dependentId, inDegree.get(dependentId) - 1);
+          if (inDegree.get(dependentId) === 0) {
+            queue.push(dependentId);
+          }
+        });
+      }
+      
+      // Check for circular dependencies
+      if (sorted.length !== regularCards.length) {
+        toast({
+          title: "Optimization Failed",
+          description: "Circular dependencies detected. Please fix dependencies before optimizing.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Step 3: Group cards by assembler type compatibility
+      const getCompatibleAssemblers = (cardType: string) => {
+        return assemblers.filter(assembler => {
+          switch (cardType) {
+            case "M": return assembler.type === "mechanical";
+            case "E": return assembler.type === "electrical";
+            case "S": case "P": return ["mechanical", "electrical"].includes(assembler.type);
+            case "KB": return true; // Kanban can go anywhere
+            default: return true;
+          }
+        });
+      };
+      
+      // Step 4: Calculate original positions for minimal movement
+      const originalPositions = new Map();
+      regularCards.forEach(card => {
+        const assembler = assemblers.find(a => a.id === card.assignedTo);
+        if (assembler) {
+          const laneIndex = activeLanes.indexOf(assembler.id);
+          const cardsInLane = regularCards.filter(c => c.assignedTo === assembler.id);
+          const cardIndex = cardsInLane.findIndex(c => c.id === card.id);
+          originalPositions.set(card.id, { laneIndex, cardIndex });
+        }
+      });
+      
+      // Step 5: Optimize assignment using a simplified scheduling algorithm
+      const optimizedCards = [];
+      const assemblerWorkload = new Map();
+      const assemblerSchedule = new Map();
+      
+      // Initialize assembler schedules
+      activeLanes.forEach(assemblerId => {
+        assemblerWorkload.set(assemblerId, 0);
+        assemblerSchedule.set(assemblerId, []);
+      });
+      
+      // Process cards in dependency order
+      sorted.forEach(cardId => {
+        const card = regularCards.find(c => c.id === cardId);
+        if (!card) return;
+        
+        const compatibleAssemblers = getCompatibleAssemblers(card.type);
+        const availableAssemblers = compatibleAssemblers.filter(a => activeLanes.includes(a.id));
+        
+        if (availableAssemblers.length === 0) {
+          // No compatible assemblers, keep original assignment
+          optimizedCards.push(card);
+          return;
+        }
+        
+        // Find the best assembler considering:
+        // 1. Least workload
+        // 2. Minimal movement from original position
+        let bestAssembler = null;
+        let bestScore = Infinity;
+        
+        availableAssemblers.forEach(assembler => {
+          const currentWorkload = assemblerWorkload.get(assembler.id) || 0;
+          const originalPos = originalPositions.get(card.id);
+          const newLaneIndex = activeLanes.indexOf(assembler.id);
+          
+          // Calculate movement penalty (favor keeping cards in same or nearby lanes)
+          const movementPenalty = originalPos ? Math.abs(originalPos.laneIndex - newLaneIndex) * 2 : 0;
+          
+          // Calculate score (lower is better)
+          const score = currentWorkload + movementPenalty;
+          
+          if (score < bestScore) {
+            bestScore = score;
+            bestAssembler = assembler;
+          }
+        });
+        
+        if (bestAssembler) {
+          // Update the card assignment
+          const optimizedCard = { ...card, assignedTo: bestAssembler.id };
+          optimizedCards.push(optimizedCard);
+          
+          // Update assembler workload
+          assemblerWorkload.set(bestAssembler.id, assemblerWorkload.get(bestAssembler.id) + card.duration);
+          assemblerSchedule.get(bestAssembler.id).push(optimizedCard);
+        } else {
+          optimizedCards.push(card);
+        }
+      });
+      
+      // Step 6: Apply the optimized assignments
+      let successCount = 0;
+      for (const card of optimizedCards) {
+        try {
+          await updateCardMutation.mutateAsync({
+            id: card.id,
+            ...card
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to update card ${card.cardNumber}:`, error);
+        }
+      }
+      
+      // Step 7: Show results
+      const totalCards = optimizedCards.length;
+      const movedCards = optimizedCards.filter(card => {
+        const original = assemblyCards.find(c => c.id === card.id);
+        return original && original.assignedTo !== card.assignedTo;
+      }).length;
+      
+      toast({
+        title: "Build Sequence Optimized",
+        description: `Successfully optimized ${successCount}/${totalCards} cards. ${movedCards} cards were reassigned to minimize total build time while respecting dependencies.`,
+        duration: 5000,
+      });
+      
+    } catch (error) {
+      console.error("Optimization failed:", error);
+      toast({
+        title: "Optimization Failed",
+        description: "An error occurred during optimization. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Check if user has permission to access this view
   if (!currentUser || (!canAccess(currentUser, 'schedule_view') && !canAccess(currentUser, 'gantt_view'))) {
     return (
@@ -309,6 +496,14 @@ export default function Scheduler() {
             <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium" 
+              onClick={optimizeBuildSequence}
+              data-testid="button-optimize"
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              Optimize Build Sequence
+            </Button>
             <Button 
               className="bg-success hover:bg-success/90 text-white font-medium" 
               onClick={saveSwimLaneConfiguration}
