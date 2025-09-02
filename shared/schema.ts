@@ -63,6 +63,8 @@ export const insertAssemblerSchema = createInsertSchema(assemblers).omit({
 
 export const insertAssemblyCardSchema = createInsertSchema(assemblyCards).omit({
   id: true,
+}).extend({
+  assignedTo: z.string().nullable().optional().transform(val => val === '' ? null : val),
 });
 
 export const updateAssemblyCardSchema = z.object({
