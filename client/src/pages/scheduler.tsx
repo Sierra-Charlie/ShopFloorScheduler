@@ -50,18 +50,10 @@ export default function Scheduler() {
         .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
         .map(assembler => assembler.id);
 
-      console.log('Assemblers with cards:', assemblersWithCards);
-      console.log('Current active lanes:', activeLanes);
-
       // Only initialize if we don't have active lanes yet and there are assemblers with cards
       if (activeLanes.length === 0 && assemblersWithCards.length > 0) {
-        console.log('Initializing swim lanes...');
-        
-        // Always start fresh - ignore saved configuration for now to ensure proper initialization
+        // Always start fresh with assemblers that have cards assigned
         setActiveLanes(assemblersWithCards);
-        
-        // Clear any problematic saved state temporarily
-        localStorage.removeItem('swimLanes');
       }
     }
   }, [assemblers, assemblyCards]);

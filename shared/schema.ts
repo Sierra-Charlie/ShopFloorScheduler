@@ -112,3 +112,88 @@ export type UpdateAssemblyCard = z.infer<typeof updateAssemblyCardSchema>;
 export type InsertAndonIssue = z.infer<typeof insertAndonIssueSchema>;
 export type AndonIssue = typeof andonIssues.$inferSelect;
 export type UpdateAndonIssue = z.infer<typeof updateAndonIssueSchema>;
+
+// Messaging System Tables
+
+export const messageThreads = pgTable("message_threads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  category: text("category").notNull(), // "kaizen", "safety", "efficiency", "quality", "general"
+  tags: text("tags").array().notNull().default([]), // Array of tags for better organization
+  createdBy: varchar("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastMessageAt: timestamp("last_message_at").defaultNow().notNull(),
+  isActive: boolean("is_active").default(true).notNull(), // For archiving threads
+  upvotes: integer("upvotes").default(0).notNull(), // Community voting for great ideas
+  implementationStatus: text("implementation_status").default("idea").notNull(), // "idea", "evaluating", "implementing", "completed", "rejected"
+});
+
+export const messages = pgTable("messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").references(() => messageThreads.id).notNull(),
+  authorId: varchar("author_id").references(() => users.id).notNull(),
+  content: text("content").notNull(),
+  attachmentPath: text("attachment_path"), // Path to file in object storage
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isEdited: boolean("is_edited").default(false).notNull(),
+});
+
+export const threadVotes = pgTable("thread_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").references(() => messageThreads.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  voteType: text("vote_type").notNull(), // "upvote", "downvote"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const threadParticipants = pgTable("thread_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").references(() => messageThreads.id).notNull(),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  lastReadAt: timestamp("last_read_at").defaultNow().notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  canWrite: boolean("can_write").default(true).notNull(), // Granular permission control
+});
+
+// Schema validation for messaging
+export const insertThreadSchema = createInsertSchema(messageThreads).omit({
+  id: true,
+  createdAt: true,
+  lastMessageAt: true,
+  upvotes: true,
+});
+
+export const insertMessageSchema = createInsertSchema(messages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  isEdited: true,
+});
+
+export const updateThreadSchema = z.object({
+  id: z.string(),
+  title: z.string().optional(),
+  category: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  implementationStatus: z.enum(["idea", "evaluating", "implementing", "completed", "rejected"]).optional(),
+  isActive: z.boolean().optional(),
+});
+
+export const insertVoteSchema = createInsertSchema(threadVotes).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types for messaging system
+export type InsertThread = z.infer<typeof insertThreadSchema>;
+export type MessageThread = typeof messageThreads.$inferSelect;
+export type UpdateThread = z.infer<typeof updateThreadSchema>;
+
+export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type Message = typeof messages.$inferSelect;
+
+export type InsertVote = z.infer<typeof insertVoteSchema>;
+export type ThreadVote = typeof threadVotes.$inferSelect;
+
+export type ThreadParticipant = typeof threadParticipants.$inferSelect;

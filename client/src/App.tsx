@@ -15,6 +15,7 @@ import MaterialHandler from "@/pages/material-handler";
 import AssemblerView from "@/pages/assembler-view";
 import AndonIssues from "@/pages/andon-issues";
 import BuildBayMap from "@/pages/build-bay-map";
+import Messages from "@/pages/messages";
 import NotFound from "@/pages/not-found";
 import MainHeader from "@/components/main-header";
 
@@ -31,6 +32,7 @@ function Router() {
           <Route path="/assembler" component={AssemblerView} />
           <Route path="/andon-issues" component={AndonIssues} />
           <Route path="/build-bay-map" component={BuildBayMap} />
+          <Route path="/messages" component={Messages} />
           <Route component={NotFound} />
         </Switch>
       </main>

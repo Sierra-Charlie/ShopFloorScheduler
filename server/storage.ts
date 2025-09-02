@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue } from "@shared/schema";
+import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -32,6 +32,15 @@ export interface IStorage {
   createAndonIssue(issue: InsertAndonIssue): Promise<AndonIssue>;
   updateAndonIssue(update: UpdateAndonIssue): Promise<AndonIssue | undefined>;
   deleteAndonIssue(id: number): Promise<boolean>;
+  
+  // Messaging System
+  getMessageThreads(): Promise<MessageThread[]>;
+  getMessageThread(id: string): Promise<MessageThread | undefined>;
+  getThreadWithMessages(id: string): Promise<{ thread: MessageThread; messages: Message[] } | undefined>;
+  createMessageThread(thread: InsertThread): Promise<MessageThread>;
+  updateMessageThread(update: UpdateThread): Promise<MessageThread | undefined>;
+  createMessage(message: InsertMessage): Promise<Message>;
+  voteOnThread(vote: InsertVote): Promise<{ thread: MessageThread; userVote: string }>;
 }
 
 export class MemStorage implements IStorage {
@@ -39,6 +48,9 @@ export class MemStorage implements IStorage {
   private assemblers: Map<string, Assembler>;
   private assemblyCards: Map<string, AssemblyCard>;
   private andonIssues: Map<number, AndonIssue>;
+  private messageThreads: Map<string, MessageThread>;
+  private messages: Map<string, Message>;
+  private threadVotes: Map<string, ThreadVote>;
   private nextIssueId: number = 1;
 
   constructor() {
@@ -46,6 +58,9 @@ export class MemStorage implements IStorage {
     this.assemblers = new Map();
     this.assemblyCards = new Map();
     this.andonIssues = new Map();
+    this.messageThreads = new Map();
+    this.messages = new Map();
+    this.threadVotes = new Map();
     this.initializeData();
   }
 
@@ -190,7 +205,8 @@ export class MemStorage implements IStorage {
         pickingStartTime: null as Date | null,
         actualDuration: null,
         gembaDocLink: null,
-        grounded: false
+        grounded: false,
+        subAssyArea: card.subAssyArea ?? null
       });
     });
   }
@@ -254,7 +270,8 @@ export class MemStorage implements IStorage {
       pickingStartTime: card.pickingStartTime || null,
       actualDuration: card.actualDuration || null,
       gembaDocLink: card.gembaDocLink || null,
-      grounded: card.grounded ?? false
+      grounded: card.grounded ?? false,
+      subAssyArea: card.subAssyArea ?? null
     };
     this.assemblyCards.set(id, newCard);
     return newCard;
@@ -449,6 +466,135 @@ export class MemStorage implements IStorage {
 
   async deleteAndonIssue(id: number): Promise<boolean> {
     return this.andonIssues.delete(id);
+  }
+
+  // Messaging System Methods
+  
+  async getMessageThreads(): Promise<MessageThread[]> {
+    return Array.from(this.messageThreads.values())
+      .sort((a, b) => new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime());
+  }
+
+  async getMessageThread(id: string): Promise<MessageThread | undefined> {
+    return this.messageThreads.get(id);
+  }
+
+  async getThreadWithMessages(id: string): Promise<{ thread: MessageThread; messages: Message[] } | undefined> {
+    const thread = this.messageThreads.get(id);
+    if (!thread) return undefined;
+    
+    const messages = Array.from(this.messages.values())
+      .filter(msg => msg.threadId === id)
+      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    
+    return { thread, messages };
+  }
+
+  async createMessageThread(thread: InsertThread): Promise<MessageThread> {
+    const id = randomUUID();
+    const now = new Date();
+    const newThread: MessageThread = {
+      ...thread,
+      id,
+      createdAt: now,
+      lastMessageAt: now,
+      isActive: true,
+      upvotes: 0,
+      implementationStatus: thread.implementationStatus || "idea",
+      tags: thread.tags || []
+    };
+    
+    this.messageThreads.set(id, newThread);
+    return newThread;
+  }
+
+  async updateMessageThread(update: UpdateThread): Promise<MessageThread | undefined> {
+    const existing = this.messageThreads.get(update.id);
+    if (!existing) return undefined;
+    
+    const updated: MessageThread = { ...existing, ...update };
+    this.messageThreads.set(update.id, updated);
+    return updated;
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const id = randomUUID();
+    const now = new Date();
+    const newMessage: Message = {
+      ...message,
+      id,
+      createdAt: now,
+      updatedAt: now,
+      isEdited: false,
+      attachmentPath: message.attachmentPath ?? null
+    };
+    
+    this.messages.set(id, newMessage);
+    
+    // Update thread's lastMessageAt
+    const thread = this.messageThreads.get(message.threadId);
+    if (thread) {
+      thread.lastMessageAt = now;
+      this.messageThreads.set(message.threadId, thread);
+    }
+    
+    return newMessage;
+  }
+
+  async voteOnThread(vote: InsertVote): Promise<{ thread: MessageThread; userVote: string }> {
+    const thread = this.messageThreads.get(vote.threadId);
+    if (!thread) {
+      throw new Error("Thread not found");
+    }
+    
+    // Check if user has already voted
+    const existingVote = Array.from(this.threadVotes.values())
+      .find(v => v.threadId === vote.threadId && v.userId === vote.userId);
+    
+    if (existingVote) {
+      // Update existing vote
+      if (existingVote.voteType !== vote.voteType) {
+        // Vote type changed
+        if (existingVote.voteType === "upvote") {
+          thread.upvotes = Math.max(0, thread.upvotes - 1);
+        } else {
+          thread.upvotes = thread.upvotes + 1;
+        }
+        
+        if (vote.voteType === "upvote") {
+          thread.upvotes = thread.upvotes + 1;
+        } else {
+          thread.upvotes = Math.max(0, thread.upvotes - 1);
+        }
+        
+        existingVote.voteType = vote.voteType;
+        existingVote.createdAt = new Date();
+        this.threadVotes.set(existingVote.id, existingVote);
+      }
+    } else {
+      // Create new vote
+      const voteId = randomUUID();
+      const newVote: ThreadVote = {
+        ...vote,
+        id: voteId,
+        createdAt: new Date()
+      };
+      
+      this.threadVotes.set(voteId, newVote);
+      
+      if (vote.voteType === "upvote") {
+        thread.upvotes = thread.upvotes + 1;
+      } else {
+        thread.upvotes = Math.max(0, thread.upvotes - 1);
+      }
+    }
+    
+    this.messageThreads.set(vote.threadId, thread);
+    
+    return {
+      thread,
+      userVote: vote.voteType
+    };
   }
 }
 

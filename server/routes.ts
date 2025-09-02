@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema } from "@shared/schema";
+import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema, insertThreadSchema, insertMessageSchema, updateThreadSchema, insertVoteSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService } from "./objectStorage";
 
@@ -287,6 +288,172 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Messaging API routes
+  
+  // Get all message threads
+  app.get("/api/threads", async (req, res) => {
+    try {
+      const threads = await storage.getMessageThreads();
+      res.json(threads);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch threads" });
+    }
+  });
+
+  // Get thread by ID with messages
+  app.get("/api/threads/:id", async (req, res) => {
+    try {
+      const threadWithMessages = await storage.getThreadWithMessages(req.params.id);
+      if (!threadWithMessages) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      res.json(threadWithMessages);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch thread" });
+    }
+  });
+
+  // Create new thread
+  app.post("/api/threads", async (req, res) => {
+    try {
+      const validatedData = insertThreadSchema.parse(req.body);
+      const thread = await storage.createMessageThread(validatedData);
+      
+      // Broadcast new thread to all connected clients
+      broadcastToAll({
+        type: "thread_created",
+        data: thread
+      });
+      
+      res.status(201).json(thread);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create thread" });
+    }
+  });
+
+  // Update thread (implementation status, etc.)
+  app.patch("/api/threads/:id", async (req, res) => {
+    try {
+      const updateData = updateThreadSchema.parse({ ...req.body, id: req.params.id });
+      const thread = await storage.updateMessageThread(updateData);
+      if (!thread) {
+        return res.status(404).json({ message: "Thread not found" });
+      }
+      
+      // Broadcast thread update to all connected clients
+      broadcastToAll({
+        type: "thread_updated",
+        data: thread
+      });
+      
+      res.json(thread);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update thread" });
+    }
+  });
+
+  // Add message to thread
+  app.post("/api/threads/:threadId/messages", async (req, res) => {
+    try {
+      const messageData = insertMessageSchema.parse({
+        ...req.body,
+        threadId: req.params.threadId
+      });
+      const message = await storage.createMessage(messageData);
+      
+      // Broadcast new message to all connected clients
+      broadcastToAll({
+        type: "message_created",
+        data: message
+      });
+      
+      res.status(201).json(message);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create message" });
+    }
+  });
+
+  // Vote on thread
+  app.post("/api/threads/:threadId/vote", async (req, res) => {
+    try {
+      const voteData = insertVoteSchema.parse({
+        ...req.body,
+        threadId: req.params.threadId
+      });
+      const result = await storage.voteOnThread(voteData);
+      
+      // Broadcast vote update to all connected clients
+      broadcastToAll({
+        type: "thread_voted",
+        data: result
+      });
+      
+      res.json(result);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to vote on thread" });
+    }
+  });
+
   const httpServer = createServer(app);
+  
+  // WebSocket server for real-time messaging
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const connectedClients = new Set<WebSocket>();
+
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('New WebSocket connection established');
+    connectedClients.add(ws);
+
+    // Handle client messages
+    ws.on('message', (data: string) => {
+      try {
+        const message = JSON.parse(data);
+        console.log('Received WebSocket message:', message);
+        
+        // Echo message back to all clients (for real-time chat)
+        broadcastToAll({
+          type: 'message_broadcast',
+          data: message
+        });
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    });
+
+    // Remove client on disconnect
+    ws.on('close', () => {
+      console.log('WebSocket connection closed');
+      connectedClients.delete(ws);
+    });
+
+    // Handle errors
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+      connectedClients.delete(ws);
+    });
+  });
+
+  // Function to broadcast messages to all connected clients
+  function broadcastToAll(message: any) {
+    const messageString = JSON.stringify(message);
+    connectedClients.forEach((ws) => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(messageString);
+      }
+    });
+  }
+
   return httpServer;
 }

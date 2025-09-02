@@ -67,19 +67,19 @@ export function canAccess(user: User | null, feature: string): boolean {
   // Define role permissions
   const permissions: Record<string, string[]> = {
     // Admin can access everything
-    admin: ['dashboard', 'schedule_view', 'gantt_view', 'material_handler_view', 'assembler_view', 'edit_cards', 'create_cards', 'delete_cards', 'andon_alerts', 'andon_issues_view'],
+    admin: ['dashboard', 'schedule_view', 'gantt_view', 'material_handler_view', 'assembler_view', 'edit_cards', 'create_cards', 'delete_cards', 'andon_alerts', 'andon_issues_view', 'messages_view'],
     
     // Production Supervisor can manage scheduling and view all data
-    production_supervisor: ['dashboard', 'schedule_view', 'gantt_view', 'material_handler_view', 'edit_cards', 'create_cards', 'andon_alerts', 'andon_issues_view'],
+    production_supervisor: ['dashboard', 'schedule_view', 'gantt_view', 'material_handler_view', 'edit_cards', 'create_cards', 'andon_alerts', 'andon_issues_view', 'messages_view'],
     
     // Scheduler can manage schedules and view data
-    scheduler: ['dashboard', 'schedule_view', 'gantt_view', 'edit_cards', 'create_cards'],
+    scheduler: ['dashboard', 'schedule_view', 'gantt_view', 'edit_cards', 'create_cards', 'messages_view'],
     
     // Material Handler manages card workflow and phases
-    material_handler: ['material_handler_view', 'edit_cards'],
+    material_handler: ['material_handler_view', 'edit_cards', 'messages_view'],
     
     // Assembler can view their assignments and report issues
-    assembler: ['assembler_view', 'andon_alerts'],
+    assembler: ['assembler_view', 'andon_alerts', 'messages_view'],
   };
 
   const userPermissions = permissions[user.role] || [];
