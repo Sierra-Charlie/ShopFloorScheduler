@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AssemblyCard, Assembler, updateAssemblyCardSchema } from "@shared/schema";
 import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
@@ -290,12 +291,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
               render={({ field }) => (
                 <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                   <FormControl>
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={field.value}
-                      onChange={field.onChange}
+                      onCheckedChange={field.onChange}
                       data-testid="checkbox-grounded"
-                      className="mt-1"
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
