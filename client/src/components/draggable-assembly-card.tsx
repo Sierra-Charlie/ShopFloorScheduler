@@ -59,27 +59,31 @@ export default function DraggableAssemblyCard({
       <div
         ref={drag}
         className={cn(
-          "relative bg-white dark:bg-gray-800 border rounded-lg p-2 cursor-move transition-all duration-200 hover:shadow-md",
+          "relative rounded-lg p-3 cursor-move transition-all duration-200 hover:shadow-md min-h-[80px]",
           getStatusColor(card.status),
           isDragging && "opacity-50 rotate-2 scale-95"
         )}
         data-testid={`draggable-card-${card.cardNumber}`}
       >
-        {/* Phase indicator */}
-        <div className="flex items-center justify-between mb-1">
-          <div className={cn("w-2 h-2 rounded-full", getPhaseColor(card.phase))}></div>
-          <span className="text-xs font-medium">{card.cardNumber}</span>
+        {/* Card number in top-right */}
+        <div className="absolute top-2 right-2 text-xs font-medium">
+          {card.cardNumber}
         </div>
         
-        {/* Card name */}
-        <div className="text-xs font-medium mb-1 line-clamp-2">
+        {/* Card name on left */}
+        <div className="text-sm font-medium mb-2 pr-8">
           {card.name}
         </div>
         
-        {/* Type and duration */}
-        <div className="flex items-center justify-between text-xs">
-          <span className="font-semibold">{card.type}</span>
-          <span className="text-muted-foreground">{card.duration}h</span>
+        {/* Bottom row with type badge and duration */}
+        <div className="flex items-center justify-between mt-auto">
+          <span className="text-sm font-semibold">{card.type}</span>
+          <div className="flex items-center space-x-2">
+            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold", getPhaseColor(card.phase))}>
+              {card.type}
+            </div>
+            <span className="text-xs text-muted-foreground">{card.duration}h</span>
+          </div>
         </div>
       </div>
     );
