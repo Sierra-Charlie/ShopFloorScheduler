@@ -1,5 +1,8 @@
-import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote } from "@shared/schema";
+import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
+import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -640,4 +643,410 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+// Database-backed storage implementation
+export class DatabaseStorage implements IStorage {
+  // Users
+  async getUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [created] = await db.insert(users).values(user).returning();
+    return created;
+  }
+
+  async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
+    const [updated] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
+    return updated || undefined;
+  }
+
+  // Assemblers
+  async getAssemblers(): Promise<Assembler[]> {
+    return await db.select().from(assemblers);
+  }
+
+  async getAssembler(id: string): Promise<Assembler | undefined> {
+    const [assembler] = await db.select().from(assemblers).where(eq(assemblers.id, id));
+    return assembler || undefined;
+  }
+
+  async createAssembler(assembler: InsertAssembler): Promise<Assembler> {
+    const [created] = await db.insert(assemblers).values(assembler).returning();
+    return created;
+  }
+
+  async updateAssembler(id: string, assemblerData: Partial<InsertAssembler>): Promise<Assembler | undefined> {
+    const [updated] = await db.update(assemblers).set(assemblerData).where(eq(assemblers.id, id)).returning();
+    return updated || undefined;
+  }
+
+  // Assembly Cards
+  async getAssemblyCards(): Promise<AssemblyCard[]> {
+    const cards = await db.select().from(assemblyCards);
+    return cards.sort((a, b) => {
+      if (a.assignedTo !== b.assignedTo) {
+        return (a.assignedTo || "").localeCompare(b.assignedTo || "");
+      }
+      return (a.position || 0) - (b.position || 0);
+    });
+  }
+
+  async getAssemblyCard(id: string): Promise<AssemblyCard | undefined> {
+    const [card] = await db.select().from(assemblyCards).where(eq(assemblyCards.id, id));
+    return card || undefined;
+  }
+
+  async getAssemblyCardByNumber(cardNumber: string): Promise<AssemblyCard | undefined> {
+    const [card] = await db.select().from(assemblyCards).where(eq(assemblyCards.cardNumber, cardNumber));
+    return card || undefined;
+  }
+
+  async createAssemblyCard(card: InsertAssemblyCard): Promise<AssemblyCard> {
+    const cardData = {
+      ...card,
+      status: card.status || "scheduled",
+      dependencies: card.dependencies || [],
+      precedents: card.precedents || [],
+      position: card.position || 0,
+      elapsedTime: card.elapsedTime || 0,
+      grounded: card.grounded ?? false
+    };
+    const [created] = await db.insert(assemblyCards).values(cardData).returning();
+    return created;
+  }
+
+  async updateAssemblyCard(update: UpdateAssemblyCard): Promise<AssemblyCard | undefined> {
+    const existing = await this.getAssemblyCard(update.id);
+    if (!existing) return undefined;
+    
+    const updateData: any = { ...update };
+    
+    // Handle explicit null values for optional fields
+    if ('startTime' in update) {
+      updateData.startTime = update.startTime ?? null;
+    }
+    if ('elapsedTime' in update) {
+      updateData.elapsedTime = update.elapsedTime ?? 0;
+    }
+    if ('pickingStartTime' in update) {
+      updateData.pickingStartTime = update.pickingStartTime ?? null;
+    }
+    if ('actualDuration' in update) {
+      updateData.actualDuration = update.actualDuration ?? null;
+    }
+    
+    // Status change logic (same as MemStorage)
+    if (update.status) {
+      if (update.status === "assembling") {
+        if (!('startTime' in update)) {
+          updateData.startTime = new Date();
+        }
+      } else if (update.status === "picking") {
+        if (!('pickingStartTime' in update)) {
+          updateData.pickingStartTime = new Date();
+        }
+      } else if (update.status === "paused" && existing.status === "assembling") {
+        if (existing.startTime) {
+          const currentTime = new Date();
+          const sessionDuration = Math.floor((currentTime.getTime() - existing.startTime.getTime()) / 1000);
+          updateData.elapsedTime = (existing.elapsedTime || 0) + sessionDuration;
+          updateData.startTime = null;
+        }
+      } else if (update.status === "completed") {
+        if (existing.status === "assembling" && existing.startTime) {
+          const currentTime = new Date();
+          const sessionDuration = Math.floor((currentTime.getTime() - existing.startTime.getTime()) / 1000);
+          const totalElapsed = (existing.elapsedTime || 0) + sessionDuration;
+          updateData.elapsedTime = totalElapsed;
+          if (!('actualDuration' in update) && totalElapsed > 0) {
+            updateData.actualDuration = Math.round((totalElapsed / 3600) * 100) / 100;
+          }
+        } else if (!('actualDuration' in update) && existing.elapsedTime) {
+          updateData.actualDuration = Math.round((existing.elapsedTime / 3600) * 100) / 100;
+        }
+        updateData.endTime = new Date();
+        updateData.startTime = null;
+      }
+    }
+    
+    const [updated] = await db.update(assemblyCards).set(updateData).where(eq(assemblyCards.id, update.id)).returning();
+    return updated || undefined;
+  }
+
+  async deleteAssemblyCard(id: string): Promise<boolean> {
+    const result = await db.delete(assemblyCards).where(eq(assemblyCards.id, id)).returning();
+    return result.length > 0;
+  }
+
+  async validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }> {
+    const issues: string[] = [];
+    
+    if (dependencies.includes(cardNumber)) {
+      issues.push("Card cannot depend on itself");
+    }
+    
+    for (const depNumber of dependencies) {
+      const depCard = await this.getAssemblyCardByNumber(depNumber);
+      if (!depCard) {
+        issues.push(`Dependency card ${depNumber} does not exist`);
+      }
+    }
+    
+    return { valid: issues.length === 0, issues };
+  }
+
+  // Andon Issues (keeping MemStorage implementation for now)
+  private andonIssues: Map<number, AndonIssue> = new Map();
+  private nextIssueId: number = 1;
+
+  async getAndonIssues(): Promise<AndonIssue[]> {
+    return Array.from(this.andonIssues.values()).sort((a, b) => b.id - a.id);
+  }
+
+  async getAndonIssue(id: number): Promise<AndonIssue | undefined> {
+    return this.andonIssues.get(id);
+  }
+
+  async createAndonIssue(issue: InsertAndonIssue): Promise<AndonIssue> {
+    const id = this.nextIssueId++;
+    const newIssue: AndonIssue = { 
+      ...issue, 
+      id, 
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      status: issue.status || "unresolved"
+    };
+    this.andonIssues.set(id, newIssue);
+    return newIssue;
+  }
+
+  async updateAndonIssue(update: UpdateAndonIssue): Promise<AndonIssue | undefined> {
+    const existing = this.andonIssues.get(update.id);
+    if (!existing) return undefined;
+    
+    const updated: AndonIssue = { ...existing, ...update };
+    this.andonIssues.set(update.id, updated);
+    return updated;
+  }
+
+  async deleteAndonIssue(id: number): Promise<boolean> {
+    return this.andonIssues.delete(id);
+  }
+
+  // Messaging System (using database)
+  async getMessageThreads(): Promise<MessageThread[]> {
+    return await db.select().from(messageThreads).orderBy(messageThreads.lastMessageAt);
+  }
+
+  async getMessageThread(id: string): Promise<MessageThread | undefined> {
+    const [thread] = await db.select().from(messageThreads).where(eq(messageThreads.id, id));
+    return thread || undefined;
+  }
+
+  async getThreadWithMessages(id: string): Promise<{ thread: MessageThread; messages: Message[] } | undefined> {
+    const thread = await this.getMessageThread(id);
+    if (!thread) return undefined;
+    
+    const threadMessages = await db.select().from(messages)
+      .where(eq(messages.threadId, id));
+    
+    return { thread, messages: threadMessages };
+  }
+
+  async createMessageThread(thread: InsertThread): Promise<MessageThread> {
+    const threadData = {
+      ...thread,
+      createdAt: new Date(),
+      lastMessageAt: new Date(),
+      isActive: true,
+      upvotes: 0,
+      implementationStatus: thread.implementationStatus || "idea"
+    };
+    const [created] = await db.insert(messageThreads).values(threadData).returning();
+    return created;
+  }
+
+  async updateMessageThread(update: UpdateThread): Promise<MessageThread | undefined> {
+    const [updated] = await db.update(messageThreads).set(update).where(eq(messageThreads.id, update.id)).returning();
+    return updated || undefined;
+  }
+
+  async createMessage(message: InsertMessage): Promise<Message> {
+    const messageData = {
+      ...message,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isEdited: false,
+      attachmentPath: message.attachmentPath ?? null
+    };
+    const [created] = await db.insert(messages).values(messageData).returning();
+    
+    // Update thread's lastMessageAt
+    await db.update(messageThreads)
+      .set({ lastMessageAt: new Date() })
+      .where(eq(messageThreads.id, message.threadId));
+    
+    return created;
+  }
+
+  async voteOnThread(vote: InsertVote): Promise<{ thread: MessageThread; userVote: string }> {
+    const [existingVote] = await db.select().from(threadVotes)
+      .where(and(eq(threadVotes.threadId, vote.threadId), eq(threadVotes.userId, vote.userId)));
+    
+    if (existingVote) {
+      await db.update(threadVotes).set(vote).where(eq(threadVotes.id, existingVote.id));
+    } else {
+      await db.insert(threadVotes).values(vote);
+    }
+    
+    const thread = await this.getMessageThread(vote.threadId);
+    if (!thread) throw new Error("Thread not found");
+    
+    return { thread, userVote: vote.voteType };
+  }
+
+  // Thread Participants
+  async addThreadParticipants(threadId: string, userIds: string[]): Promise<void> {
+    const participantData = userIds.map(userId => ({
+      threadId,
+      userId,
+      joinedAt: new Date(),
+      lastReadAt: new Date(),
+      canWrite: true
+    }));
+    
+    // Insert only new participants (avoid duplicates)
+    for (const participant of participantData) {
+      try {
+        await db.insert(threadParticipants).values(participant);
+      } catch (error) {
+        // Ignore duplicate key errors
+      }
+    }
+  }
+
+  async getThreadParticipants(threadId: string): Promise<ThreadParticipant[]> {
+    return await db.select().from(threadParticipants).where(eq(threadParticipants.threadId, threadId));
+  }
+
+  async removeThreadParticipant(threadId: string, userId: string): Promise<void> {
+    await db.delete(threadParticipants)
+      .where(and(eq(threadParticipants.threadId, threadId), eq(threadParticipants.userId, userId)));
+  }
+}
+
+// Use DatabaseStorage instead of MemStorage
+export const storage = new DatabaseStorage();
+
+// Initialize default data in database if tables are empty
+async function initializeDatabaseData() {
+  try {
+    const existingUsers = await db.select().from(users).limit(1);
+    if (existingUsers.length === 0) {
+      // Initialize users
+      const defaultUsers = [
+        { name: "John Smith", role: "production_supervisor", email: "john.smith@company.com" },
+        { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@company.com" },
+        { name: "Mike Wilson", role: "assembler", email: "mike.wilson@company.com" },
+        { name: "Emily Chen", role: "scheduler", email: "emily.chen@company.com" },
+        { name: "David Brown", role: "admin", email: "david.brown@company.com" },
+      ];
+      await db.insert(users).values(defaultUsers);
+
+      // Initialize assemblers
+      const defaultAssemblers = [
+        { name: "Mech Assy 1", type: "mechanical", status: "available" },
+        { name: "Mech Assy 2", type: "mechanical", status: "available" },
+        { name: "Mech Assy 3", type: "mechanical", status: "available" },
+        { name: "Mech Assy 4", type: "mechanical", status: "available" },
+        { name: "Elec Assy 1", type: "electrical", status: "available" },
+        { name: "Elec Assy 2", type: "electrical", status: "available" },
+        { name: "Elec Assy 3", type: "electrical", status: "available" },
+        { name: "Elec Assy 4", type: "electrical", status: "available" },
+        { name: "Run-in", type: "final", status: "available" },
+      ];
+      const createdAssemblers = await db.insert(assemblers).values(defaultAssemblers).returning();
+
+      // Initialize assembly cards
+      const mechanicalAssembler1 = createdAssemblers.find(a => a.name === "Mech Assy 1");
+      const electricalAssembler1 = createdAssemblers.find(a => a.name === "Elec Assy 1");
+      const runin = createdAssemblers.find(a => a.name === "Run-in");
+
+      const defaultCards = [
+        {
+          cardNumber: "M4",
+          name: "Base Frame",
+          type: "M",
+          duration: 4,
+          phase: 1,
+          assignedTo: mechanicalAssembler1?.id || null,
+          status: "in_progress",
+          dependencies: [],
+          precedents: ["M5"],
+          startTime: new Date(),
+          endTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+          position: 0,
+        },
+        {
+          cardNumber: "S4",
+          name: "Sub Assembly",
+          type: "S",
+          duration: 3,
+          phase: 2,
+          assignedTo: mechanicalAssembler1?.id || null,
+          status: "scheduled",
+          dependencies: [],
+          precedents: ["M5"],
+          startTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
+          endTime: new Date(Date.now() + 7 * 60 * 60 * 1000),
+          position: 1,
+        },
+        {
+          cardNumber: "E7",
+          name: "Wiring Harness",
+          type: "E",
+          duration: 5,
+          phase: 3,
+          assignedTo: electricalAssembler1?.id || null,
+          status: "in_progress",
+          dependencies: [],
+          precedents: [],
+          startTime: new Date(Date.now() - 30 * 60 * 1000),
+          endTime: new Date(Date.now() + 4.5 * 60 * 60 * 1000),
+          position: 0,
+        },
+        {
+          cardNumber: "E8",
+          name: "Control Module",
+          type: "E",
+          duration: 3,
+          phase: 4,
+          assignedTo: runin?.id || null,
+          status: "completed",
+          dependencies: [],
+          precedents: [],
+          startTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
+          endTime: new Date(Date.now() - 30 * 60 * 1000),
+          actualDuration: 3,
+          position: 0,
+        }
+      ];
+      await db.insert(assemblyCards).values(defaultCards);
+    }
+  } catch (error) {
+    console.error("Error initializing database data:", error);
+  }
+}
+
+// Initialize database data on startup
+initializeDatabaseData();
