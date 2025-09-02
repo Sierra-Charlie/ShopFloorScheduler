@@ -356,18 +356,20 @@ export default function Scheduler() {
         }
       });
       
-      // Step 5: Optimize assignment using a simplified scheduling algorithm
+      // Step 5: Optimize assignment and positioning using dependency-aware scheduling
       const optimizedCards = [];
       const assemblerWorkload = new Map();
       const assemblerSchedule = new Map();
+      const assemblerPositionCounter = new Map();
       
       // Initialize assembler schedules
       activeLanes.forEach(assemblerId => {
         assemblerWorkload.set(assemblerId, 0);
         assemblerSchedule.set(assemblerId, []);
+        assemblerPositionCounter.set(assemblerId, 0);
       });
       
-      // Process cards in dependency order
+      // Process cards in dependency order (this ensures dependencies are scheduled first)
       sorted.forEach(cardId => {
         const card = regularCards.find(c => c.id === cardId);
         if (!card) return;
@@ -376,14 +378,20 @@ export default function Scheduler() {
         const availableAssemblers = compatibleAssemblers.filter(a => activeLanes.includes(a.id));
         
         if (availableAssemblers.length === 0) {
-          // No compatible assemblers, keep original assignment
-          optimizedCards.push(card);
+          // No compatible assemblers, keep original assignment but calculate position
+          const currentAssembler = card.assignedTo;
+          if (currentAssembler && assemblerPositionCounter.has(currentAssembler)) {
+            const position = assemblerPositionCounter.get(currentAssembler);
+            assemblerPositionCounter.set(currentAssembler, position + 1);
+            optimizedCards.push({ ...card, position });
+          } else {
+            optimizedCards.push(card);
+          }
           return;
         }
         
-        // Find the best assembler considering:
-        // 1. Least workload
-        // 2. Minimal movement from original position
+        // For dependency satisfaction, check if any dependencies are already scheduled
+        // and prefer assemblers where dependencies are located
         let bestAssembler = null;
         let bestScore = Infinity;
         
@@ -395,8 +403,19 @@ export default function Scheduler() {
           // Calculate movement penalty (favor keeping cards in same or nearby lanes)
           const movementPenalty = originalPos ? Math.abs(originalPos.laneIndex - newLaneIndex) * 2 : 0;
           
+          // Dependency bonus: prefer assemblers where dependencies are already scheduled
+          let dependencyBonus = 0;
+          if (card.dependencies && card.dependencies.length > 0) {
+            const cardsInThisAssembler = assemblerSchedule.get(assembler.id) || [];
+            const dependenciesInThisAssembler = card.dependencies.filter(depId => 
+              cardsInThisAssembler.some(c => c.id === depId)
+            );
+            // Give bonus for each dependency already in this assembler
+            dependencyBonus = -dependenciesInThisAssembler.length * 5;
+          }
+          
           // Calculate score (lower is better)
-          const score = currentWorkload + movementPenalty;
+          const score = currentWorkload + movementPenalty + dependencyBonus;
           
           if (score < bestScore) {
             bestScore = score;
@@ -405,26 +424,35 @@ export default function Scheduler() {
         });
         
         if (bestAssembler) {
-          // Update the card assignment
-          const optimizedCard = { ...card, assignedTo: bestAssembler.id };
+          // Calculate position based on dependency order within the assembler
+          const currentPosition = assemblerPositionCounter.get(bestAssembler.id);
+          
+          // Update the card assignment and position
+          const optimizedCard = { 
+            ...card, 
+            assignedTo: bestAssembler.id,
+            position: currentPosition
+          };
           optimizedCards.push(optimizedCard);
           
-          // Update assembler workload
+          // Update assembler state
           assemblerWorkload.set(bestAssembler.id, assemblerWorkload.get(bestAssembler.id) + card.duration);
           assemblerSchedule.get(bestAssembler.id).push(optimizedCard);
+          assemblerPositionCounter.set(bestAssembler.id, currentPosition + 1);
         } else {
           optimizedCards.push(card);
         }
       });
       
-      // Step 6: Apply the optimized assignments
+      // Step 6: Apply the optimized assignments and positions
       let successCount = 0;
       for (const card of optimizedCards) {
         try {
-          // Only send the fields that are actually being changed for optimization
+          // Send both assignedTo and position for proper dependency ordering
           const updateData = {
             id: card.id,
-            assignedTo: card.assignedTo
+            assignedTo: card.assignedTo,
+            position: card.position
           };
           
           await updateCardMutation.mutateAsync(updateData);
