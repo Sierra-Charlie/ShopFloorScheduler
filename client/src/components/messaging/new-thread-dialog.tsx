@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUsers } from "@/hooks/use-users";
+import { AttachmentUpload } from "./attachment-upload";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -44,6 +45,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
 
   const queryClient = useQueryClient();
   const { data: users = [] } = useUsers();
@@ -67,10 +69,11 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
       }
 
       // If there's an initial message, send it
-      if (data.initialMessage.trim()) {
+      if (data.initialMessage.trim() || pendingAttachment) {
         await apiRequest("POST", `/api/threads/${thread.id}/messages`, {
           authorId: "john-doe-id", // TODO: Get from current user context
-          content: data.initialMessage
+          content: data.initialMessage.trim() || (pendingAttachment ? `[Attachment: ${pendingAttachment.name}]` : ""),
+          attachmentPath: pendingAttachment?.url
         });
       }
 
@@ -90,6 +93,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
     setTags([]);
     setCurrentTag("");
     setSelectedUsers([]);
+    setPendingAttachment(null);
   };
 
   const addTag = () => {
@@ -252,6 +256,34 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
               rows={4}
               data-testid="textarea-initial-message"
             />
+          </div>
+
+          <div>
+            <Label>Attach Photo or Video (optional)</Label>
+            {pendingAttachment ? (
+              <div className="mt-2 p-3 border border-border rounded-md bg-muted/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{pendingAttachment.name}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setPendingAttachment(null)}
+                    data-testid="button-remove-dialog-attachment"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-2">
+                <AttachmentUpload
+                  onAttachmentSelect={(attachment) => setPendingAttachment(attachment)}
+                />
+              </div>
+            )}
           </div>
         </div>
 
