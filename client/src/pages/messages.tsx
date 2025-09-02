@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import MainHeader from "@/components/main-header";
 import { ThreadList } from "@/components/messaging/thread-list";
 import { ChatView } from "@/components/messaging/chat-view";
 import { NewThreadDialog } from "@/components/messaging/new-thread-dialog";
@@ -23,8 +22,7 @@ export default function MessagesPage() {
   }, [threads, selectedThreadId]);
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      <MainHeader />
+    <div className="flex-1 flex flex-col bg-background">
       
       <div className="flex flex-1 overflow-hidden">
         {/* Thread Sidebar */}
