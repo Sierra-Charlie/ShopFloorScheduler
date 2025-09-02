@@ -53,7 +53,7 @@ export default function BuildAreaZone({
       </div>
 
       {/* Cards Container */}
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         {cards.length === 0 ? (
           <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-4">
             No cards in this area
