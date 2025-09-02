@@ -50,6 +50,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
 
   const isReady = card.status === "ready_for_build";
   const isPicking = card.status === "picking";
+  const isDeliveredToPaint = card.status === "delivered_to_paint";
   const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : "bg-gray-400";
 
   // Timer for picking status
@@ -81,6 +82,26 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     } catch (error) {
       toast({
         title: "Failed to start picking",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeliveredToPaint = async () => {
+    try {
+      await updateCardMutation.mutateAsync({
+        id: card.id,
+        status: "delivered_to_paint",
+      });
+      onStatusChange(card.id);
+      toast({
+        title: "Status updated",
+        description: `${card.cardNumber} delivered to paint`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to update status",
         description: "Please try again",
         variant: "destructive",
       });
@@ -166,6 +187,29 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       )}
       
       {isPicking && (
+        <div className="space-y-2">
+          <Button
+            onClick={handleDeliveredToPaint}
+            size="sm"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            data-testid={`button-delivered-paint-${card.cardNumber}`}
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Delivered to Paint
+          </Button>
+          <Button
+            onClick={handleReadyForBuild}
+            size="sm"
+            className="w-full bg-green-600 hover:bg-green-700 text-white"
+            data-testid={`button-ready-${card.cardNumber}`}
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Ready for Build
+          </Button>
+        </div>
+      )}
+      
+      {isDeliveredToPaint && (
         <Button
           onClick={handleReadyForBuild}
           size="sm"
