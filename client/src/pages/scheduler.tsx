@@ -421,10 +421,13 @@ export default function Scheduler() {
       let successCount = 0;
       for (const card of optimizedCards) {
         try {
-          await updateCardMutation.mutateAsync({
+          // Only send the fields that are actually being changed for optimization
+          const updateData = {
             id: card.id,
-            ...card
-          });
+            assignedTo: card.assignedTo
+          };
+          
+          await updateCardMutation.mutateAsync(updateData);
           successCount++;
         } catch (error) {
           console.error(`Failed to update card ${card.cardNumber}:`, error);
