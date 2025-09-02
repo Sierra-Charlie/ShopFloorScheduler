@@ -51,7 +51,7 @@ export default function AndonIssues() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: andonIssues = [], isLoading } = useQuery({
+  const { data: andonIssues = [], isLoading } = useQuery<AndonIssue[]>({
     queryKey: ["/api/andon-issues"],
     refetchOnMount: true,
     refetchOnWindowFocus: true,
@@ -59,7 +59,7 @@ export default function AndonIssues() {
     gcTime: 0,
   });
 
-  const { data: users = [] } = useQuery({
+  const { data: users = [] } = useQuery<UserType[]>({
     queryKey: ["/api/users"],
   });
 
@@ -114,7 +114,7 @@ export default function AndonIssues() {
 
   const getAssignedUserName = (userId: string | null) => {
     if (!userId) return "Unassigned";
-    const user = users.find((u: UserType) => u.id === userId);
+    const user = users.find((u) => u.id === userId);
     return user ? user.name : "Unknown User";
   };
 
@@ -201,8 +201,8 @@ export default function AndonIssues() {
                       <SelectContent>
                         <SelectItem value="unassigned">Unassigned</SelectItem>
                         {users
-                          .filter((user: UserType) => user.role === "production_supervisor" || user.role === "admin")
-                          .map((user: UserType) => (
+                          .filter((user) => user.role === "production_supervisor" || user.role === "admin")
+                          .map((user) => (
                             <SelectItem key={user.id} value={user.id}>
                               {user.name}
                             </SelectItem>

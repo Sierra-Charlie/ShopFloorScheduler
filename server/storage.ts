@@ -104,7 +104,7 @@ export class MemStorage implements IStorage {
 
     defaultAssemblers.forEach(assembler => {
       const id = randomUUID();
-      this.assemblers.set(id, { ...assembler, id, status: assembler.status || "available" });
+      this.assemblers.set(id, { ...assembler, id, status: assembler.status || "available", assignedUser: null });
     });
 
     // Initialize assembly cards
@@ -232,7 +232,7 @@ export class MemStorage implements IStorage {
 
   async createAssembler(assembler: InsertAssembler): Promise<Assembler> {
     const id = randomUUID();
-    const newAssembler: Assembler = { ...assembler, id, status: assembler.status || "available" };
+    const newAssembler: Assembler = { ...assembler, id, status: assembler.status || "available", assignedUser: assembler.assignedUser || null };
     this.assemblers.set(id, newAssembler);
     return newAssembler;
   }
@@ -949,7 +949,7 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
 
 // Initialize default data in database if tables are empty
 async function initializeDatabaseData() {
@@ -1052,4 +1052,4 @@ async function initializeDatabaseData() {
 }
 
 // Initialize database data on startup
-initializeDatabaseData();
+// initializeDatabaseData(); // Commented out while using MemStorage
