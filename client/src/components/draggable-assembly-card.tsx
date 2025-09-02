@@ -69,28 +69,28 @@ export default function DraggableAssemblyCard({
       <div
         ref={drag}
         className={cn(
-          "relative rounded-lg p-3 cursor-move transition-all duration-200 hover:shadow-md min-h-[80px]",
+          "relative rounded-lg p-2 cursor-move transition-all duration-200 hover:shadow-md min-h-[60px]",
           getPhaseBackgroundColor(card.phase),
           isDragging && "opacity-50 rotate-2 scale-95"
         )}
         data-testid={`draggable-card-${card.cardNumber}`}
       >
         {/* Card number in top-right */}
-        <div className="absolute top-2 right-2 text-xs font-medium">
+        <div className="absolute top-1 right-1 text-xs font-medium">
           {card.cardNumber}
         </div>
         
         {/* Card name on left */}
-        <div className="text-sm font-medium mb-2 pr-8">
+        <div className="text-xs font-medium mb-1 pr-6">
           {card.name}
         </div>
         
         {/* Bottom row with type badge and duration */}
         <div className="flex items-center justify-between mt-auto">
-          <span className="text-sm font-semibold">{card.type}</span>
+          <span className="text-xs font-semibold">{card.type}</span>
           <div className="flex items-center space-x-2">
             <div className={cn(
-              "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold",
+              "w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold",
               card.status === "picking" ? "bg-green-500" : getPhaseColor(card.phase)
             )}>
               {card.status === "picking" ? "P" : card.type}
