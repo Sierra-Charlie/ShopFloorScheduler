@@ -55,7 +55,9 @@ export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: Att
         if (bucketIndex !== -1) {
           // Get the path after bucket and .private directory
           const attachmentPath = pathParts.slice(bucketIndex + 2).join('/');
-          const attachmentUrl = `/attachments/${attachmentPath}`;
+          // Extract just the filename from the attachments/filename path
+          const fileName = attachmentPath.replace('attachments/', '');
+          const attachmentUrl = `/attachments/${fileName}`;
           
           onAttachmentSelect({
             url: attachmentUrl,
