@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AssemblyCard, Assembler, updateAssemblyCardSchema } from "@shared/schema";
-import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
+import { AssemblyCard, Assembler, updateAssemblyCardSchema, insertAssemblyCardSchema } from "@shared/schema";
+import { useUpdateAssemblyCard, useCreateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useToast } from "@/hooks/use-toast";
 
 interface AssemblyCardModalProps {
@@ -21,9 +21,12 @@ interface AssemblyCardModalProps {
 export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }: AssemblyCardModalProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const createCardMutation = useCreateAssemblyCard();
+  
+  const isEditing = Boolean(card);
 
   const form = useForm({
-    resolver: zodResolver(updateAssemblyCardSchema.omit({ id: true })),
+    resolver: zodResolver(isEditing ? updateAssemblyCardSchema.omit({ id: true }) : insertAssemblyCardSchema),
     defaultValues: {
       cardNumber: "",
       name: "",
@@ -34,6 +37,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       dependencies: [] as string[],
       precedents: [] as string[],
       grounded: false,
+      status: "scheduled" as const,
     },
   });
 
@@ -49,26 +53,49 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         dependencies: card.dependencies || [],
         precedents: card.precedents || [],
         grounded: card.grounded || false,
+        status: card.status as "scheduled" | "in_progress" | "assembling" | "completed" | "blocked" | "ready_for_build" | "paused" | "picking",
+      });
+    } else {
+      // Reset to default values for new cards
+      form.reset({
+        cardNumber: "",
+        name: "",
+        type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
+        duration: 1,
+        phase: 1,
+        assignedTo: "",
+        dependencies: [] as string[],
+        precedents: [] as string[],
+        grounded: false,
+        status: "scheduled" as const,
       });
     }
   }, [card, form]);
 
   const onSubmit = async (data: any) => {
-    if (!card) return;
-
     try {
-      await updateCardMutation.mutateAsync({
-        id: card.id,
-        ...data,
-      });
-      toast({
-        title: "Card updated successfully",
-        description: `Assembly card ${data.cardNumber} has been updated`,
-      });
+      if (isEditing && card) {
+        // Update existing card
+        await updateCardMutation.mutateAsync({
+          id: card.id,
+          ...data,
+        });
+        toast({
+          title: "Card updated successfully",
+          description: `Assembly card ${data.cardNumber} has been updated`,
+        });
+      } else {
+        // Create new card
+        await createCardMutation.mutateAsync(data);
+        toast({
+          title: "Card created successfully",
+          description: `Assembly card ${data.cardNumber} has been created`,
+        });
+      }
       onClose();
     } catch (error) {
       toast({
-        title: "Failed to update card",
+        title: isEditing ? "Failed to update card" : "Failed to create card",
         description: "Please check your inputs and try again",
         variant: "destructive",
       });
@@ -80,7 +107,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="modal-assembly-card">
         <DialogHeader>
           <DialogTitle data-testid="modal-title">
-            {card?.type === "DEAD_TIME" ? "Edit Dead Time" : "Edit Assembly Card"}
+            {isEditing 
+              ? (card?.type === "DEAD_TIME" ? "Edit Dead Time" : "Edit Assembly Card")
+              : "Create Assembly Card"
+            }
           </DialogTitle>
         </DialogHeader>
         
@@ -322,10 +352,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
               </Button>
               <Button
                 type="submit"
-                disabled={updateCardMutation.isPending}
+                disabled={updateCardMutation.isPending || createCardMutation.isPending}
                 data-testid="button-save-modal"
               >
-                Save Changes
+                {isEditing ? 'Save Changes' : 'Create Card'}
               </Button>
             </div>
           </form>
