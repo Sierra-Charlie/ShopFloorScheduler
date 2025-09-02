@@ -210,6 +210,7 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     {msg.attachmentPath && (
                       <div className="mt-2">
+                        <div className="text-xs text-muted-foreground mb-2">Debug: {msg.attachmentPath}</div>
                         {msg.attachmentPath.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                           <img 
                             src={msg.attachmentPath} 
