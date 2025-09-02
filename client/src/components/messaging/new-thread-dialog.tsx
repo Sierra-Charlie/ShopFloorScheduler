@@ -132,15 +132,15 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Share a New Idea</DialogTitle>
           <DialogDescription>
             Start a conversation about an improvement idea or suggestion with your team.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pr-2">
           <div>
             <Label htmlFor="title">Idea Title *</Label>
             <Input
@@ -255,7 +255,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4">
+        <div className="flex justify-end gap-3 pt-4 border-t bg-background flex-shrink-0">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
