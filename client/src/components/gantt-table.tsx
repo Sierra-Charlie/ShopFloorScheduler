@@ -169,6 +169,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 Status
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Sub Assy Area
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Gemba Doc Link
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -427,6 +430,31 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     <Badge variant={statusBadge.variant} data-testid={`badge-status-${card.cardNumber}`}>
                       {statusBadge.label}
                     </Badge>
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing && (card.type === "S" || card.type === "P") ? (
+                      <Select
+                        value={editValues.subAssyArea?.toString() || card.subAssyArea?.toString() || ""}
+                        onValueChange={(value) => setEditValues(prev => ({ ...prev, subAssyArea: value ? parseInt(value) : null }))}
+                      >
+                        <SelectTrigger className="w-full" data-testid={`select-sub-assy-${card.cardNumber}`}>
+                          <SelectValue placeholder="Select Area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Area 1</SelectItem>
+                          <SelectItem value="2">Area 2</SelectItem>
+                          <SelectItem value="3">Area 3</SelectItem>
+                          <SelectItem value="4">Area 4</SelectItem>
+                          <SelectItem value="5">Area 5</SelectItem>
+                          <SelectItem value="6">Area 6</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm" data-testid={`text-sub-assy-${card.cardNumber}`}>
+                        {(card.type === "S" || card.type === "P") && card.subAssyArea ? `Area ${card.subAssyArea}` : "-"}
+                      </span>
+                    )}
                   </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap">

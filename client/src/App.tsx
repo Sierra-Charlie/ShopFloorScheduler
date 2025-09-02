@@ -14,6 +14,7 @@ import GanttView from "@/pages/gantt-view";
 import MaterialHandler from "@/pages/material-handler";
 import AssemblerView from "@/pages/assembler-view";
 import AndonIssues from "@/pages/andon-issues";
+import BuildBayMap from "@/pages/build-bay-map";
 import NotFound from "@/pages/not-found";
 import MainHeader from "@/components/main-header";
 
@@ -29,6 +30,7 @@ function Router() {
           <Route path="/material-handler" component={MaterialHandler} />
           <Route path="/assembler" component={AssemblerView} />
           <Route path="/andon-issues" component={AndonIssues} />
+          <Route path="/build-bay-map" component={BuildBayMap} />
           <Route component={NotFound} />
         </Switch>
       </main>
