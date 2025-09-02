@@ -2,7 +2,7 @@ import { type User, type InsertUser, type Assembler, type InsertAssembler, type 
 import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -805,42 +805,45 @@ export class DatabaseStorage implements IStorage {
     return { valid: issues.length === 0, issues };
   }
 
-  // Andon Issues (keeping MemStorage implementation for now)
-  private andonIssues: Map<number, AndonIssue> = new Map();
-  private nextIssueId: number = 1;
-
+  // Andon Issues
   async getAndonIssues(): Promise<AndonIssue[]> {
-    return Array.from(this.andonIssues.values()).sort((a, b) => b.id - a.id);
+    return await db.select().from(andonIssues).orderBy(desc(andonIssues.createdAt));
   }
 
   async getAndonIssue(id: number): Promise<AndonIssue | undefined> {
-    return this.andonIssues.get(id);
+    const [issue] = await db.select().from(andonIssues).where(eq(andonIssues.id, id));
+    return issue || undefined;
   }
 
   async createAndonIssue(issue: InsertAndonIssue): Promise<AndonIssue> {
-    const id = this.nextIssueId++;
-    const newIssue: AndonIssue = { 
-      ...issue, 
-      id, 
-      createdAt: new Date(),
-      updatedAt: new Date(),
+    // Generate auto-incrementing issue number
+    const existingIssues = await db.select({ id: andonIssues.id }).from(andonIssues);
+    const nextNumber = existingIssues.length + 1;
+    const issueNumber = `AI-${nextNumber.toString().padStart(3, '0')}`;
+    
+    const issueData = {
+      ...issue,
+      issueNumber,
       status: issue.status || "unresolved"
     };
-    this.andonIssues.set(id, newIssue);
-    return newIssue;
+    
+    const [created] = await db.insert(andonIssues).values(issueData).returning();
+    return created;
   }
 
   async updateAndonIssue(update: UpdateAndonIssue): Promise<AndonIssue | undefined> {
-    const existing = this.andonIssues.get(update.id);
-    if (!existing) return undefined;
+    const updateData: any = { updatedAt: new Date() };
     
-    const updated: AndonIssue = { ...existing, ...update };
-    this.andonIssues.set(update.id, updated);
-    return updated;
+    if (update.assignedTo !== undefined) updateData.assignedTo = update.assignedTo;
+    if (update.status !== undefined) updateData.status = update.status;
+    
+    const [updated] = await db.update(andonIssues).set(updateData).where(eq(andonIssues.id, update.id)).returning();
+    return updated || undefined;
   }
 
   async deleteAndonIssue(id: number): Promise<boolean> {
-    return this.andonIssues.delete(id);
+    const result = await db.delete(andonIssues).where(eq(andonIssues.id, id)).returning();
+    return result.length > 0;
   }
 
   // Messaging System (using database)
