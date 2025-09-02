@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown, Zap } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
+import { useUsers } from "@/hooks/use-users";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
 import SwimLane from "@/components/swim-lane";
@@ -40,6 +41,7 @@ export default function Scheduler() {
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  const { data: users = [], isLoading: usersLoading } = useUsers();
   const updateCardMutation = useUpdateAssemblyCard();
   
   // Initialize active lanes with assemblers that have cards assigned to them
@@ -493,7 +495,7 @@ export default function Scheduler() {
     );
   }
 
-  if (cardsLoading || assemblersLoading) {
+  if (cardsLoading || assemblersLoading || usersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -618,6 +620,7 @@ export default function Scheduler() {
                           return baseCards;
                         })}
                         allAssemblyCards={assemblyCards}
+                        users={users}
                         onCardEdit={handleCardEdit}
                         onCardView={handleCardView}
                         startTimeOffset={getStartTimeOffset()}

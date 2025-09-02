@@ -15,6 +15,7 @@ export const assemblers = pgTable("assemblers", {
   name: text("name").notNull(),
   type: text("type").notNull(), // "mechanical", "electrical", "final", "qc"
   status: text("status").notNull().default("available"), // "available", "busy", "offline"
+  assignedUser: varchar("assigned_user").references(() => users.id), // User assigned to operate this assembler
 });
 
 export const assemblyCards = pgTable("assembly_cards", {

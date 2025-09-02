@@ -1,7 +1,9 @@
 import { useDrop } from "react-dnd";
-import { Assembler, AssemblyCard } from "@shared/schema";
+import { Assembler, AssemblyCard, User } from "@shared/schema";
 import { useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
+import { useUpdateAssembler } from "@/hooks/use-assemblers";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AssemblyCardComponent from "./assembly-card";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +11,7 @@ interface SwimLaneProps {
   assembler: Assembler;
   assemblyCards: AssemblyCard[]; // Cards for this specific assembler
   allAssemblyCards?: AssemblyCard[]; // All cards for type validation
+  users: User[]; // Available users for assignment
   onCardEdit: (card: AssemblyCard) => void;
   onCardView?: (card: AssemblyCard) => void;
   startTimeOffset?: number;
@@ -50,9 +53,35 @@ const canCardBeAssignedToAssembler = (cardType: string, assemblerName: string): 
   return true;
 };
 
-export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, onCardEdit, onCardView, startTimeOffset = 0, isCardOverdue }: SwimLaneProps) {
+export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, users, onCardEdit, onCardView, startTimeOffset = 0, isCardOverdue }: SwimLaneProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const updateAssemblerMutation = useUpdateAssembler();
+
+  // Handle user assignment to assembler
+  const handleUserAssignment = async (userId: string) => {
+    try {
+      const assignedUserId = userId === "none" ? null : userId;
+      
+      await updateAssemblerMutation.mutateAsync({
+        id: assembler.id,
+        assignedUser: assignedUserId
+      });
+      
+      const selectedUser = users.find(u => u.id === userId);
+      toast({
+        title: "User Assignment Updated",
+        description: `${assembler.name} is now assigned to ${selectedUser?.name || 'no one'}`,
+      });
+    } catch (error) {
+      console.error('Error updating assembler assignment:', error);
+      toast({
+        title: "Assignment Failed",
+        description: "Failed to update user assignment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: "assembly-card",
@@ -308,6 +337,30 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, o
           <span className="text-xs capitalize" data-testid={`assembler-status-${assembler.id}`}>
             {assembler.status}
           </span>
+        </div>
+        
+        {/* User Assignment Dropdown */}
+        <div className="mt-3">
+          <div className="text-xs font-medium text-muted-foreground mb-1">Assigned User:</div>
+          <Select 
+            value={assembler.assignedUser || "none"} 
+            onValueChange={handleUserAssignment}
+            data-testid={`select-user-${assembler.id}`}
+          >
+            <SelectTrigger className="w-full h-7 text-xs">
+              <SelectValue placeholder="Select user" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No user assigned</SelectItem>
+              {(users || [])
+                .filter(user => user.role === 'assembler') // Only show assemblers
+                .map(user => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       
