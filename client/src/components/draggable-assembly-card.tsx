@@ -79,8 +79,11 @@ export default function DraggableAssemblyCard({
         <div className="flex items-center justify-between mt-auto">
           <span className="text-sm font-semibold">{card.type}</span>
           <div className="flex items-center space-x-2">
-            <div className={cn("w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold", getPhaseColor(card.phase))}>
-              {card.type}
+            <div className={cn(
+              "w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold",
+              card.status === "picking" ? "bg-green-500" : getPhaseColor(card.phase)
+            )}>
+              {card.status === "picking" ? "P" : card.type}
             </div>
             <span className="text-xs text-muted-foreground">{card.duration}h</span>
           </div>
