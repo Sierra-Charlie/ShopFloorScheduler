@@ -44,28 +44,24 @@ export default function Scheduler() {
   
   // Initialize active lanes with assemblers that have cards assigned to them
   useEffect(() => {
-    if (assemblers.length > 0 && assemblyCards.length > 0 && activeLanes.length === 0) {
-      // Only initialize if we don't have any saved configuration
-      const savedLanes = localStorage.getItem('swimLanes');
-      if (savedLanes) {
-        try {
-          const parsed = JSON.parse(savedLanes);
-          // Filter to only include assemblers that still exist
-          const validLanes = parsed.filter((id: string) => assemblers.some(a => a.id === id));
-          setActiveLanes(validLanes);
-        } catch {
-          // If parsing fails, fall back to assemblers with assigned cards
-          const assemblersWithCards = assemblers
-            .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
-            .map(assembler => assembler.id);
-          setActiveLanes(assemblersWithCards);
-        }
-      } else {
-        // Initialize with only assemblers that have cards assigned to them
-        const assemblersWithCards = assemblers
-          .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
-          .map(assembler => assembler.id);
+    if (assemblers.length > 0 && assemblyCards.length > 0) {
+      // Get assemblers that have cards assigned to them
+      const assemblersWithCards = assemblers
+        .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
+        .map(assembler => assembler.id);
+
+      console.log('Assemblers with cards:', assemblersWithCards);
+      console.log('Current active lanes:', activeLanes);
+
+      // Only initialize if we don't have active lanes yet and there are assemblers with cards
+      if (activeLanes.length === 0 && assemblersWithCards.length > 0) {
+        console.log('Initializing swim lanes...');
+        
+        // Always start fresh - ignore saved configuration for now to ensure proper initialization
         setActiveLanes(assemblersWithCards);
+        
+        // Clear any problematic saved state temporarily
+        localStorage.removeItem('swimLanes');
       }
     }
   }, [assemblers, assemblyCards]);
