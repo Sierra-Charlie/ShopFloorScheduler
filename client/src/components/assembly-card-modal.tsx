@@ -77,7 +77,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md" data-testid="modal-assembly-card">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto" data-testid="modal-assembly-card">
         <DialogHeader>
           <DialogTitle data-testid="modal-title">
             {card?.type === "DEAD_TIME" ? "Edit Dead Time" : "Edit Assembly Card"}
