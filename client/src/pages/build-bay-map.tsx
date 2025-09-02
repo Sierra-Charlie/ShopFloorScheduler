@@ -140,7 +140,7 @@ export default function BuildBayMap() {
                 cards={getCardsForArea("warehouse")}
                 areaId="warehouse"
                 onCardMove={handleCardMove}
-                className="border-2 border-dashed border-gray-400 bg-yellow-50 dark:bg-yellow-950/20"
+                className="border-2 border-dashed border-black bg-white dark:bg-gray-900"
               />
               
               {/* Electrical Pre-Assembly */}
@@ -149,7 +149,7 @@ export default function BuildBayMap() {
                 cards={getCardsForArea("electrical-pre")}
                 areaId="electrical-pre"
                 onCardMove={handleCardMove}
-                className="border-2 border-dashed border-blue-400 bg-blue-50 dark:bg-blue-950/20"
+                className="border-2 border-dashed border-black bg-white dark:bg-gray-900"
               />
               
               {/* Mechanical Pre-Assembly */}
@@ -158,7 +158,7 @@ export default function BuildBayMap() {
                 cards={getCardsForArea("mechanical-pre")}
                 areaId="mechanical-pre"
                 onCardMove={handleCardMove}
-                className="border-2 border-dashed border-green-400 bg-green-50 dark:bg-green-950/20"
+                className="border-2 border-dashed border-black bg-white dark:bg-gray-900"
               />
             </div>
 
