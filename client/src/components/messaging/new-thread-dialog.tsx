@@ -70,6 +70,11 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
 
       // If there's an initial message, send it
       if (data.initialMessage.trim() || data.pendingAttachment) {
+        console.log("DEBUG - Creating message with attachment:", {
+          content: data.initialMessage.trim() || (data.pendingAttachment ? `[Attachment: ${data.pendingAttachment.name}]` : ""),
+          attachmentPath: data.pendingAttachment?.url,
+          hasAttachment: !!data.pendingAttachment
+        });
         await apiRequest("POST", `/api/threads/${thread.id}/messages`, {
           authorId: "john-doe-id", // TODO: Get from current user context
           content: data.initialMessage.trim() || (data.pendingAttachment ? `[Attachment: ${data.pendingAttachment.name}]` : ""),
