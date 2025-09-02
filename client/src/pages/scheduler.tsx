@@ -309,39 +309,6 @@ export default function Scheduler() {
             <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
-            {/* Dead Time Source */}
-            <div className="border-r border-border pr-3">
-              <DeadTimeSource />
-            </div>
-
-            {/* Swim Lane Management */}
-            <div className="flex items-center space-x-2 border-r border-border pr-3">
-              <Label className="text-sm font-medium">Add Lane:</Label>
-              <Select value={newLaneAssembler} onValueChange={setNewLaneAssembler}>
-                <SelectTrigger className="w-40" data-testid="select-new-lane-assembler">
-                  <SelectValue placeholder="Select assembler" />
-                </SelectTrigger>
-                <SelectContent>
-                  {assemblers
-                    .filter(assembler => !activeLanes.includes(assembler.id))
-                    .map(assembler => (
-                      <SelectItem key={assembler.id} value={assembler.id}>
-                        {assembler.name}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
-              <Button 
-                size="sm" 
-                onClick={addSwimLane}
-                disabled={!newLaneAssembler}
-                data-testid="button-add-lane"
-              >
-                <Plus className="h-4 w-4 mr-1" />
-                Add Lane
-              </Button>
-            </div>
-            
             <Button 
               className="bg-success hover:bg-success/90 text-white font-medium" 
               onClick={saveSwimLaneConfiguration}
@@ -349,6 +316,42 @@ export default function Scheduler() {
             >
               <Save className="mr-2 h-4 w-4" />
               Save Changes
+            </Button>
+          </div>
+        </div>
+        
+        {/* Secondary Controls Row */}
+        <div className="flex items-center justify-end space-x-3 mt-3 pt-3 border-t border-border">
+          {/* Dead Time Source */}
+          <div className="border-r border-border pr-3">
+            <DeadTimeSource />
+          </div>
+
+          {/* Swim Lane Management */}
+          <div className="flex items-center space-x-2">
+            <Label className="text-sm font-medium">Add Lane:</Label>
+            <Select value={newLaneAssembler} onValueChange={setNewLaneAssembler}>
+              <SelectTrigger className="w-40" data-testid="select-new-lane-assembler">
+                <SelectValue placeholder="Select assembler" />
+              </SelectTrigger>
+              <SelectContent>
+                {assemblers
+                  .filter(assembler => !activeLanes.includes(assembler.id))
+                  .map(assembler => (
+                    <SelectItem key={assembler.id} value={assembler.id}>
+                      {assembler.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+            <Button 
+              size="sm" 
+              onClick={addSwimLane}
+              disabled={!newLaneAssembler}
+              data-testid="button-add-lane"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Lane
             </Button>
           </div>
         </div>
