@@ -51,8 +51,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
 
   const handleSave = async (cardId: string) => {
     try {
-      console.log("Attempting to save card:", cardId, "with data:", editValues);
-      
       // Clean the data before sending
       const updateData: any = {
         id: cardId,
@@ -70,8 +68,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
       // Always include subAssyArea if it exists in editValues
       updateData.subAssyArea = editValues.subAssyArea;
-      
-      console.log("Cleaned update data:", updateData);
       
       await updateCardMutation.mutateAsync(updateData);
       setEditingCard(null);
