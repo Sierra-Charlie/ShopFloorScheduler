@@ -17,6 +17,7 @@ interface AssemblyDetailViewProps {
   card: AssemblyCard | null;
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: (card: AssemblyCard) => void;
   userRole?: string;
 }
 
@@ -41,7 +42,7 @@ const getSequenceTypeLabel = (type: string) => {
   }
 };
 
-export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "assembler" }: AssemblyDetailViewProps) {
+export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, userRole = "assembler" }: AssemblyDetailViewProps) {
   const [isTimerRunning, setIsTimerRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
@@ -329,18 +330,33 @@ export default function AssemblyDetailView({ card, isOpen, onClose, userRole = "
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center space-x-3">
-              <div className={cn(
-                "w-4 h-4 rounded",
-                currentCard.status === "ready_for_build" ? getPhaseClass(currentCard.phase) :
-                currentCard.status === "assembling" ? "bg-blue-500" :
-                currentCard.status === "completed" ? "bg-green-500" :
-                "bg-gray-400"
-              )}></div>
-              <span>Assembly Card {currentCard.cardNumber}</span>
-              <div className="text-sm bg-black text-white px-2 py-1 rounded">
-                Phase {currentCard.phase}
+            <DialogTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className={cn(
+                  "w-4 h-4 rounded",
+                  currentCard.status === "ready_for_build" ? getPhaseClass(currentCard.phase) :
+                  currentCard.status === "assembling" ? "bg-blue-500" :
+                  currentCard.status === "completed" ? "bg-green-500" :
+                  "bg-gray-400"
+                )}></div>
+                <span>Assembly Card {currentCard.cardNumber}</span>
+                <div className="text-sm bg-black text-white px-2 py-1 rounded">
+                  Phase {currentCard.phase}
+                </div>
               </div>
+              {onEdit && (
+                <Button
+                  onClick={() => {
+                    onClose();
+                    onEdit(currentCard);
+                  }}
+                  variant="outline"
+                  size="sm"
+                  data-testid="button-edit-properties"
+                >
+                  Edit Properties
+                </Button>
+              )}
             </DialogTitle>
             <DialogDescription>
               View and manage assembly card {currentCard.cardNumber} - {currentCard.name}

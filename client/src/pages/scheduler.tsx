@@ -551,6 +551,7 @@ export default function Scheduler() {
         card={selectedDetailCard}
         isOpen={isDetailViewOpen}
         onClose={handleDetailViewClose}
+        onEdit={handleCardEdit}
       />
 
       {/* Dependency Legend */}
