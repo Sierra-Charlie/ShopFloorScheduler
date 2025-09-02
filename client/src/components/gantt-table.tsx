@@ -68,6 +68,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
       if (editValues.precedents !== undefined) updateData.precedents = editValues.precedents;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
+      if (editValues.subAssyArea !== undefined) updateData.subAssyArea = editValues.subAssyArea;
       
       console.log("Cleaned update data:", updateData);
       
