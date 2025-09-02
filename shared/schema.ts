@@ -21,7 +21,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   cardNumber: text("card_number").notNull().unique(),
   name: text("name").notNull(),
-  type: text("type").notNull(), // "M", "E", "S", "P", "KB"
+  type: text("type").notNull(), // "M", "E", "S", "P", "KB", "DEAD_TIME"
   duration: integer("duration").notNull(), // in hours
   phase: integer("phase").notNull(), // 1, 2, 3, 4
   assignedTo: varchar("assigned_to").references(() => assemblers.id),
@@ -66,7 +66,7 @@ export const updateAssemblyCardSchema = z.object({
   id: z.string(),
   cardNumber: z.string().optional(),
   name: z.string().optional(),
-  type: z.enum(["M", "E", "S", "P", "KB"]).optional(),
+  type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME"]).optional(),
   duration: z.number().min(1).optional(),
   phase: z.number().min(1).max(4).optional(),
   assignedTo: z.string().nullable().optional(),

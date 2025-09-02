@@ -13,6 +13,7 @@ import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
 import DependencyLegend from "@/components/dependency-legend";
+import DeadTimeSource from "@/components/dead-time-source";
 import { AssemblyCard } from "@shared/schema";
 
 export default function Scheduler() {
@@ -308,6 +309,11 @@ export default function Scheduler() {
             <span>4</span>
           </div>
           <div className="flex items-center space-x-3">
+            {/* Dead Time Source */}
+            <div className="border-r border-border pr-3">
+              <DeadTimeSource />
+            </div>
+
             {/* Swim Lane Management */}
             <div className="flex items-center space-x-2 border-r border-border pr-3">
               <Label className="text-sm font-medium">Add Lane:</Label>

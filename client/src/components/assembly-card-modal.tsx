@@ -26,7 +26,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
     defaultValues: {
       cardNumber: "",
       name: "",
-      type: "M" as const,
+      type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
       duration: 1,
       phase: 1,
       assignedTo: "",
@@ -40,7 +40,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       form.reset({
         cardNumber: card.cardNumber,
         name: card.name,
-        type: card.type as "M" | "E" | "S" | "P" | "KB",
+        type: card.type as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
         duration: card.duration,
         phase: card.phase,
         assignedTo: card.assignedTo || "",
@@ -76,91 +76,140 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md" data-testid="modal-assembly-card">
         <DialogHeader>
-          <DialogTitle data-testid="modal-title">Edit Assembly Card</DialogTitle>
+          <DialogTitle data-testid="modal-title">
+            {card?.type === "DEAD_TIME" ? "Edit Dead Time" : "Edit Assembly Card"}
+          </DialogTitle>
         </DialogHeader>
         
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="cardNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Card Number</FormLabel>
-                  <FormControl>
-                    <Input {...field} data-testid="input-card-number" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Assembly Name</FormLabel>
-                  <FormControl>
-                    <Input {...field} data-testid="input-assembly-name" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Duration (hrs)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                        data-testid="input-duration"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="phase"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Phase</FormLabel>
-                    <Select
-                      value={field.value.toString()}
-                      onValueChange={(value) => field.onChange(parseInt(value))}
-                    >
+            {card?.type === "DEAD_TIME" ? (
+              // Dead Time specific fields
+              <>
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Duration</FormLabel>
+                      <Select
+                        value={field.value.toString()}
+                        onValueChange={(value) => field.onChange(parseFloat(value))}
+                      >
+                        <FormControl>
+                          <SelectTrigger data-testid="select-dead-time-duration">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="0.25">15 minutes</SelectItem>
+                          <SelectItem value="0.5">30 minutes</SelectItem>
+                          <SelectItem value="0.75">45 minutes</SelectItem>
+                          <SelectItem value="1">1 hour</SelectItem>
+                          <SelectItem value="1.25">1 hour 15 minutes</SelectItem>
+                          <SelectItem value="1.5">1 hour 30 minutes</SelectItem>
+                          <SelectItem value="1.75">1 hour 45 minutes</SelectItem>
+                          <SelectItem value="2">2 hours</SelectItem>
+                          <SelectItem value="2.5">2 hours 30 minutes</SelectItem>
+                          <SelectItem value="3">3 hours</SelectItem>
+                          <SelectItem value="4">4 hours</SelectItem>
+                          <SelectItem value="6">6 hours</SelectItem>
+                          <SelectItem value="8">8 hours</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            ) : (
+              // Regular assembly card fields
+              <>
+                <FormField
+                  control={form.control}
+                  name="cardNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Card Number</FormLabel>
                       <FormControl>
-                        <SelectTrigger data-testid="select-phase">
-                          <SelectValue />
-                        </SelectTrigger>
+                        <Input {...field} data-testid="input-card-number" />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="1">Phase 1</SelectItem>
-                        <SelectItem value="2">Phase 2</SelectItem>
-                        <SelectItem value="3">Phase 3</SelectItem>
-                        <SelectItem value="4">Phase 4</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assembly Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} data-testid="input-assembly-name" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Duration (hrs)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            {...field}
+                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            data-testid="input-duration"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="phase"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phase</FormLabel>
+                        <Select
+                          value={field.value.toString()}
+                          onValueChange={(value) => field.onChange(parseInt(value))}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-phase">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="1">Phase 1</SelectItem>
+                            <SelectItem value="2">Phase 2</SelectItem>
+                            <SelectItem value="3">Phase 3</SelectItem>
+                            <SelectItem value="4">Phase 4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </>
+            )}
             
-            <FormField
-              control={form.control}
-              name="dependencies"
-              render={({ field }) => (
+            {/* Dependencies and other fields - only for regular cards */}
+            {card?.type !== "DEAD_TIME" && (
+              <>
+                <FormField
+                  control={form.control}
+                  name="dependencies"
+                  render={({ field }) => (
                 <FormItem>
                   <FormLabel>Dependencies</FormLabel>
                   <FormControl>
@@ -231,6 +280,8 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                 </FormItem>
               )}
             />
+              </>
+            )}
             
             <div className="flex justify-end space-x-3 pt-4">
               <Button

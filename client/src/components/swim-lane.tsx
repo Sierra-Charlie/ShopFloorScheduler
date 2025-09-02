@@ -26,6 +26,11 @@ const getStatusColor = (status: string) => {
 
 // Validate if an assembly card type can be placed in an assembler
 const canCardBeAssignedToAssembler = (cardType: string, assemblerName: string): boolean => {
+  // Dead time cards can be placed in any swim lane
+  if (cardType === "DEAD_TIME") {
+    return true;
+  }
+  
   // Mechanical assembly cards (M, S, P) can only go to Mech Assy 1-4
   if (["M", "S", "P"].includes(cardType)) {
     return assemblerName.startsWith("Mech Assy");
@@ -51,7 +56,12 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, o
 
   const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: "assembly-card",
-    canDrop: (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string }) => {
+    canDrop: (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string; type?: string; isNewDeadTime?: boolean }) => {
+      // Handle new dead time creation - always allowed
+      if (item.isNewDeadTime) {
+        return true;
+      }
+
       // Find the dragged card from all assembly cards
       const allCards = allAssemblyCards || assemblyCards;
       const draggedCard = allCards.find(c => c.id === item.id);
@@ -61,9 +71,77 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, o
       // Check if card type is compatible with this assembler
       return canCardBeAssignedToAssembler(draggedCard.type, assembler.name);
     },
-    drop: async (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string }, monitor) => {
+    drop: async (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string; type?: string; duration?: number; isNewDeadTime?: boolean }, monitor) => {
       try {
-        // Find the dragged card from all assembly cards
+        // Handle new dead time card creation
+        if (item.isNewDeadTime) {
+          // Get mouse position to determine where to insert the dead time
+          const clientOffset = monitor.getClientOffset();
+          let newPosition = assemblyCards.length; // Default to end
+          
+          if (clientOffset) {
+            const laneElement = document.querySelector(`[data-testid="swim-lane-${assembler.id}"]`);
+            if (laneElement) {
+              const laneRect = laneElement.getBoundingClientRect();
+              const relativeX = clientOffset.x - laneRect.left;
+              
+              // Find the position where dead time should be inserted
+              const sortedCards = assemblyCards
+                .filter(c => c.assignedTo === assembler.id)
+                .sort((a, b) => (a.position || 0) - (b.position || 0));
+              
+              let cumulativeWidth = 0;
+              for (let i = 0; i < sortedCards.length; i++) {
+                const cardWidth = Math.max((sortedCards[i].duration || 1) * 60, 60) + 8;
+                if (relativeX < cumulativeWidth + cardWidth / 2) {
+                  newPosition = i;
+                  break;
+                }
+                cumulativeWidth += cardWidth;
+              }
+              
+              // Update positions of cards that come after the insertion point
+              for (let i = newPosition; i < sortedCards.length; i++) {
+                await updateCardMutation.mutateAsync({
+                  id: sortedCards[i].id,
+                  position: i + 1,
+                });
+              }
+            }
+          }
+          
+          // Create new dead time card
+          const response = await fetch("/api/assembly-cards", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              cardNumber: `DT-${Date.now()}`,
+              name: "Dead Time",
+              type: "DEAD_TIME",
+              duration: item.duration || 1,
+              phase: 1,
+              assignedTo: assembler.id,
+              status: "scheduled",
+              position: newPosition,
+              dependencies: [],
+              precedents: [],
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to create dead time");
+          }
+
+          toast({
+            title: "Dead time added",
+            description: `Dead time (${item.duration || 1}hr) added to ${assembler.name}`,
+          });
+          return;
+        }
+
+        // Find the dragged card from all assembly cards (existing card logic)
         const allCards = allAssemblyCards || assemblyCards;
         const draggedCard = allCards.find(c => c.id === item.id);
         

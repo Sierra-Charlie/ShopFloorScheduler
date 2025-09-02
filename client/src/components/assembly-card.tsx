@@ -1,5 +1,5 @@
 import { useDrag } from "react-dnd";
-import { GripVertical, AlertTriangle } from "lucide-react";
+import { GripVertical, AlertTriangle, Clock } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -30,6 +30,7 @@ const getSequenceTypeLabel = (type: string) => {
     case "S": return "Sub-Assembly";
     case "P": return "Pre-Assembly";
     case "KB": return "Kanban";
+    case "DEAD_TIME": return "Dead Time";
     default: return type;
   }
 };
@@ -47,6 +48,48 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
       isDragging: monitor.isDragging(),
     }),
   }), [card.id, card.position, card.assignedTo]);
+
+  // Handle dead time cards differently
+  if (card.type === "DEAD_TIME") {
+    const width = Math.max((card.duration || 1) * 60, 60); // 60px per hour, minimum 60px
+    const durationText = card.duration! < 1 
+      ? `${Math.round(card.duration! * 60)} min` 
+      : card.duration === 1 
+        ? "1 hr" 
+        : `${card.duration} hrs`;
+
+    return (
+      <div
+        ref={drag}
+        className={cn(
+          "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative cursor-grab active:cursor-grabbing border-2 border-dashed border-gray-400",
+          "bg-gray-200/50 opacity-80",
+          isDragging && "opacity-30"
+        )}
+        style={{ 
+          width: `${width}px`,
+          backgroundImage: `repeating-linear-gradient(
+            45deg,
+            rgba(156, 163, 175, 0.3) 0px,
+            rgba(156, 163, 175, 0.3) 10px,
+            transparent 10px,
+            transparent 20px
+          )`
+        }}
+        onClick={() => onView?.(card)}
+        onDoubleClick={() => onEdit(card)}
+        data-testid={`assembly-card-${card.cardNumber}`}
+      >
+        <div className="flex items-center justify-center h-full">
+          <Clock className="h-4 w-4 text-gray-600 mr-2" />
+          <div className="text-center">
+            <div className="font-bold text-gray-700">Dead Time</div>
+            <div className="text-xs text-gray-600">{durationText}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const phaseClass = 
     isOverdue ? "bg-red-500" : // Override all other colors when overdue
