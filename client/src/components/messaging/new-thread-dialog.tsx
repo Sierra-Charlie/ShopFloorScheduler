@@ -51,7 +51,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
   const { data: users = [] } = useUsers();
 
   const createThreadMutation = useMutation({
-    mutationFn: async (data: { title: string; category: string; tags: string[]; initialMessage: string }) => {
+    mutationFn: async (data: { title: string; category: string; tags: string[]; initialMessage: string; selectedUsers: string[]; pendingAttachment?: { url: string; name: string; type: string } | null }) => {
       // Create the thread first
       const response = await apiRequest("POST", "/api/threads", {
         title: data.title,
@@ -69,11 +69,11 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
       }
 
       // If there's an initial message, send it
-      if (data.initialMessage.trim() || pendingAttachment) {
+      if (data.initialMessage.trim() || data.pendingAttachment) {
         await apiRequest("POST", `/api/threads/${thread.id}/messages`, {
           authorId: "john-doe-id", // TODO: Get from current user context
-          content: data.initialMessage.trim() || (pendingAttachment ? `[Attachment: ${pendingAttachment.name}]` : ""),
-          attachmentPath: pendingAttachment?.url
+          content: data.initialMessage.trim() || (data.pendingAttachment ? `[Attachment: ${data.pendingAttachment.name}]` : ""),
+          attachmentPath: data.pendingAttachment?.url
         });
       }
 
@@ -122,7 +122,8 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
         category,
         tags,
         selectedUsers,
-        initialMessage: initialMessage.trim()
+        initialMessage: initialMessage.trim(),
+        pendingAttachment
       });
     }
   };

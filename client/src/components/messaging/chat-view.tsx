@@ -210,15 +210,14 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     {msg.attachmentPath && (
                       <div className="mt-2">
-                        <div className="text-xs text-muted-foreground mb-2">Debug: {msg.attachmentPath}</div>
-                        {msg.attachmentPath.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                        {(msg.attachmentPath.match(/\.(jpg|jpeg|png|gif|webp)$/i) || msg.attachmentPath.includes('image')) ? (
                           <img 
                             src={msg.attachmentPath} 
                             alt="Attachment" 
                             className="max-w-xs max-h-64 rounded-md border border-border cursor-pointer"
                             onClick={() => window.open(msg.attachmentPath, '_blank')}
                           />
-                        ) : msg.attachmentPath.match(/\.(mp4|mov|avi|webm)$/i) ? (
+                        ) : (msg.attachmentPath.match(/\.(mp4|mov|avi|webm)$/i) || msg.attachmentPath.includes('video')) ? (
                           <video 
                             src={msg.attachmentPath} 
                             controls 
