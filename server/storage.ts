@@ -41,6 +41,11 @@ export interface IStorage {
   updateMessageThread(update: UpdateThread): Promise<MessageThread | undefined>;
   createMessage(message: InsertMessage): Promise<Message>;
   voteOnThread(vote: InsertVote): Promise<{ thread: MessageThread; userVote: string }>;
+  
+  // Thread Participants
+  addThreadParticipants(threadId: string, userIds: string[]): Promise<void>;
+  getThreadParticipants(threadId: string): Promise<ThreadParticipant[]>;
+  removeThreadParticipant(threadId: string, userId: string): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -51,6 +56,7 @@ export class MemStorage implements IStorage {
   private messageThreads: Map<string, MessageThread>;
   private messages: Map<string, Message>;
   private threadVotes: Map<string, ThreadVote>;
+  private threadParticipants: Map<string, ThreadParticipant>;
   private nextIssueId: number = 1;
 
   constructor() {
@@ -61,6 +67,7 @@ export class MemStorage implements IStorage {
     this.messageThreads = new Map();
     this.messages = new Map();
     this.threadVotes = new Map();
+    this.threadParticipants = new Map();
     this.initializeData();
   }
 
@@ -595,6 +602,41 @@ export class MemStorage implements IStorage {
       thread,
       userVote: vote.voteType
     };
+  }
+
+  // Thread Participants Operations
+  async addThreadParticipants(threadId: string, userIds: string[]): Promise<void> {
+    for (const userId of userIds) {
+      // Check if participant already exists
+      const exists = Array.from(this.threadParticipants.values())
+        .some(p => p.threadId === threadId && p.userId === userId);
+      
+      if (!exists) {
+        const id = randomUUID();
+        const participant: ThreadParticipant = {
+          id,
+          threadId,
+          userId,
+          lastReadAt: new Date(),
+          joinedAt: new Date(),
+          canWrite: true
+        };
+        this.threadParticipants.set(id, participant);
+      }
+    }
+  }
+
+  async getThreadParticipants(threadId: string): Promise<ThreadParticipant[]> {
+    return Array.from(this.threadParticipants.values())
+      .filter(p => p.threadId === threadId);
+  }
+
+  async removeThreadParticipant(threadId: string, userId: string): Promise<void> {
+    const participant = Array.from(this.threadParticipants.values())
+      .find(p => p.threadId === threadId && p.userId === userId);
+    if (participant) {
+      this.threadParticipants.delete(participant.id);
+    }
   }
 }
 

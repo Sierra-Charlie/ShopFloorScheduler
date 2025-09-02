@@ -237,6 +237,75 @@ export class ObjectStorageService {
       requestedPermission: requestedPermission ?? ObjectPermission.READ,
     });
   }
+
+  // Gets the upload URL for a message attachment.
+  async getAttachmentUploadURL(fileExtension: string = ""): Promise<string> {
+    const privateObjectDir = this.getPrivateObjectDir();
+    if (!privateObjectDir) {
+      throw new Error(
+        "PRIVATE_OBJECT_DIR not set. Create a bucket in 'Object Storage' " +
+          "tool and set PRIVATE_OBJECT_DIR env var."
+      );
+    }
+
+    const attachmentId = randomUUID();
+    const fileName = fileExtension ? `${attachmentId}.${fileExtension}` : attachmentId;
+    const fullPath = `${privateObjectDir}/attachments/${fileName}`;
+
+    const { bucketName, objectName } = parseObjectPath(fullPath);
+
+    // Sign URL for PUT method with TTL
+    return signObjectURL({
+      bucketName,
+      objectName,
+      method: "PUT",
+      ttlSec: 900,
+    });
+  }
+
+  // Gets the attachment file from the object path.
+  async getAttachmentFile(objectPath: string): Promise<File> {
+    if (!objectPath.startsWith("/attachments/")) {
+      throw new ObjectNotFoundError();
+    }
+
+    let privateDir = this.getPrivateObjectDir();
+    if (!privateDir.endsWith("/")) {
+      privateDir = `${privateDir}/`;
+    }
+    const attachmentPath = `${privateDir}${objectPath.slice(1)}`;
+    const { bucketName, objectName } = parseObjectPath(attachmentPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const attachmentFile = bucket.file(objectName);
+    const [exists] = await attachmentFile.exists();
+    if (!exists) {
+      throw new ObjectNotFoundError();
+    }
+    return attachmentFile;
+  }
+
+  normalizeAttachmentPath(rawPath: string): string {
+    if (!rawPath.startsWith("https://storage.googleapis.com/")) {
+      return rawPath;
+    }
+  
+    // Extract the path from the URL by removing query parameters and domain
+    const url = new URL(rawPath);
+    const rawObjectPath = url.pathname;
+  
+    let privateDir = this.getPrivateObjectDir();
+    if (!privateDir.endsWith("/")) {
+      privateDir = `${privateDir}/`;
+    }
+  
+    if (!rawObjectPath.startsWith(privateDir)) {
+      return rawObjectPath;
+    }
+  
+    // Extract the attachment path
+    const attachmentPath = rawObjectPath.slice(privateDir.length);
+    return `/${attachmentPath}`;
+  }
 }
 
 function parseObjectPath(path: string): {

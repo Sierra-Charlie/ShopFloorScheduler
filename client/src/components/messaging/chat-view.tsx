@@ -9,7 +9,8 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
-import { Send, Menu, ArrowUp, ArrowDown, Users } from "lucide-react";
+import { Send, Menu, ArrowUp, ArrowDown, Users, Paperclip } from "lucide-react";
+import { AttachmentUpload } from "./attachment-upload";
 import { cn } from "@/lib/utils";
 import type { Message } from "@shared/schema";
 
@@ -29,6 +30,7 @@ const statusColors = {
 
 export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatViewProps) {
   const [message, setMessage] = useState("");
+  const [pendingAttachment, setPendingAttachment] = useState<{ url: string; name: string; type: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   
@@ -39,10 +41,11 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
   const messages = data?.messages || [];
 
   const sendMessageMutation = useMutation({
-    mutationFn: async (content: string) => {
+    mutationFn: async ({ content, attachmentPath }: { content: string; attachmentPath?: string }) => {
       const response = await apiRequest("POST", `/api/threads/${threadId}/messages`, {
         authorId: "john-doe-id", // TODO: Get from current user context
-        content
+        content,
+        attachmentPath
       });
       return response.json();
     },
@@ -50,6 +53,7 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
       queryClient.invalidateQueries({ queryKey: ["/api/threads", threadId] });
       queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
       setMessage("");
+      setPendingAttachment(null);
     }
   });
 
@@ -68,8 +72,11 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
   });
 
   const handleSendMessage = () => {
-    if (message.trim() && !sendMessageMutation.isPending) {
-      sendMessageMutation.mutate(message.trim());
+    if ((message.trim() || pendingAttachment) && !sendMessageMutation.isPending) {
+      sendMessageMutation.mutate({
+        content: message.trim() || (pendingAttachment ? `[Attachment: ${pendingAttachment.name}]` : ""),
+        attachmentPath: pendingAttachment?.url
+      });
     }
   };
 
@@ -202,8 +209,31 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
                   <div className="bg-muted/50 rounded-lg p-3">
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     {msg.attachmentPath && (
-                      <div className="mt-2 p-2 bg-background rounded border">
-                        <p className="text-xs text-muted-foreground">📎 Attachment</p>
+                      <div className="mt-2">
+                        {msg.attachmentPath.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                          <img 
+                            src={msg.attachmentPath} 
+                            alt="Attachment" 
+                            className="max-w-xs max-h-64 rounded-md border border-border cursor-pointer"
+                            onClick={() => window.open(msg.attachmentPath, '_blank')}
+                          />
+                        ) : msg.attachmentPath.match(/\.(mp4|mov|avi|webm)$/i) ? (
+                          <video 
+                            src={msg.attachmentPath} 
+                            controls 
+                            className="max-w-xs max-h-64 rounded-md border border-border"
+                          />
+                        ) : (
+                          <a 
+                            href={msg.attachmentPath} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center space-x-2 text-primary hover:underline p-2 bg-background rounded border"
+                          >
+                            <Paperclip className="h-4 w-4" />
+                            <span className="text-sm">View Attachment</span>
+                          </a>
+                        )}
                       </div>
                     )}
                   </div>
@@ -217,23 +247,44 @@ export function ChatView({ threadId, sidebarCollapsed, onToggleSidebar }: ChatVi
 
       {/* Message Input */}
       <div className="p-4 border-t bg-background">
-        <div className="flex gap-2">
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Share your ideas and feedback..."
-            className="flex-1"
-            data-testid="input-message"
-            disabled={sendMessageMutation.isPending}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim() || sendMessageMutation.isPending}
-            data-testid="button-send-message"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="space-y-3">
+          {pendingAttachment && (
+            <div className="flex items-center space-x-2 p-2 bg-muted/30 border border-border rounded-md">
+              <Paperclip className="h-4 w-4" />
+              <span className="text-sm font-medium">{pendingAttachment.name}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPendingAttachment(null)}
+                data-testid="button-remove-attachment"
+              >
+                ×
+              </Button>
+            </div>
+          )}
+          
+          <div className="flex items-end gap-2">
+            <div className="flex-1 space-y-2">
+              <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Share your ideas and feedback..."
+                data-testid="input-message"
+                disabled={sendMessageMutation.isPending}
+              />
+              <AttachmentUpload
+                onAttachmentSelect={(attachment) => setPendingAttachment(attachment)}
+              />
+            </div>
+            <Button
+              onClick={handleSendMessage}
+              disabled={(!message.trim() && !pendingAttachment) || sendMessageMutation.isPending}
+              data-testid="button-send-message"
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

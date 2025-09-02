@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useUsers } from "@/hooks/use-users";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import {
@@ -42,8 +43,10 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
   const [initialMessage, setInitialMessage] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [currentTag, setCurrentTag] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
 
   const queryClient = useQueryClient();
+  const { data: users = [] } = useUsers();
 
   const createThreadMutation = useMutation({
     mutationFn: async (data: { title: string; category: string; tags: string[]; initialMessage: string }) => {
@@ -55,6 +58,13 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
         createdBy: "john-doe-id", // TODO: Get from current user context
       });
       const thread = await response.json();
+
+      // Add selected participants to the thread
+      if (data.selectedUsers.length > 0) {
+        await apiRequest("POST", `/api/threads/${thread.id}/participants`, {
+          userIds: data.selectedUsers
+        });
+      }
 
       // If there's an initial message, send it
       if (data.initialMessage.trim()) {
@@ -79,6 +89,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
     setInitialMessage("");
     setTags([]);
     setCurrentTag("");
+    setSelectedUsers([]);
   };
 
   const addTag = () => {
@@ -92,12 +103,21 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const toggleUserSelection = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
   const handleSubmit = () => {
     if (title.trim() && category) {
       createThreadMutation.mutate({
         title: title.trim(),
         category,
         tags,
+        selectedUsers,
         initialMessage: initialMessage.trim()
       });
     }
@@ -187,6 +207,37 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
                     </button>
                   </Badge>
                 ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="participants">Select Participants (optional)</Label>
+            <div className="mt-2 max-h-40 overflow-y-auto border border-border rounded-md p-3">
+              {users.map((user) => (
+                <div key={user.id} className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="checkbox"
+                    id={`user-${user.id}`}
+                    checked={selectedUsers.includes(user.id)}
+                    onChange={() => toggleUserSelection(user.id)}
+                    className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
+                    data-testid={`checkbox-user-${user.id}`}
+                  />
+                  <label htmlFor={`user-${user.id}`} className="text-sm font-medium">
+                    {user.name}
+                  </label>
+                  <Badge variant="outline" className="text-xs">
+                    {user.role.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+            {selectedUsers.length > 0 && (
+              <div className="mt-2">
+                <p className="text-sm text-muted-foreground">
+                  {selectedUsers.length} participant{selectedUsers.length !== 1 ? 's' : ''} selected
+                </p>
               </div>
             )}
           </div>

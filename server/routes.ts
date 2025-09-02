@@ -4,7 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { insertUserSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema, insertThreadSchema, insertMessageSchema, updateThreadSchema, insertVoteSchema } from "@shared/schema";
 import { z } from "zod";
-import { ObjectStorageService } from "./objectStorage";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Users routes
@@ -403,6 +403,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to vote on thread" });
+    }
+  });
+
+  // Thread participants
+  app.post("/api/threads/:threadId/participants", async (req, res) => {
+    const { threadId } = req.params;
+    const { userIds } = req.body;
+    
+    if (!Array.isArray(userIds)) {
+      return res.status(400).json({ message: "userIds must be an array" });
+    }
+    
+    try {
+      await storage.addThreadParticipants(threadId, userIds);
+      res.status(201).json({ message: "Participants added successfully" });
+    } catch (error) {
+      console.error("Error adding thread participants:", error);
+      res.status(500).json({ message: "Failed to add thread participants" });
+    }
+  });
+
+  app.get("/api/threads/:threadId/participants", async (req, res) => {
+    const { threadId } = req.params;
+    
+    try {
+      const participants = await storage.getThreadParticipants(threadId);
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching thread participants:", error);
+      res.status(500).json({ message: "Failed to fetch thread participants" });
+    }
+  });
+
+  app.delete("/api/threads/:threadId/participants/:userId", async (req, res) => {
+    const { threadId, userId } = req.params;
+    
+    try {
+      await storage.removeThreadParticipant(threadId, userId);
+      res.json({ message: "Participant removed successfully" });
+    } catch (error) {
+      console.error("Error removing thread participant:", error);
+      res.status(500).json({ message: "Failed to remove thread participant" });
+    }
+  });
+
+  // File attachment upload
+  app.post("/api/attachments/upload", async (req, res) => {
+    const { fileExtension } = req.body;
+    
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getAttachmentUploadURL(fileExtension);
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating attachment upload URL:", error);
+      res.status(500).json({ message: "Failed to generate upload URL" });
+    }
+  });
+
+  // Serve attachments
+  app.get("/attachments/:attachmentPath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const attachmentFile = await objectStorageService.getAttachmentFile(`/attachments/${req.params.attachmentPath}`);
+      objectStorageService.downloadObject(attachmentFile, res);
+    } catch (error) {
+      console.error("Error downloading attachment:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
     }
   });
 
