@@ -53,6 +53,10 @@ export default function AndonIssues() {
 
   const { data: andonIssues = [], isLoading } = useQuery({
     queryKey: ["/api/andon-issues"],
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: users = [] } = useQuery({
