@@ -18,6 +18,16 @@ const getPhaseColor = (phase: number) => {
   }
 };
 
+const getPhaseBackgroundColor = (phase: number) => {
+  switch (phase) {
+    case 1: return "bg-[#ff8000] text-white"; // Orange background for phase 1
+    case 2: return "bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-200";
+    case 3: return "bg-green-100 border-green-300 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-200";
+    case 4: return "bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-200";
+    default: return "bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-900/20 dark:border-gray-700 dark:text-gray-200";
+  }
+};
+
 const getTypeLabel = (type: string) => {
   switch (type) {
     case "M": return "Mechanical";
@@ -60,7 +70,7 @@ export default function DraggableAssemblyCard({
         ref={drag}
         className={cn(
           "relative rounded-lg p-3 cursor-move transition-all duration-200 hover:shadow-md min-h-[80px]",
-          getStatusColor(card.status),
+          getPhaseBackgroundColor(card.phase),
           isDragging && "opacity-50 rotate-2 scale-95"
         )}
         data-testid={`draggable-card-${card.cardNumber}`}
