@@ -387,7 +387,7 @@ export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, user
                   currentCard.status === "paused" ? "text-orange-600" :
                   currentCard.status === "ready_for_build" ? "text-orange-600" : "text-gray-600"
                 )}>
-                  {currentCard.status?.replace('_', ' ')}
+                  {currentCard.status === "scheduled" ? "Not Started" : currentCard.status?.replace('_', ' ')}
                 </p>
               </div>
               {currentCard.dependencies && currentCard.dependencies.length > 0 && (
