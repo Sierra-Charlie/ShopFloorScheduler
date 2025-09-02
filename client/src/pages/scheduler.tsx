@@ -42,9 +42,9 @@ export default function Scheduler() {
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
   const updateCardMutation = useUpdateAssemblyCard();
   
-  // Initialize active lanes with all assemblers when data is loaded (only once)
+  // Initialize active lanes with assemblers that have cards assigned to them
   useEffect(() => {
-    if (assemblers.length > 0 && activeLanes.length === 0) {
+    if (assemblers.length > 0 && assemblyCards.length > 0 && activeLanes.length === 0) {
       // Only initialize if we don't have any saved configuration
       const savedLanes = localStorage.getItem('swimLanes');
       if (savedLanes) {
@@ -54,14 +54,21 @@ export default function Scheduler() {
           const validLanes = parsed.filter((id: string) => assemblers.some(a => a.id === id));
           setActiveLanes(validLanes);
         } catch {
-          // If parsing fails, fall back to all assemblers
-          setActiveLanes(assemblers.map(a => a.id));
+          // If parsing fails, fall back to assemblers with assigned cards
+          const assemblersWithCards = assemblers
+            .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
+            .map(assembler => assembler.id);
+          setActiveLanes(assemblersWithCards);
         }
       } else {
-        setActiveLanes(assemblers.map(a => a.id));
+        // Initialize with only assemblers that have cards assigned to them
+        const assemblersWithCards = assemblers
+          .filter(assembler => assemblyCards.some(card => card.assignedTo === assembler.id))
+          .map(assembler => assembler.id);
+        setActiveLanes(assemblersWithCards);
       }
     }
-  }, [assemblers]);
+  }, [assemblers, assemblyCards]);
 
   // Save active lanes to localStorage whenever they change
   useEffect(() => {
