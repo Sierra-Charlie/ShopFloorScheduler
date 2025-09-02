@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, timestamp, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, timestamp, serial, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,6 +35,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   pickingStartTime: timestamp("picking_start_time"), // when picking started
   actualDuration: integer("actual_duration"), // actual time taken in hours when completed
   position: integer("position").default(0), // horizontal position in timeline
+  grounded: boolean("grounded").default(false), // true if card is locked in place and cannot be moved
 });
 
 export const andonIssues = pgTable("andon_issues", {
@@ -80,6 +81,7 @@ export const updateAssemblyCardSchema = z.object({
   pickingStartTime: z.date().nullable().optional(),
   actualDuration: z.number().optional(),
   position: z.number().nullable().optional(),
+  grounded: z.boolean().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

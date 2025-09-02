@@ -1,5 +1,5 @@
 import { useDrag } from "react-dnd";
-import { GripVertical, AlertTriangle, Clock } from "lucide-react";
+import { GripVertical, AlertTriangle, Clock, Pin } from "lucide-react";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -47,7 +47,8 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
-  }), [card.id, card.position, card.assignedTo]);
+    canDrag: !card.grounded, // Disable dragging for grounded cards
+  }), [card.id, card.position, card.assignedTo, card.grounded]);
 
   // Handle dead time cards differently
   if (card.type === "DEAD_TIME") {
@@ -106,11 +107,13 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     <div
       ref={drag}
       className={cn(
-        "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative cursor-grab active:cursor-grabbing border border-black",
+        "assembly-card p-3 rounded-md font-medium text-sm shadow-sm relative border border-black",
+        card.grounded ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing",
         phaseClass,
         isDragging && "opacity-50",
         hasWarning && "border-2 border-warning",
-        isOverdue && "border-2 border-red-700 shadow-lg animate-pulse"
+        isOverdue && "border-2 border-red-700 shadow-lg animate-pulse",
+        card.grounded && "border-2 border-orange-500 shadow-md"
       )}
       style={{ width: `${width}px` }}
       onClick={() => onView?.(card)}
@@ -131,7 +134,12 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
       )}
       <div className="flex items-center justify-between">
         <span className="font-bold">{card.cardNumber}</span>
-        <GripVertical className="h-3 w-3 opacity-70" />
+        <div className="flex items-center space-x-1">
+          {card.grounded && (
+            <Pin className="h-3 w-3 text-orange-600" />
+          )}
+          <GripVertical className={cn("h-3 w-3", card.grounded ? "opacity-30" : "opacity-70")} />
+        </div>
       </div>
       <div className="text-xs mt-1 opacity-90" title={getSequenceTypeLabel(card.type)}>
         {card.name}

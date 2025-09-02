@@ -32,6 +32,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       assignedTo: "",
       dependencies: [] as string[],
       precedents: [] as string[],
+      grounded: false,
     },
   });
 
@@ -46,6 +47,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         assignedTo: card.assignedTo || "",
         dependencies: card.dependencies || [],
         precedents: card.precedents || [],
+        grounded: card.grounded || false,
       });
     }
   }, [card, form]);
@@ -277,6 +279,33 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                     </SelectContent>
                   </Select>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            {/* Grounded checkbox - only for regular cards */}
+            <FormField
+              control={form.control}
+              name="grounded"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      data-testid="checkbox-grounded"
+                      className="mt-1"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Ground Assembly Card (Lock in Place)
+                    </FormLabel>
+                    <FormDescription>
+                      When grounded, this card cannot be moved. Useful for material delivery scheduling.
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
