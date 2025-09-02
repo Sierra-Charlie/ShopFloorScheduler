@@ -361,11 +361,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add message to thread
   app.post("/api/threads/:threadId/messages", async (req, res) => {
     try {
+      console.log("DEBUG - Message creation request:", JSON.stringify(req.body, null, 2));
       const messageData = insertMessageSchema.parse({
         ...req.body,
         threadId: req.params.threadId
       });
+      console.log("DEBUG - Parsed message data:", JSON.stringify(messageData, null, 2));
       const message = await storage.createMessage(messageData);
+      console.log("DEBUG - Created message:", JSON.stringify(message, null, 2));
       
       // Broadcast new message to all connected clients
       broadcastToAll({
