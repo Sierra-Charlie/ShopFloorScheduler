@@ -5,6 +5,7 @@ import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart 
 import { useUser, canAccess } from "@/contexts/user-context";
 import UserRoleSelector from "@/components/user-role-selector";
 import { cn } from "@/lib/utils";
+import vikingLogo from "@assets/Viking-logo-2_1756777299359.jpg";
 
 export default function MainHeader() {
   const [location] = useLocation();
@@ -62,8 +63,8 @@ export default function MainHeader() {
       <div className="px-6 py-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center space-x-2">
-            <Settings className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-semibold">Shop Floor Scheduler</h1>
+            <img src={vikingLogo} alt="Viking Logo" className="h-6 w-6 object-contain" />
+            <h1 className="text-xl font-semibold">Viking's Shop Floor Scheduler</h1>
           </div>
           
           <UserRoleSelector />
