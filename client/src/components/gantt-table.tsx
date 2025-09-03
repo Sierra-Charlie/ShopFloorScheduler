@@ -68,6 +68,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.materialSeq !== undefined) updateData.materialSeq = editValues.materialSeq;
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
+      if (editValues.requiresCrane !== undefined) updateData.requiresCrane = editValues.requiresCrane;
       // Always include subAssyArea if it exists in editValues
       updateData.subAssyArea = editValues.subAssyArea;
       
@@ -176,6 +177,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Sub Assy Area
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Crane
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Gemba Doc Link
@@ -490,6 +494,27 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     ) : (
                       <span className="text-sm" data-testid={`text-sub-assy-${card.cardNumber}`}>
                         {(card.type === "S" || card.type === "P") && card.subAssyArea ? `Area ${card.subAssyArea}` : "-"}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Button
+                        variant={editValues.requiresCrane !== undefined ? (editValues.requiresCrane ? "default" : "outline") : (card.requiresCrane ? "default" : "outline")}
+                        size="sm"
+                        onClick={() => {
+                          const currentValue = editValues.requiresCrane !== undefined ? editValues.requiresCrane : card.requiresCrane;
+                          setEditValues(prev => ({ ...prev, requiresCrane: !currentValue }));
+                        }}
+                        className="w-16"
+                        data-testid={`toggle-crane-${card.cardNumber}`}
+                      >
+                        {editValues.requiresCrane !== undefined ? (editValues.requiresCrane ? "Yes" : "No") : (card.requiresCrane ? "Yes" : "No")}
+                      </Button>
+                    ) : (
+                      <span className="text-sm" data-testid={`text-crane-${card.cardNumber}`}>
+                        {card.requiresCrane ? "Yes" : "No"}
                       </span>
                     )}
                   </td>

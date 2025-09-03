@@ -39,6 +39,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       materialSeq: "",
       operationSeq: "",
       grounded: false,
+      requiresCrane: false,
     },
   });
 
@@ -56,6 +57,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         materialSeq: card.materialSeq || "",
         operationSeq: card.operationSeq || "",
         grounded: card.grounded || false,
+        requiresCrane: card.requiresCrane || false,
       });
     } else {
       // Reset to default values for new cards
@@ -71,6 +73,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         materialSeq: "",
         operationSeq: "",
         grounded: false,
+        requiresCrane: false,
       });
     }
   }, [card, form]);
@@ -398,6 +401,31 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                     </FormLabel>
                     <FormDescription>
                       When grounded, this card cannot be moved. Useful for material delivery scheduling.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+            
+            {/* Crane requirement checkbox - only for regular cards */}
+            <FormField
+              control={form.control}
+              name="requiresCrane"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                      data-testid="checkbox-requires-crane"
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Requires Crane
+                    </FormLabel>
+                    <FormDescription>
+                      Check if this assembly requires crane assistance.
                     </FormDescription>
                   </div>
                 </FormItem>

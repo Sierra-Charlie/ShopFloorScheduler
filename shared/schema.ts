@@ -43,6 +43,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   position: integer("position").default(0), // horizontal position in timeline
   grounded: boolean("grounded").default(false), // true if card is locked in place and cannot be moved
   subAssyArea: integer("sub_assy_area"), // SUB ASSY AREA 1-6 assignment for S and P type cards
+  requiresCrane: boolean("requires_crane").default(false), // true if assembly requires crane assistance
 });
 
 export const andonIssues = pgTable("andon_issues", {
@@ -121,6 +122,7 @@ export const updateAssemblyCardSchema = z.object({
   position: z.number().nullable().optional(),
   grounded: z.boolean().optional(),
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
+  requiresCrane: z.boolean().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

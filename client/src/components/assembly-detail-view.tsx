@@ -398,6 +398,10 @@ export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, user
                 <Label className="text-sm font-medium text-muted-foreground">Operation Seq</Label>
                 <p className="font-semibold">{currentCard.operationSeq || 'Not specified'}</p>
               </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Requires Crane</Label>
+                <p className="font-semibold">{currentCard.requiresCrane ? 'Yes' : 'No'}</p>
+              </div>
               {currentCard.dependencies && currentCard.dependencies.length > 0 && (
                 <div className="col-span-2">
                   <Label className="text-sm font-medium text-muted-foreground">Dependencies</Label>
