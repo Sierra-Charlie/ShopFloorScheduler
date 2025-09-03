@@ -36,8 +36,9 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       assignedTo: "",
       dependencies: [] as string[],
       precedents: [] as string[],
+      materialSeq: "",
+      operationSeq: "",
       grounded: false,
-      status: "scheduled" as const,
     },
   });
 
@@ -52,8 +53,9 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         assignedTo: card.assignedTo || "",
         dependencies: card.dependencies || [],
         precedents: card.precedents || [],
+        materialSeq: card.materialSeq || "",
+        operationSeq: card.operationSeq || "",
         grounded: card.grounded || false,
-        status: card.status as "scheduled" | "in_progress" | "assembling" | "completed" | "blocked" | "ready_for_build" | "paused" | "picking",
       });
     } else {
       // Reset to default values for new cards
@@ -66,8 +68,9 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         assignedTo: "",
         dependencies: [] as string[],
         precedents: [] as string[],
+        materialSeq: "",
+        operationSeq: "",
         grounded: false,
-        status: "scheduled" as const,
       });
     }
   }, [card, form]);
@@ -252,6 +255,44 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                             <SelectItem value="4">Phase 4</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="materialSeq"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Material Seq</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Material sequence info"
+                            data-testid="input-material-seq"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="operationSeq"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Operation Seq</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            placeholder="Operation sequence info"
+                            data-testid="input-operation-seq"
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

@@ -390,6 +390,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, user
                   {currentCard.status === "scheduled" ? "Not Started" : currentCard.status?.replace('_', ' ')}
                 </p>
               </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Material Seq</Label>
+                <p className="font-semibold">{currentCard.materialSeq || 'Not specified'}</p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-muted-foreground">Operation Seq</Label>
+                <p className="font-semibold">{currentCard.operationSeq || 'Not specified'}</p>
+              </div>
               {currentCard.dependencies && currentCard.dependencies.length > 0 && (
                 <div className="col-span-2">
                   <Label className="text-sm font-medium text-muted-foreground">Dependencies</Label>

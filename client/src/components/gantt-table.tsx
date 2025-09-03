@@ -65,6 +65,8 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.status !== undefined) updateData.status = editValues.status;
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
       if (editValues.precedents !== undefined) updateData.precedents = editValues.precedents;
+      if (editValues.materialSeq !== undefined) updateData.materialSeq = editValues.materialSeq;
+      if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
       // Always include subAssyArea if it exists in editValues
       updateData.subAssyArea = editValues.subAssyArea;
@@ -159,6 +161,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Phase
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Material Seq
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Operation Seq
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Assigned To
@@ -395,6 +403,38 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     ) : (
                       <span className="text-sm" data-testid={`text-phase-${card.cardNumber}`}>
                         Phase {card.phase}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Input
+                        value={editValues.materialSeq || card.materialSeq || ""}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, materialSeq: e.target.value }))}
+                        placeholder="Material seq"
+                        className="w-32"
+                        data-testid={`input-material-seq-${card.cardNumber}`}
+                      />
+                    ) : (
+                      <span className="text-sm" data-testid={`text-material-seq-${card.cardNumber}`}>
+                        {card.materialSeq || "Not specified"}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Input
+                        value={editValues.operationSeq || card.operationSeq || ""}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, operationSeq: e.target.value }))}
+                        placeholder="Operation seq"
+                        className="w-32"
+                        data-testid={`input-operation-seq-${card.cardNumber}`}
+                      />
+                    ) : (
+                      <span className="text-sm" data-testid={`text-operation-seq-${card.cardNumber}`}>
+                        {card.operationSeq || "Not specified"}
                       </span>
                     )}
                   </td>
