@@ -62,7 +62,8 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
   }), [card.id, index]);
 
   const isClearedForPicking = card.status === "cleared_for_picking";
-  const phaseClass = getPhaseClass(card.phase);
+  // Planning cards should always be grey, regardless of status
+  const phaseClass = "bg-gray-400";
 
   const handleClearedForPicking = async () => {
     try {
