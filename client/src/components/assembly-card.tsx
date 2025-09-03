@@ -146,22 +146,22 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
         {card.name}
       </div>
       <div className="text-xs opacity-80">{card.duration} hrs</div>
-      {/* Large white P indicator for cleared for picking status */}
+      {/* Small white P indicator for cleared for picking status */}
       {card.status === "cleared_for_picking" && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white border-4 border-black rounded-full flex items-center justify-center z-10">
-          <span className="text-black font-bold text-2xl">P</span>
+        <div className="absolute bottom-1 left-1 w-6 h-6 bg-white border-2 border-black rounded-full flex items-center justify-center z-10">
+          <span className="text-black font-bold text-xs">P</span>
         </div>
       )}
-      {/* Large green P indicator for picking status */}
+      {/* Small green P indicator for picking status */}
       {card.status === "picking" && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center z-10">
-          <span className="text-white font-bold text-2xl">P</span>
+        <div className="absolute bottom-1 left-1 w-6 h-6 bg-green-600 rounded-full flex items-center justify-center z-10">
+          <span className="text-white font-bold text-xs">P</span>
         </div>
       )}
-      {/* Large purple P indicator for delivered to paint status */}
+      {/* Small purple P indicator for delivered to paint status */}
       {card.status === "delivered_to_paint" && (
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center z-10">
-          <span className="text-white font-bold text-2xl">P</span>
+        <div className="absolute bottom-1 left-1 w-6 h-6 bg-purple-600 rounded-full flex items-center justify-center z-10">
+          <span className="text-white font-bold text-xs">P</span>
         </div>
       )}
       {hasWarning && (
