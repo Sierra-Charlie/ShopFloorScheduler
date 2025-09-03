@@ -61,9 +61,7 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Manufacturing Assembly System
-          </CardTitle>
+          <CardTitle className="tracking-tight font-bold text-center text-[28px]">Viking's Manufacturing Assembly System</CardTitle>
           <CardDescription className="text-center">
             Sign in to access the system
           </CardDescription>
