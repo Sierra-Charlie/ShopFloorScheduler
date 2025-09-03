@@ -66,7 +66,6 @@ export class MemStorage implements IStorage {
   private threadVotes: Map<string, ThreadVote>;
   private threadParticipants: Map<string, ThreadParticipant>;
   private nextIssueId: number = 1;
-
   constructor() {
     this.users = new Map();
     this.assemblers = new Map();
@@ -76,23 +75,54 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.threadVotes = new Map();
     this.threadParticipants = new Map();
-    this.initializeData().catch(console.error);
+    this.initializeData();
   }
 
-  private async initializeData() {
-    // Initialize users with hashed passwords
-    const defaultUsers: InsertUser[] = [
-      { name: "John Smith", role: "production_supervisor", email: "john.smith@vikingeng.com", password: await bcrypt.hash("password123", 10) },
-      { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@vikingeng.com", password: await bcrypt.hash("password123", 10) },
-      { name: "Mike Wilson", role: "assembler", email: "mike.wilson@stonetreeinvest.com", password: await bcrypt.hash("password123", 10) },
-      { name: "Emily Chen", role: "scheduler", email: "emily.chen@vikingeng.com", password: await bcrypt.hash("password123", 10) },
-      { name: "David Brown", role: "admin", email: "david.brown@stonetreeinvest.com", password: await bcrypt.hash("admin123", 10) },
+  private initializeData() {
+    // Initialize users with pre-hashed passwords for admin123 and password123
+    const now = new Date();
+    
+    const defaultUsers = [
+      { 
+        name: "John Smith", 
+        role: "production_supervisor", 
+        email: "john.smith@vikingeng.com", 
+        password: "$2b$10$k1u6C502f.wLw38.b3ckk.a5i5yR9v/Stn.M8zrQinzEA4FwWwqHS" // password123
+      },
+      { 
+        name: "Sarah Johnson", 
+        role: "material_handler", 
+        email: "sarah.johnson@vikingeng.com", 
+        password: "$2b$10$k1u6C502f.wLw38.b3ckk.a5i5yR9v/Stn.M8zrQinzEA4FwWwqHS" // password123
+      },
+      { 
+        name: "Mike Wilson", 
+        role: "assembler", 
+        email: "mike.wilson@stonetreeinvest.com", 
+        password: "$2b$10$k1u6C502f.wLw38.b3ckk.a5i5yR9v/Stn.M8zrQinzEA4FwWwqHS" // password123
+      },
+      { 
+        name: "Emily Chen", 
+        role: "scheduler", 
+        email: "emily.chen@vikingeng.com", 
+        password: "$2b$10$k1u6C502f.wLw38.b3ckk.a5i5yR9v/Stn.M8zrQinzEA4FwWwqHS" // password123
+      },
+      { 
+        name: "David Brown", 
+        role: "admin", 
+        email: "david.brown@stonetreeinvest.com", 
+        password: "$2b$10$UyrXWhp5Tdsissr1m1e.BO29RB2eQiZE07bjzj4juE3lKb6.KIA9." // admin123
+      },
     ];
 
-    const now = new Date();
-    defaultUsers.forEach(user => {
+    defaultUsers.forEach(userData => {
       const id = randomUUID();
-      this.users.set(id, { ...user, id, createdAt: now, updatedAt: now });
+      this.users.set(id, { 
+        ...userData, 
+        id, 
+        createdAt: now, 
+        updatedAt: now 
+      });
     });
 
     // Initialize assemblers
@@ -999,7 +1029,7 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
-export const storage = new DatabaseStorage();
+export const storage = new MemStorage();
 
 // Initialize default data in database if tables are empty
 async function initializeDatabaseData() {
