@@ -149,7 +149,7 @@ export default function BuildBayMap() {
                 cards={getCardsForArea("paint")}
                 areaId="paint"
                 onCardMove={handleCardMove}
-                className="border-2 border-dashed border-purple-500 bg-purple-100 dark:bg-purple-950/30"
+                className="border-2 border-dashed border-black bg-white dark:bg-gray-900"
               />
               
               {/* Electrical Pre-Assembly */}
