@@ -949,7 +949,7 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
 
 // Initialize default data in database if tables are empty
 async function initializeDatabaseData() {
