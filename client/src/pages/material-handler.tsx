@@ -66,7 +66,8 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const isPicking = card.status === "picking";
   const isDeliveredToPaint = card.status === "delivered_to_paint";
   const isClearedForPicking = card.status === "cleared_for_picking";
-  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : isClearedForPicking ? getPhaseClass(card.phase) : "bg-gray-400";
+  // Cards should only get phase colors when actively picking, delivered to paint, or ready for build
+  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : "bg-gray-400";
 
   // Timer for picking status
   useEffect(() => {
