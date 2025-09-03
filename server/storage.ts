@@ -1,8 +1,9 @@
-import { type User, type InsertUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
+import { type User, type InsertUser, type LoginUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
 import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // Users
@@ -11,6 +12,10 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<boolean>;
+  
+  // Authentication
+  authenticateUser(credentials: LoginUser): Promise<User | null>;
   
   // Assemblers
   getAssemblers(): Promise<Assembler[]>;
@@ -71,22 +76,23 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.threadVotes = new Map();
     this.threadParticipants = new Map();
-    this.initializeData();
+    this.initializeData().catch(console.error);
   }
 
-  private initializeData() {
-    // Initialize users
+  private async initializeData() {
+    // Initialize users with hashed passwords
     const defaultUsers: InsertUser[] = [
-      { name: "John Smith", role: "production_supervisor", email: "john.smith@company.com" },
-      { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@company.com" },
-      { name: "Mike Wilson", role: "assembler", email: "mike.wilson@company.com" },
-      { name: "Emily Chen", role: "scheduler", email: "emily.chen@company.com" },
-      { name: "David Brown", role: "admin", email: "david.brown@company.com" },
+      { name: "John Smith", role: "production_supervisor", email: "john.smith@vikingeng.com", password: await bcrypt.hash("password123", 10) },
+      { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@vikingeng.com", password: await bcrypt.hash("password123", 10) },
+      { name: "Mike Wilson", role: "assembler", email: "mike.wilson@stonetreeinvest.com", password: await bcrypt.hash("password123", 10) },
+      { name: "Emily Chen", role: "scheduler", email: "emily.chen@vikingeng.com", password: await bcrypt.hash("password123", 10) },
+      { name: "David Brown", role: "admin", email: "david.brown@stonetreeinvest.com", password: await bcrypt.hash("admin123", 10) },
     ];
 
+    const now = new Date();
     defaultUsers.forEach(user => {
       const id = randomUUID();
-      this.users.set(id, { ...user, id });
+      this.users.set(id, { ...user, id, createdAt: now, updatedAt: now });
     });
 
     // Initialize assemblers
@@ -415,7 +421,9 @@ export class MemStorage implements IStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     const id = randomUUID();
-    const newUser: User = { ...user, id };
+    const now = new Date();
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const newUser: User = { ...user, id, password: hashedPassword, createdAt: now, updatedAt: now };
     this.users.set(id, newUser);
     return newUser;
   }
@@ -424,9 +432,28 @@ export class MemStorage implements IStorage {
     const existing = this.users.get(id);
     if (!existing) return undefined;
     
-    const updated: User = { ...existing, ...user };
+    const updatedData = { ...user };
+    if (user.password) {
+      updatedData.password = await bcrypt.hash(user.password, 10);
+    }
+    
+    const updated: User = { ...existing, ...updatedData, updatedAt: new Date() };
     this.users.set(id, updated);
     return updated;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    return this.users.delete(id);
+  }
+
+  async authenticateUser(credentials: LoginUser): Promise<User | null> {
+    const user = await this.getUserByEmail(credentials.email);
+    if (!user) return null;
+    
+    const isValid = await bcrypt.compare(credentials.password, user.password);
+    if (!isValid) return null;
+    
+    return user;
   }
 
   // Andon Issues
@@ -661,13 +688,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(user: InsertUser): Promise<User> {
-    const [created] = await db.insert(users).values(user).returning();
+    const hashedPassword = await bcrypt.hash(user.password, 10);
+    const userData = { ...user, password: hashedPassword };
+    const [created] = await db.insert(users).values(userData).returning();
     return created;
   }
 
   async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
-    const [updated] = await db.update(users).set(userData).where(eq(users.id, id)).returning();
+    const updateData = { ...userData };
+    if (userData.password) {
+      updateData.password = await bcrypt.hash(userData.password, 10);
+    }
+    updateData.updatedAt = new Date();
+    
+    const [updated] = await db.update(users).set(updateData).where(eq(users.id, id)).returning();
     return updated || undefined;
+  }
+
+  async deleteUser(id: string): Promise<boolean> {
+    const result = await db.delete(users).where(eq(users.id, id));
+    return result.rowCount > 0;
+  }
+
+  async authenticateUser(credentials: LoginUser): Promise<User | null> {
+    const user = await this.getUserByEmail(credentials.email);
+    if (!user) return null;
+    
+    const isValid = await bcrypt.compare(credentials.password, user.password);
+    if (!isValid) return null;
+    
+    return user;
   }
 
   // Assemblers

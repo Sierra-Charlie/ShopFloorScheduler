@@ -1,7 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart, Map, MessageCircle } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart, Map, MessageCircle, LogOut, User, Shield } from "lucide-react";
 import { useUser, canAccess } from "@/contexts/user-context";
 import UserRoleSelector from "@/components/user-role-selector";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,7 @@ import vikingLogo from "@assets/Viking-logo-2_1756777299359.jpg";
 
 export default function MainHeader() {
   const [location] = useLocation();
-  const { currentUser } = useUser();
+  const { currentUser, logout } = useUser();
 
   if (!currentUser) {
     return null;
@@ -63,6 +64,12 @@ export default function MainHeader() {
       label: "Kaizen Ideas",
       icon: MessageCircle,
       permission: "messages_view"
+    },
+    {
+      href: "/admin",
+      label: "Admin",
+      icon: Shield,
+      permission: "admin"
     }
   ];
 
@@ -79,7 +86,24 @@ export default function MainHeader() {
             <h1 className="text-xl font-semibold">Viking's Shop Floor Scheduler</h1>
           </div>
           
-          <UserRoleSelector />
+          <div className="flex items-center space-x-4">
+            <UserRoleSelector />
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" data-testid="button-user-menu">
+                  <User className="h-4 w-4 mr-2" />
+                  {currentUser.name}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={logout} data-testid="button-logout">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         
         <nav className="flex items-center space-x-1">

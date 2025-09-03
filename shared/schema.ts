@@ -8,6 +8,9 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   role: text("role").notNull(), // "production_supervisor", "assembler", "material_handler", "scheduler", "admin"
   email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const assemblers = pgTable("assemblers", {
@@ -55,6 +58,33 @@ export const andonIssues = pgTable("andon_issues", {
 
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  email: z.string().email().refine(
+    (email) => email.endsWith('@vikingeng.com') || email.endsWith('@stonetreeinvest.com'),
+    { message: 'Email must be from @vikingeng.com or @stonetreeinvest.com domain' }
+  ),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email().refine(
+    (email) => email.endsWith('@vikingeng.com') || email.endsWith('@stonetreeinvest.com'),
+    { message: 'Email must be from @vikingeng.com or @stonetreeinvest.com domain' }
+  ),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const updateUserSchema = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+  email: z.string().email().refine(
+    (email) => email.endsWith('@vikingeng.com') || email.endsWith('@stonetreeinvest.com'),
+    { message: 'Email must be from @vikingeng.com or @stonetreeinvest.com domain' }
+  ).optional(),
+  role: z.enum(["production_supervisor", "assembler", "material_handler", "scheduler", "admin"]).optional(),
+  password: z.string().min(6, 'Password must be at least 6 characters').optional(),
 });
 
 export const insertAssemblerSchema = createInsertSchema(assemblers).omit({
@@ -91,6 +121,8 @@ export const updateAssemblyCardSchema = z.object({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type LoginUser = z.infer<typeof loginSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 
 export type InsertAssembler = z.infer<typeof insertAssemblerSchema>;
 export type Assembler = typeof assemblers.$inferSelect;

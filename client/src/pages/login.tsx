@@ -1,0 +1,137 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { loginSchema, type LoginUser } from "@shared/schema";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+
+interface LoginPageProps {
+  onLoginSuccess: (user: any) => void;
+}
+
+export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
+  const { toast } = useToast();
+  const [error, setError] = useState<string>("");
+
+  const form = useForm<LoginUser>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginUser) => {
+      const response = await apiRequest("POST", "/api/auth/login", credentials);
+      return await response.json();
+    },
+    onSuccess: (response) => {
+      setError("");
+      toast({
+        title: "Login Successful",
+        description: "Welcome to the Manufacturing Assembly System",
+      });
+      onLoginSuccess(response.user);
+    },
+    onError: (error: any) => {
+      console.error("Login error:", error);
+      const errorMessage = error.message || "Login failed. Please check your credentials.";
+      setError(errorMessage);
+      toast({
+        title: "Login Failed",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: LoginUser) => {
+    setError("");
+    loginMutation.mutate(data);
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            Manufacturing Assembly System
+          </CardTitle>
+          <CardDescription className="text-center">
+            Sign in to access the system
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="your.email@vikingeng.com"
+                {...form.register("email")}
+                data-testid="input-email"
+                className="w-full"
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                {...form.register("password")}
+                data-testid="input-password"
+                className="w-full"
+              />
+              {form.formState.errors.password && (
+                <p className="text-sm text-red-600 dark:text-red-400">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription data-testid="text-login-error">
+                  {error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={loginMutation.isPending}
+              data-testid="button-login"
+            >
+              {loginMutation.isPending ? "Signing In..." : "Sign In"}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            <p>Authorized domains: @vikingeng.com, @stonetreeinvest.com</p>
+            <p className="mt-2 text-xs">
+              Default credentials for testing:
+              <br />
+              david.brown@stonetreeinvest.com / admin123
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
