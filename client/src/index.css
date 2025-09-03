@@ -121,7 +121,7 @@
     background-image: 
         linear-gradient(to right, hsl(0, 0%, 60%) 1px, transparent 1px);
     background-size: 60px 100%;
-    background-position: 216px 0; /* First line aligned with 6a text start */
+    background-position: 320px 0; /* First line aligned with 6a text start - adjusted for checkbox + machine group columns */
   }
   
   .phase-1 { 
