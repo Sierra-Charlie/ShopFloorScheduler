@@ -50,6 +50,12 @@
   --success: hsl(134, 61%, 41%);
 }
 
+/* Utility for vertical text */
+.writing-mode-vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+
 .dark {
   --background: hsl(0, 0%, 4%);
   --foreground: hsl(0, 0%, 95%);

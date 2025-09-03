@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown, Zap } from "lucide-react";
+import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown, Zap, Minus } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUsers } from "@/hooks/use-users";
@@ -15,6 +15,8 @@ import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
 import DependencyLegend from "@/components/dependency-legend";
 import DeadTimeSource from "@/components/dead-time-source";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AssemblyCard } from "@shared/schema";
 
 export default function Scheduler() {
@@ -27,6 +29,11 @@ export default function Scheduler() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeLanes, setActiveLanes] = useState<string[]>([]); // Track active swim lane assembler IDs
   const [newLaneAssembler, setNewLaneAssembler] = useState<string>(""); // Selected assembler for new lane
+  const [selectedLanes, setSelectedLanes] = useState<string[]>([]); // Track selected swim lanes for grouping
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false); // Group by machine modal
+  const [groupMachineType, setGroupMachineType] = useState<string>(""); // Selected machine type for grouping
+  const [groupMachineNumber, setGroupMachineNumber] = useState<string>(""); // Machine number for grouping
+  const [machineGroups, setMachineGroups] = useState<Record<string, { type: string; number: string; assemblerIds: string[]; collapsed: boolean }>>({});
   const { toast } = useToast();
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
@@ -124,6 +131,85 @@ export default function Scheduler() {
         variant: "destructive"
       });
     }
+  };
+
+  // Machine grouping functions
+  const handleLaneSelection = (assemblerId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedLanes([...selectedLanes, assemblerId]);
+    } else {
+      setSelectedLanes(selectedLanes.filter(id => id !== assemblerId));
+    }
+  };
+
+  const openGroupModal = () => {
+    setIsGroupModalOpen(true);
+    setGroupMachineType("");
+    setGroupMachineNumber("");
+  };
+
+  const handleGroupByMachine = async () => {
+    if (!groupMachineType || !groupMachineNumber || selectedLanes.length === 0) {
+      toast({
+        title: "Missing Information",
+        description: "Please select machine type, number, and at least one swim lane.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // Update assemblers with machine grouping information
+      for (const assemblerId of selectedLanes) {
+        const assembler = assemblers.find(a => a.id === assemblerId);
+        if (assembler) {
+          await fetch(`/api/assemblers/${assemblerId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              machineType: groupMachineType,
+              machineNumber: groupMachineNumber
+            })
+          });
+        }
+      }
+
+      // Create machine group
+      const groupKey = `${groupMachineType}-${groupMachineNumber}`;
+      setMachineGroups(prev => ({
+        ...prev,
+        [groupKey]: {
+          type: groupMachineType,
+          number: groupMachineNumber,
+          assemblerIds: selectedLanes,
+          collapsed: false
+        }
+      }));
+
+      setSelectedLanes([]);
+      setIsGroupModalOpen(false);
+      
+      toast({
+        title: "Machine Group Created",
+        description: `Successfully grouped ${selectedLanes.length} swim lanes under ${groupMachineType} - ${groupMachineNumber}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Grouping Failed",
+        description: "Failed to group swim lanes. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const toggleGroupCollapse = (groupKey: string) => {
+    setMachineGroups(prev => ({
+      ...prev,
+      [groupKey]: {
+        ...prev[groupKey],
+        collapsed: !prev[groupKey].collapsed
+      }
+    }));
   };
   
   // Utility function to get current time in Central Time Zone
@@ -576,6 +662,19 @@ export default function Scheduler() {
               <Plus className="h-4 w-4 mr-1" />
               Add Lane
             </Button>
+            
+            {/* Group by Machine Button - only show when lanes are selected */}
+            {selectedLanes.length > 0 && (
+              <Button 
+                size="sm" 
+                onClick={openGroupModal}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="button-group-machine"
+              >
+                <Package className="h-4 w-4 mr-1" />
+                Group by Machine ({selectedLanes.length})
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -589,7 +688,9 @@ export default function Scheduler() {
               {/* Time Header - sticky within the scroll container */}
               <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
                 <div className="flex items-center">
-                  <div className="w-48 font-semibold text-sm">Assembler</div>
+                  <div className="w-6 text-center text-xs font-medium text-muted-foreground">☐</div>
+                  <div className="w-20 text-xs font-medium text-muted-foreground writing-mode-vertical-rl text-center border-l border-border px-1">Machine Group</div>
+                  <div className="w-48 font-semibold text-sm pl-4">Assembler</div>
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
                       key={i}
@@ -611,22 +712,46 @@ export default function Scheduler() {
                   const assembler = assemblers.find(a => a.id === assemblerId);
                   if (!assembler) return null;
                   
+                  const machineGroup = assembler.machineType && assembler.machineNumber ? 
+                    `${assembler.machineType} - ${assembler.machineNumber}` : null;
+                  
                   return (
-                    <div key={assembler.id} className="relative group">
-                      <SwimLane
-                        assembler={assembler}
-                        assemblyCards={assemblyCards.filter(card => {
-                          const baseCards = card.assignedTo === assembler.id;
-                          return baseCards;
-                        })}
-                        allAssemblyCards={assemblyCards}
-                        users={users}
-                        onCardEdit={handleCardEdit}
-                        onCardView={handleCardView}
-                        startTimeOffset={getStartTimeOffset()}
-                        isCardOverdue={isCardOverdue}
-                        data-testid={`swim-lane-${assembler.id}`}
-                      />
+                    <div key={assembler.id} className="relative group flex items-center">
+                      {/* Checkbox for lane selection */}
+                      <div className="w-6 flex justify-center items-center">
+                        <Checkbox
+                          checked={selectedLanes.includes(assemblerId)}
+                          onCheckedChange={(checked) => handleLaneSelection(assemblerId, checked as boolean)}
+                          data-testid={`checkbox-lane-${assembler.id}`}
+                        />
+                      </div>
+                      
+                      {/* Machine Group Column */}
+                      <div className="w-20 border-l border-border px-1 flex items-center justify-center min-h-20">
+                        {machineGroup && (
+                          <div className="writing-mode-vertical-rl text-xs font-medium text-center">
+                            {machineGroup}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Swim Lane */}
+                      <div className="flex-1">
+                        <SwimLane
+                          assembler={assembler}
+                          assemblyCards={assemblyCards.filter(card => {
+                            const baseCards = card.assignedTo === assembler.id;
+                            return baseCards;
+                          })}
+                          allAssemblyCards={assemblyCards}
+                          users={users}
+                          onCardEdit={handleCardEdit}
+                          onCardView={handleCardView}
+                          startTimeOffset={getStartTimeOffset()}
+                          isCardOverdue={isCardOverdue}
+                          data-testid={`swim-lane-${assembler.id}`}
+                        />
+                      </div>
                       
                       {/* Lane Controls - visible on hover */}
                       <div className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col space-y-1">
@@ -780,6 +905,71 @@ export default function Scheduler() {
         onClose={handleDetailViewClose}
         onEdit={handleCardEdit}
       />
+
+      {/* Group by Machine Modal */}
+      <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Group Swim Lanes by Machine</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="machine-type" className="text-sm font-medium">
+                Machine Type
+              </Label>
+              <Select value={groupMachineType} onValueChange={setGroupMachineType}>
+                <SelectTrigger className="w-full" data-testid="select-machine-type">
+                  <SelectValue placeholder="Select machine type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Turbo 505">Turbo 505</SelectItem>
+                  <SelectItem value="Voyager">Voyager</SelectItem>
+                  <SelectItem value="Champ">Champ</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <Label htmlFor="machine-number" className="text-sm font-medium">
+                Machine Number (4 digits)
+              </Label>
+              <Input
+                id="machine-number"
+                type="text"
+                value={groupMachineNumber}
+                onChange={(e) => setGroupMachineNumber(e.target.value)}
+                placeholder="e.g., 2002"
+                maxLength={4}
+                pattern="[0-9]{4}"
+                className="w-full"
+                data-testid="input-machine-number"
+              />
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              Selected swim lanes: {selectedLanes.length}
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleGroupByMachine}
+                className="flex-1"
+                data-testid="button-confirm-group"
+              >
+                Group Swim Lanes
+              </Button>
+              <Button 
+                onClick={() => setIsGroupModalOpen(false)}
+                variant="outline"
+                data-testid="button-cancel-group"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Dependency Legend */}
       <DependencyLegend />
