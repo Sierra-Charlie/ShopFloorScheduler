@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUsers } from "@/hooks/use-users";
+import { useUser } from "@/contexts/user-context";
 import { AttachmentUpload } from "./attachment-upload";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
@@ -49,15 +50,20 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
 
   const queryClient = useQueryClient();
   const { data: users = [] } = useUsers();
+  const { currentUser } = useUser();
 
   const createThreadMutation = useMutation({
     mutationFn: async (data: { title: string; category: string; tags: string[]; initialMessage: string; selectedUsers: string[]; pendingAttachment?: { url: string; name: string; type: string } | null }) => {
+      if (!currentUser) {
+        throw new Error("User must be logged in to create a thread");
+      }
+
       // Create the thread first
       const response = await apiRequest("POST", "/api/threads", {
         title: data.title,
         category: data.category,
         tags: data.tags,
-        createdBy: "john-doe-id", // TODO: Get from current user context
+        createdBy: currentUser.id,
       });
       const thread = await response.json();
 
@@ -71,7 +77,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
       // If there's an initial message, send it
       if (data.initialMessage.trim() || data.pendingAttachment) {
         await apiRequest("POST", `/api/threads/${thread.id}/messages`, {
-          authorId: "john-doe-id", // TODO: Get from current user context
+          authorId: currentUser.id,
           content: data.initialMessage.trim() || (data.pendingAttachment ? `[Attachment: ${data.pendingAttachment.name}]` : ""),
           attachmentPath: data.pendingAttachment?.url
         });
@@ -83,6 +89,9 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
       queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
       onThreadCreated(thread.id);
       resetForm();
+    },
+    onError: (error) => {
+      console.error("Failed to create thread:", error);
     }
   });
 
@@ -299,7 +308,7 @@ export function NewThreadDialog({ open, onOpenChange, onThreadCreated }: NewThre
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!title.trim() || !category || createThreadMutation.isPending}
+            disabled={!title.trim() || !category || !currentUser || createThreadMutation.isPending}
             data-testid="button-create-thread"
           >
             {createThreadMutation.isPending ? "Creating..." : "Start Conversation"}
