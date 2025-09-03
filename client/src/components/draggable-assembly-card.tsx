@@ -70,7 +70,7 @@ export default function DraggableAssemblyCard({
         ref={drag}
         className={cn(
           "relative rounded-lg p-2 cursor-move transition-all duration-200 hover:shadow-md min-h-[60px]",
-          getPhaseBackgroundColor(card.phase),
+          card.type === "E" && card.status === "assembling" ? "bg-blue-500 text-white" : getPhaseBackgroundColor(card.phase),
           isDragging && "opacity-50 rotate-2 scale-95"
         )}
         data-testid={`draggable-card-${card.cardNumber}`}
