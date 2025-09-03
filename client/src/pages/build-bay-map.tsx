@@ -33,6 +33,8 @@ export default function BuildBayMap() {
       switch (areaType) {
         case "warehouse":
           return card.status === "picking";
+        case "paint":
+          return card.status === "delivered_to_paint";
         case "mechanical-pre":
           return card.type === "P" && card.status === "ready_for_build";
         case "electrical-pre":
@@ -130,7 +132,7 @@ export default function BuildBayMap() {
           <div className="grid grid-cols-12 gap-4 h-[800px]">
             
             {/* Top Row - Pre-Assembly Areas */}
-            <div className="col-span-12 grid grid-cols-3 gap-4 h-32">
+            <div className="col-span-12 grid grid-cols-4 gap-4 h-32">
               {/* Warehouse Picking */}
               <BuildAreaZone
                 title="WAREHOUSE PICKING"
@@ -140,7 +142,16 @@ export default function BuildBayMap() {
                 className="border-2 border-dashed border-black bg-white dark:bg-gray-900"
               />
               
-              {/* Electrical Pre-Assembly */}
+              {/* Paint Area */}
+              <BuildAreaZone
+                title="PAINT"
+                cards={getCardsForArea("paint")}
+                areaId="paint"
+                onCardMove={handleCardMove}
+                className="border-2 border-dashed border-purple-500 bg-purple-100 dark:bg-purple-950/30"
+              />
+              
+              {/* Electrical Pre-Assembly */
               <BuildAreaZone
                 title="ELECTRICAL PRE-ASSEMBLY"
                 cards={getCardsForArea("electrical-pre")}
