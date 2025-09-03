@@ -120,7 +120,7 @@ export default function Scheduler() {
 
   // Filter swim lanes based on machine type and number
   const getFilteredLanes = () => {
-    if (!machineFilter) return activeLanes;
+    if (!machineFilter || machineFilter === "all") return activeLanes;
     
     return activeLanes.filter(assemblerId => {
       const assembler = assemblers.find(a => a.id === assemblerId);
@@ -145,7 +145,7 @@ export default function Scheduler() {
 
   // Clear machine filter
   const clearMachineFilter = () => {
-    setMachineFilter("");
+    setMachineFilter("all");
   };
 
   // Save swim lane configuration
@@ -712,16 +712,16 @@ export default function Scheduler() {
             <Button 
               size="sm" 
               onClick={() => setIsFilterModalOpen(true)}
-              variant={machineFilter ? "default" : "outline"}
-              className={machineFilter ? "bg-green-600 hover:bg-green-700" : ""}
+              variant={machineFilter && machineFilter !== "all" ? "default" : "outline"}
+              className={machineFilter && machineFilter !== "all" ? "bg-green-600 hover:bg-green-700" : ""}
               data-testid="button-filter-machine"
             >
               <Zap className="h-4 w-4 mr-1" />
-              {machineFilter ? `Filter: ${machineFilter}` : "Filter by Machine"}
+              {machineFilter && machineFilter !== "all" ? `Filter: ${machineFilter}` : "Filter by Machine"}
             </Button>
             
             {/* Clear Filter Button - only show when filter is active */}
-            {machineFilter && (
+            {machineFilter && machineFilter !== "all" && (
               <Button 
                 size="sm" 
                 onClick={clearMachineFilter}
@@ -981,7 +981,7 @@ export default function Scheduler() {
                   <SelectValue placeholder="Select machine group to filter" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Show All Machines</SelectItem>
+                  <SelectItem value="all">Show All Machines</SelectItem>
                   {getAvailableMachineGroups().map(group => (
                     <SelectItem key={group} value={group}>{group}</SelectItem>
                   ))}
@@ -990,7 +990,7 @@ export default function Scheduler() {
             </div>
             
             <div className="text-sm text-muted-foreground">
-              {machineFilter ? (
+              {machineFilter && machineFilter !== "all" ? (
                 `Showing ${getFilteredLanes().length} of ${activeLanes.length} swim lanes`
               ) : (
                 `Total swim lanes: ${activeLanes.length}`
@@ -1007,7 +1007,7 @@ export default function Scheduler() {
               </Button>
               <Button 
                 onClick={() => {
-                  setMachineFilter("");
+                  setMachineFilter("all");
                   setIsFilterModalOpen(false);
                 }}
                 variant="outline"
