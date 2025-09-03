@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, Clock, Play, CheckCircle } from "lucide-react";
 import AssemblyDetailView from "@/components/assembly-detail-view";
+import AssemblyCardModal from "@/components/assembly-card-modal";
 import type { AssemblyCard } from "@shared/schema";
 
 export default function AssemblerView() {
@@ -14,6 +15,8 @@ export default function AssemblerView() {
   const { data: assemblyCards = [] } = useAssemblyCards();
   const { data: assemblers = [] } = useAssemblers();
   const [selectedCard, setSelectedCard] = useState<AssemblyCard | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editCard, setEditCard] = useState<AssemblyCard | null>(null);
 
   // Check if user has permission to access this view
   if (!currentUser || !canAccess(currentUser, 'assembler_view')) {
@@ -62,13 +65,34 @@ export default function AssemblerView() {
     }
   };
 
+  const handleCardEdit = (card: AssemblyCard) => {
+    setEditCard(card);
+    setIsModalOpen(true);
+    setSelectedCard(null); // Close detail view
+  };
+
+  const handleModalClose = () => {
+    setIsModalOpen(false);
+    setEditCard(null);
+  };
+
   if (selectedCard) {
     return (
-      <AssemblyDetailView
-        card={selectedCard}
-        isOpen={true}
-        onClose={() => setSelectedCard(null)}
-      />
+      <>
+        <AssemblyDetailView
+          card={selectedCard}
+          isOpen={true}
+          onClose={() => setSelectedCard(null)}
+          onEdit={handleCardEdit}
+        />
+        {editCard && (
+          <AssemblyCardModal
+            isOpen={isModalOpen}
+            onClose={handleModalClose}
+            card={editCard}
+          />
+        )}
+      </>
     );
   }
 
