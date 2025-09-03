@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import vikingLogo from "@assets/Viking-logo-2_1756864041230.jpg";
 
 interface LoginPageProps {
   onLoginSuccess: (user: any) => void;
@@ -61,6 +62,9 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
+          <div className="flex justify-center mb-4">
+            <img src={vikingLogo} alt="Viking Logo" className="h-16 w-16 object-contain" />
+          </div>
           <CardTitle className="tracking-tight font-bold text-center text-[28px]">Viking's Manufacturing Assembly System</CardTitle>
           <CardDescription className="text-center">
             Sign in to access the system
