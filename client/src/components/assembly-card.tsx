@@ -98,6 +98,7 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     card.status === "assembling" ? "bg-blue-500" :
     card.status === "completed" ? "bg-green-500" :
     card.status === "picking" ? getPhaseClass(card.phase) :
+    card.status === "delivered_to_paint" ? getPhaseClass(card.phase) :
     "bg-gray-400";
   // Calculate width reactively - use actualDuration for completed cards, otherwise use expected duration
   const displayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
@@ -148,6 +149,12 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
       {/* Large green P indicator for picking status */}
       {card.status === "picking" && (
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-green-600 rounded-full flex items-center justify-center z-10">
+          <span className="text-white font-bold text-2xl">P</span>
+        </div>
+      )}
+      {/* Large purple P indicator for delivered to paint status */}
+      {card.status === "delivered_to_paint" && (
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center z-10">
           <span className="text-white font-bold text-2xl">P</span>
         </div>
       )}
