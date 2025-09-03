@@ -747,7 +747,7 @@ export default function Scheduler() {
               <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
                 <div className="flex items-center">
                   <div className="w-6 text-center text-xs font-medium text-muted-foreground">☐</div>
-                  <div className="w-14 text-xs font-medium text-muted-foreground writing-mode-vertical-rl text-center border-l border-border px-1">Machine Group</div>
+                  <div className="w-10 text-xs font-medium text-muted-foreground writing-mode-vertical-rl text-center border-l border-border px-1">Machine Group</div>
                   <div className="w-48 font-semibold text-sm pl-4">Assembler</div>
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
@@ -785,7 +785,7 @@ export default function Scheduler() {
                       </div>
                       
                       {/* Machine Group Column */}
-                      <div className="w-14 border-l border-border px-1 flex items-center justify-center min-h-20">
+                      <div className="w-10 border-l border-border px-1 flex items-center justify-center min-h-20">
                         {machineGroup && (
                           <div className="writing-mode-vertical-rl text-xs font-medium text-center">
                             {machineGroup}
