@@ -202,8 +202,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                           <SelectItem value="M">M - Mechanical</SelectItem>
                           <SelectItem value="E">E - Electrical</SelectItem>
                           <SelectItem value="S">S - Sub Assembly</SelectItem>
-                          <SelectItem value="F">F - Final</SelectItem>
-                          <SelectItem value="Q">Q - Quality Control</SelectItem>
+                          <SelectItem value="P">P - Pre-Assembly</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
