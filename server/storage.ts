@@ -252,7 +252,10 @@ export class MemStorage implements IStorage {
         actualDuration: null,
         gembaDocLink: null,
         grounded: false,
-        subAssyArea: card.subAssyArea ?? null
+        subAssyArea: card.subAssyArea ?? null,
+        materialSeq: null,
+        operationSeq: null,
+        requiresCrane: false
       });
     });
   }
