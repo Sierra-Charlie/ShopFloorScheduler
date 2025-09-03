@@ -1029,20 +1029,46 @@ export class DatabaseStorage implements IStorage {
 }
 
 // Use DatabaseStorage instead of MemStorage
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
 
 // Initialize default data in database if tables are empty
 async function initializeDatabaseData() {
   try {
     const existingUsers = await db.select().from(users).limit(1);
     if (existingUsers.length === 0) {
-      // Initialize users
+      // Initialize users with hashed passwords
+      const bcrypt = await import('bcryptjs');
       const defaultUsers = [
-        { name: "John Smith", role: "production_supervisor", email: "john.smith@company.com" },
-        { name: "Sarah Johnson", role: "material_handler", email: "sarah.johnson@company.com" },
-        { name: "Mike Wilson", role: "assembler", email: "mike.wilson@company.com" },
-        { name: "Emily Chen", role: "scheduler", email: "emily.chen@company.com" },
-        { name: "David Brown", role: "admin", email: "david.brown@company.com" },
+        { 
+          name: "John Smith", 
+          role: "production_supervisor", 
+          email: "john.smith@vikingeng.com",
+          password: await bcrypt.hash("password123", 10)
+        },
+        { 
+          name: "Sarah Johnson", 
+          role: "material_handler", 
+          email: "sarah.johnson@vikingeng.com",
+          password: await bcrypt.hash("password123", 10)
+        },
+        { 
+          name: "Mike Wilson", 
+          role: "assembler", 
+          email: "mike.wilson@stonetreeinvest.com",
+          password: await bcrypt.hash("password123", 10)
+        },
+        { 
+          name: "Emily Chen", 
+          role: "scheduler", 
+          email: "emily.chen@vikingeng.com",
+          password: await bcrypt.hash("password123", 10)
+        },
+        { 
+          name: "David Brown", 
+          role: "admin", 
+          email: "david.brown@stonetreeinvest.com",
+          password: await bcrypt.hash("admin123", 10)
+        },
       ];
       await db.insert(users).values(defaultUsers);
 
@@ -1132,4 +1158,4 @@ async function initializeDatabaseData() {
 }
 
 // Initialize database data on startup
-// initializeDatabaseData(); // Commented out while using MemStorage
+initializeDatabaseData();
