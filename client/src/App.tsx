@@ -11,6 +11,7 @@ import { UserProvider, useUser } from "@/contexts/user-context";
 import Scheduler from "@/pages/scheduler";
 import Dashboard from "@/pages/dashboard";
 import GanttView from "@/pages/gantt-view";
+import Planning from "@/pages/planning";
 import MaterialHandler from "@/pages/material-handler";
 import AssemblerView from "@/pages/assembler-view";
 import AndonIssues from "@/pages/andon-issues";
@@ -47,6 +48,7 @@ function Router() {
           <Route path="/" component={Scheduler} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/gantt" component={GanttView} />
+          <Route path="/planning" component={Planning} />
           <Route path="/material-handler" component={MaterialHandler} />
           <Route path="/assembler" component={AssemblerView} />
           <Route path="/andon-issues" component={AndonIssues} />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowLeft, AlertTriangle, Camera } from "lucide-react";
+import { Package, AlertTriangle, Camera } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
@@ -39,80 +39,41 @@ const getSequenceTypeLabel = (type: string) => {
   }
 };
 
-interface MaterialCardProps {
+interface PlanningCardProps {
   card: AssemblyCard;
   index: number;
   onStatusChange: (cardId: string) => void;
 }
 
-function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
+function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
-  const [pickingElapsed, setPickingElapsed] = useState(0);
   const [showAndonDialog, setShowAndonDialog] = useState(false);
   const [andonIssue, setAndonIssue] = useState("");
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
 
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: "material-card",
+    type: "planning-card",
     item: { id: card.id, originalIndex: index },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   }), [card.id, index]);
 
-  const isReady = card.status === "ready_for_build";
-  const isPicking = card.status === "picking";
-  const isDeliveredToPaint = card.status === "delivered_to_paint";
   const isClearedForPicking = card.status === "cleared_for_picking";
-  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : isClearedForPicking ? getPhaseClass(card.phase) : "bg-gray-400";
+  const phaseClass = getPhaseClass(card.phase);
 
-  // Timer for picking status
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPicking && card.pickingStartTime) {
-      const startTime = new Date(card.pickingStartTime);
-      // Update immediately
-      setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
-      
-      interval = setInterval(() => {
-        setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [isPicking, card.pickingStartTime]);
-
-  const handleStartPicking = async () => {
+  const handleClearedForPicking = async () => {
     try {
       await updateCardMutation.mutateAsync({
         id: card.id,
-        status: "picking",
-      });
-      onStatusChange(card.id);
-      toast({
-        title: "Picking started",
-        description: `Started picking materials for ${card.cardNumber}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to start picking",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeliveredToPaint = async () => {
-    try {
-      await updateCardMutation.mutateAsync({
-        id: card.id,
-        status: "delivered_to_paint",
+        status: "cleared_for_picking",
       });
       onStatusChange(card.id);
       toast({
         title: "Status updated",
-        description: `${card.cardNumber} delivered to paint`,
+        description: `${card.cardNumber} cleared for picking`,
       });
     } catch (error) {
       toast({
@@ -121,33 +82,6 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         variant: "destructive",
       });
     }
-  };
-
-  const handleReadyForBuild = async () => {
-    try {
-      await updateCardMutation.mutateAsync({
-        id: card.id,
-        status: "ready_for_build",
-      });
-      onStatusChange(card.id);
-      toast({
-        title: "Status updated",
-        description: `${card.cardNumber} is now ready for build`,
-      });
-    } catch (error) {
-      toast({
-        title: "Failed to update status",
-        description: "Please try again",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   const handlePhotoCapture = async (photoBlob: Blob) => {
@@ -226,7 +160,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
           assemblyCardNumber: card.cardNumber,
           description: andonIssue,
           photoPath,
-          submittedBy: "Material Handler", // In real app, get from auth
+          submittedBy: "Scheduler", // Planning role submitting
           status: "unresolved",
         }),
       });
@@ -258,20 +192,15 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     <div
       ref={drag}
       className={cn(
-        "material-card p-4 rounded-lg border border-black shadow-sm cursor-grab active:cursor-grabbing",
+        "planning-card p-4 rounded-lg border border-black shadow-sm cursor-grab active:cursor-grabbing",
         phaseClass,
         isDragging && "opacity-50"
       )}
-      data-testid={`material-card-${card.cardNumber}`}
+      data-testid={`planning-card-${card.cardNumber}`}
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
           <span className="font-bold text-lg">{card.cardNumber}</span>
-          {isPicking && (
-            <div className="bg-green-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">
-              P
-            </div>
-          )}
           {isClearedForPicking && (
             <div className="bg-white text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg border-2 border-black">
               P
@@ -289,71 +218,23 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         {card.duration} hrs • {getSequenceTypeLabel(card.type)}
       </div>
       
-      {isPicking && (
-        <div className="text-center mb-3">
-          <div className="text-sm font-medium text-green-800">Picking in progress</div>
-          <div className="text-lg font-mono font-bold text-green-600">
-            {formatTime(pickingElapsed)}
-          </div>
+      {!isClearedForPicking && card.status !== "completed" && card.status !== "assembling" && (
+        <div className="space-y-2">
+          <Button
+            onClick={handleClearedForPicking}
+            size="sm"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            data-testid={`button-cleared-${card.cardNumber}`}
+          >
+            <Package className="mr-2 h-4 w-4" />
+            Cleared for Picking
+          </Button>
         </div>
       )}
       
       {isClearedForPicking && (
-        <Button
-          onClick={handleStartPicking}
-          size="sm"
-          className="w-full bg-orange-600 hover:bg-orange-700 text-white"
-          data-testid={`button-picking-${card.cardNumber}`}
-        >
-          <Package className="mr-2 h-4 w-4" />
-          Start Picking
-        </Button>
-      )}
-      
-      {!isClearedForPicking && !isPicking && !isReady && !isDeliveredToPaint && card.status !== "completed" && card.status !== "assembling" && (
-        <div className="text-center text-sm font-medium text-orange-800 p-2 bg-orange-50 rounded">
-          ⏳ Waiting for Planning Clearance
-        </div>
-      )}
-      
-      {isPicking && (
-        <div className="space-y-2">
-          <Button
-            onClick={handleDeliveredToPaint}
-            size="sm"
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-            data-testid={`button-delivered-paint-${card.cardNumber}`}
-          >
-            <Package className="mr-2 h-4 w-4" />
-            Delivered to Paint
-          </Button>
-          <Button
-            onClick={handleReadyForBuild}
-            size="sm"
-            className="w-full bg-green-600 hover:bg-green-700 text-white"
-            data-testid={`button-ready-${card.cardNumber}`}
-          >
-            <Package className="mr-2 h-4 w-4" />
-            Ready for Build
-          </Button>
-        </div>
-      )}
-      
-      {isDeliveredToPaint && (
-        <Button
-          onClick={handleReadyForBuild}
-          size="sm"
-          className="w-full bg-green-600 hover:bg-green-700 text-white"
-          data-testid={`button-ready-${card.cardNumber}`}
-        >
-          <Package className="mr-2 h-4 w-4" />
-          Ready for Build
-        </Button>
-      )}
-      
-      {isReady && (
-        <div className="text-center text-sm font-medium text-green-800">
-          ✓ Ready for Build
+        <div className="text-center text-sm font-medium text-green-800 mb-2">
+          ✓ Cleared for Picking
         </div>
       )}
 
@@ -471,7 +352,7 @@ interface DropZoneProps {
 
 function DropZone({ onDrop, index, children }: DropZoneProps) {
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: "material-card",
+    accept: "planning-card",
     drop: (item: { id: string; originalIndex: number }) => {
       if (item.originalIndex !== index) {
         onDrop(item.id, index);
@@ -495,13 +376,13 @@ function DropZone({ onDrop, index, children }: DropZoneProps) {
   );
 }
 
-export default function MaterialHandler() {
+export default function Planning() {
   const { currentUser } = useUser();
   const { data: assemblyCards = [], isLoading } = useAssemblyCards();
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
 
-  // Sort cards by phase first, then by position for material picking order
+  // Sort cards by phase first, then by position for planning order
   const sortedCards = [...assemblyCards].sort((a, b) => {
     if (a.phase !== b.phase) {
       return a.phase - b.phase;
@@ -545,18 +426,18 @@ export default function MaterialHandler() {
   };
 
   const handleStatusChange = (cardId: string) => {
-    // This function is called when a card status changes to ready_for_build
+    // This function is called when a card status changes
     // The UI will automatically update due to React Query refetching
   };
 
   // Check if user has permission to access this view
-  if (!currentUser || !canAccess(currentUser, 'material_handler_view')) {
+  if (!currentUser || !canAccess(currentUser, 'scheduler_view')) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-warning mx-auto mb-4" />
           <h2 className="text-xl font-semibold mb-2">Access Denied</h2>
-          <p className="text-muted-foreground">You don't have permission to access the Material Handler View.</p>
+          <p className="text-muted-foreground">You don't have permission to access the Planning View.</p>
         </div>
       </div>
     );
@@ -567,7 +448,7 @@ export default function MaterialHandler() {
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading material handler...</p>
+          <p className="text-muted-foreground">Loading planning...</p>
         </div>
       </div>
     );
@@ -586,7 +467,7 @@ export default function MaterialHandler() {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
-              Material Handler View
+              Planning View
             </h1>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span className="font-semibold mr-2">Delivery Sequence:</span>
@@ -603,12 +484,12 @@ export default function MaterialHandler() {
         </div>
       </header>
 
-      {/* Material Handler Content */}
+      {/* Planning Content */}
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Assembly Cards - Pick Order by Delivery Phase</h2>
+          <h2 className="text-lg font-semibold mb-2">Assembly Cards - Planning Approval</h2>
           <p className="text-sm text-muted-foreground">
-            Drag and drop to reorder cards within their delivery phase. Click "Ready for Build" when materials are picked and delivered.
+            Review and approve assembly cards for material picking. Click "Cleared for Picking" when ready for material handler processing.
           </p>
         </div>
 
@@ -618,7 +499,7 @@ export default function MaterialHandler() {
             <div key={phase} className="space-y-4">
               <div className="flex items-center space-x-2">
                 <div className={cn("w-4 h-4 rounded", getPhaseClass(phase))}></div>
-                <h3 className="text-md font-semibold">Phase {phase} Delivery Sequence</h3>
+                <h3 className="text-md font-semibold">Phase {phase} Assembly Sequence</h3>
                 <span className="text-sm text-muted-foreground">({cards.length} cards)</span>
               </div>
               
@@ -631,7 +512,7 @@ export default function MaterialHandler() {
                       index={globalIndex}
                       onDrop={handleCardReorder}
                     >
-                      <MaterialCard
+                      <PlanningCard
                         card={card}
                         index={globalIndex}
                         onStatusChange={handleStatusChange}

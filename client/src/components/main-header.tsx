@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart, Map, MessageCircle, LogOut, User, Shield } from "lucide-react";
+import { Calendar, Package, Users, BarChart3, Settings, AlertTriangle, PieChart, Map, MessageCircle, LogOut, User, Shield, ClipboardList } from "lucide-react";
 import { useUser, canAccess } from "@/contexts/user-context";
 import UserRoleSelector from "@/components/user-role-selector";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,12 @@ export default function MainHeader() {
       label: "Gantt View",
       icon: BarChart3,
       permission: "gantt_view"
+    },
+    {
+      href: "/planning",
+      label: "Planning",
+      icon: ClipboardList,
+      permission: "scheduler_view"
     },
     {
       href: "/material-handler",

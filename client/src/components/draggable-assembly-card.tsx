@@ -89,10 +89,12 @@ export default function DraggableAssemblyCard({
         <div className="flex items-center justify-between mt-auto">
           <span className="text-xs font-semibold">{card.type}</span>
           <div className="flex items-center space-x-2">
-{(card.status === "picking" || card.status === "delivered_to_paint") && (
+            {(card.status === "picking" || card.status === "delivered_to_paint" || card.status === "cleared_for_picking") && (
               <div className={cn(
-                "w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold",
-                card.status === "picking" ? "bg-green-500" : "bg-purple-600"
+                "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
+                card.status === "picking" ? "bg-green-500 text-white" :
+                card.status === "delivered_to_paint" ? "bg-purple-600 text-white" :
+                card.status === "cleared_for_picking" ? "bg-white text-black border-2 border-black" : ""
               )}>
                 P
               </div>
@@ -120,6 +122,16 @@ export default function DraggableAssemblyCard({
         <div className="flex items-center space-x-2">
           <div className={cn("w-3 h-3 rounded-full", getPhaseColor(card.phase))}></div>
           <span className="text-sm font-bold">{card.cardNumber}</span>
+          {(card.status === "picking" || card.status === "delivered_to_paint" || card.status === "cleared_for_picking") && (
+            <div className={cn(
+              "w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold",
+              card.status === "picking" ? "bg-green-500 text-white" :
+              card.status === "delivered_to_paint" ? "bg-purple-600 text-white" :
+              card.status === "cleared_for_picking" ? "bg-white text-black border-2 border-black" : ""
+            )}>
+              P
+            </div>
+          )}
         </div>
         <span className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded">
           {getTypeLabel(card.type)}
