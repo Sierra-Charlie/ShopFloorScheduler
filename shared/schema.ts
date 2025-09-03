@@ -19,8 +19,6 @@ export const assemblers = pgTable("assemblers", {
   type: text("type").notNull(), // "mechanical", "electrical", "final", "qc"
   status: text("status").notNull().default("available"), // "available", "busy", "offline"
   assignedUser: varchar("assigned_user").references(() => users.id), // User assigned to operate this assembler
-  machineType: text("machine_type"), // "Turbo 505", "Voyager", "Champ"
-  machineNumber: text("machine_number"), // 4-digit machine number
 });
 
 export const assemblyCards = pgTable("assembly_cards", {
@@ -94,19 +92,6 @@ export const updateUserSchema = z.object({
 
 export const insertAssemblerSchema = createInsertSchema(assemblers).omit({
   id: true,
-}).extend({
-  machineType: z.enum(["Turbo 505", "Voyager", "Champ"]).nullable().optional(),
-  machineNumber: z.string().length(4, "Machine number must be exactly 4 digits").nullable().optional(),
-});
-
-export const updateAssemblerSchema = z.object({
-  id: z.string(),
-  name: z.string().optional(),
-  type: z.enum(["mechanical", "electrical", "final", "qc"]).optional(),
-  status: z.enum(["available", "busy", "offline"]).optional(),
-  assignedUser: z.string().nullable().optional(),
-  machineType: z.enum(["Turbo 505", "Voyager", "Champ"]).nullable().optional(),
-  machineNumber: z.string().length(4, "Machine number must be exactly 4 digits").nullable().optional(),
 });
 
 export const insertAssemblyCardSchema = createInsertSchema(assemblyCards).omit({
@@ -147,7 +132,6 @@ export type UpdateUser = z.infer<typeof updateUserSchema>;
 
 export type InsertAssembler = z.infer<typeof insertAssemblerSchema>;
 export type Assembler = typeof assemblers.$inferSelect;
-export type UpdateAssembler = z.infer<typeof updateAssemblerSchema>;
 
 export const insertAndonIssueSchema = createInsertSchema(andonIssues).omit({
   id: true,
