@@ -151,7 +151,7 @@ export default function BuildBayMap() {
                 className="border-2 border-dashed border-purple-500 bg-purple-100 dark:bg-purple-950/30"
               />
               
-              {/* Electrical Pre-Assembly */
+              {/* Electrical Pre-Assembly */}
               <BuildAreaZone
                 title="ELECTRICAL PRE-ASSEMBLY"
                 cards={getCardsForArea("electrical-pre")}
