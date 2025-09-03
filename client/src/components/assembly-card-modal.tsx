@@ -186,6 +186,31 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                   )}
                 />
                 
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="M">M - Mechanical</SelectItem>
+                          <SelectItem value="E">E - Electrical</SelectItem>
+                          <SelectItem value="S">S - Sub Assembly</SelectItem>
+                          <SelectItem value="F">F - Final</SelectItem>
+                          <SelectItem value="Q">Q - Quality Control</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
