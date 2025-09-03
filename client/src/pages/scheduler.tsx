@@ -34,6 +34,8 @@ export default function Scheduler() {
   const [groupMachineType, setGroupMachineType] = useState<string>(""); // Selected machine type for grouping
   const [groupMachineNumber, setGroupMachineNumber] = useState<string>(""); // Machine number for grouping
   const [machineGroups, setMachineGroups] = useState<Record<string, { type: string; number: string; assemblerIds: string[]; collapsed: boolean }>>({});
+  const [machineFilter, setMachineFilter] = useState<string>(""); // Filter by machine type-number
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // Machine filter modal
   const { toast } = useToast();
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
@@ -114,6 +116,36 @@ export default function Scheduler() {
     if (index < activeLanes.length - 1) {
       moveSwimLane(index, index + 1);
     }
+  };
+
+  // Filter swim lanes based on machine type and number
+  const getFilteredLanes = () => {
+    if (!machineFilter) return activeLanes;
+    
+    return activeLanes.filter(assemblerId => {
+      const assembler = assemblers.find(a => a.id === assemblerId);
+      if (!assembler || !assembler.machineType || !assembler.machineNumber) return false;
+      
+      const machineGroup = `${assembler.machineType} - ${assembler.machineNumber}`;
+      return machineGroup === machineFilter;
+    });
+  };
+
+  // Get unique machine groups for filter options
+  const getAvailableMachineGroups = () => {
+    const groups = new Set<string>();
+    activeLanes.forEach(assemblerId => {
+      const assembler = assemblers.find(a => a.id === assemblerId);
+      if (assembler?.machineType && assembler?.machineNumber) {
+        groups.add(`${assembler.machineType} - ${assembler.machineNumber}`);
+      }
+    });
+    return Array.from(groups).sort();
+  };
+
+  // Clear machine filter
+  const clearMachineFilter = () => {
+    setMachineFilter("");
   };
 
   // Save swim lane configuration
@@ -675,6 +707,32 @@ export default function Scheduler() {
                 Group by Machine ({selectedLanes.length})
               </Button>
             )}
+            
+            {/* Machine Filter Button */}
+            <Button 
+              size="sm" 
+              onClick={() => setIsFilterModalOpen(true)}
+              variant={machineFilter ? "default" : "outline"}
+              className={machineFilter ? "bg-green-600 hover:bg-green-700" : ""}
+              data-testid="button-filter-machine"
+            >
+              <Zap className="h-4 w-4 mr-1" />
+              {machineFilter ? `Filter: ${machineFilter}` : "Filter by Machine"}
+            </Button>
+            
+            {/* Clear Filter Button - only show when filter is active */}
+            {machineFilter && (
+              <Button 
+                size="sm" 
+                onClick={clearMachineFilter}
+                variant="ghost"
+                className="text-red-600 hover:text-red-700"
+                data-testid="button-clear-filter"
+              >
+                <Minus className="h-4 w-4 mr-1" />
+                Clear Filter
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -708,7 +766,7 @@ export default function Scheduler() {
 
               {/* Swim Lanes Container */}
               <div className="time-grid relative">
-                {activeLanes.map((assemblerId, index) => {
+                {getFilteredLanes().map((assemblerId, index) => {
                   const assembler = assemblers.find(a => a.id === assemblerId);
                   if (!assembler) return null;
                   
@@ -905,6 +963,62 @@ export default function Scheduler() {
         onClose={handleDetailViewClose}
         onEdit={handleCardEdit}
       />
+
+      {/* Machine Filter Modal */}
+      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Filter Swim Lanes by Machine</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="filter-machine" className="text-sm font-medium">
+                Select Machine Group
+              </Label>
+              <Select value={machineFilter} onValueChange={setMachineFilter}>
+                <SelectTrigger className="w-full" data-testid="select-filter-machine">
+                  <SelectValue placeholder="Select machine group to filter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Show All Machines</SelectItem>
+                  {getAvailableMachineGroups().map(group => (
+                    <SelectItem key={group} value={group}>{group}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="text-sm text-muted-foreground">
+              {machineFilter ? (
+                `Showing ${getFilteredLanes().length} of ${activeLanes.length} swim lanes`
+              ) : (
+                `Total swim lanes: ${activeLanes.length}`
+              )}
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button 
+                onClick={() => setIsFilterModalOpen(false)}
+                className="flex-1"
+                data-testid="button-apply-filter"
+              >
+                Apply Filter
+              </Button>
+              <Button 
+                onClick={() => {
+                  setMachineFilter("");
+                  setIsFilterModalOpen(false);
+                }}
+                variant="outline"
+                data-testid="button-clear-and-close"
+              >
+                Clear & Close
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Group by Machine Modal */}
       <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
