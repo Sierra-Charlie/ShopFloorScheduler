@@ -15,26 +15,7 @@ import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
 import DependencyLegend from "@/components/dependency-legend";
 import DeadTimeSource from "@/components/dead-time-source";
-import { AssemblyCard, Assembler } from "@shared/schema";
-
-// Helper functions for machine grouping
-const getMachineGroupKey = (assembler: Assembler): string => {
-  if (assembler.machineType && assembler.machineNumber) {
-    return `${assembler.machineType} - ${assembler.machineNumber}`;
-  }
-  return 'Ungrouped';
-};
-
-const groupAssemblersByMachine = (assemblers: Assembler[]): Record<string, Assembler[]> => {
-  return assemblers.reduce((groups, assembler) => {
-    const groupKey = getMachineGroupKey(assembler);
-    if (!groups[groupKey]) {
-      groups[groupKey] = [];
-    }
-    groups[groupKey].push(assembler);
-    return groups;
-  }, {} as Record<string, Assembler[]>);
-};
+import { AssemblyCard } from "@shared/schema";
 
 export default function Scheduler() {
   const { currentUser } = useUser();
@@ -46,7 +27,6 @@ export default function Scheduler() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeLanes, setActiveLanes] = useState<string[]>([]); // Track active swim lane assembler IDs
   const [newLaneAssembler, setNewLaneAssembler] = useState<string>(""); // Selected assembler for new lane
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set()); // Track collapsed machine groups
   const { toast } = useToast();
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
@@ -86,19 +66,6 @@ export default function Scheduler() {
       localStorage.setItem('swimLanes', JSON.stringify(activeLanes));
     }
   }, [activeLanes]);
-  
-  // Functions to manage machine groups
-  const toggleGroupCollapse = (groupKey: string) => {
-    setCollapsedGroups(prev => {
-      const newCollapsed = new Set(prev);
-      if (newCollapsed.has(groupKey)) {
-        newCollapsed.delete(groupKey);
-      } else {
-        newCollapsed.add(groupKey);
-      }
-      return newCollapsed;
-    });
-  };
   
   // Functions to manage swim lanes
   const addSwimLane = () => {
@@ -622,7 +589,6 @@ export default function Scheduler() {
               {/* Time Header - sticky within the scroll container */}
               <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
                 <div className="flex items-center">
-                  <div className="w-24 font-semibold text-sm" style={{ writingMode: 'vertical-rl', textOrientation: 'mixed', height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Machine Group</div>
                   <div className="w-48 font-semibold text-sm">Assembler</div>
                   {Array.from({ length: 4 }, (_, i) => (
                     <div
@@ -639,87 +605,74 @@ export default function Scheduler() {
                 </div>
               </div>
 
-              {/* Swim Lanes Container with Machine Grouping */}
+              {/* Swim Lanes Container */}
               <div className="time-grid relative">
-                {(() => {
-                  // Get active assemblers
-                  const activeAssemblers = activeLanes
-                    .map(id => assemblers.find(a => a.id === id))
-                    .filter(Boolean) as Assembler[];
+                {activeLanes.map((assemblerId, index) => {
+                  const assembler = assemblers.find(a => a.id === assemblerId);
+                  if (!assembler) return null;
                   
-                  // Group assemblers by machine
-                  const machineGroups = groupAssemblersByMachine(activeAssemblers);
-                  
-                  return Object.entries(machineGroups).map(([groupKey, groupAssemblers]) => {
-                    const isCollapsed = collapsedGroups.has(groupKey);
-                    
-                    return (
-                      <div key={groupKey} className="machine-group">
-                        {groupAssemblers.map((assembler, index) => {
-                          const isFirstInGroup = index === 0;
-                          const groupSize = groupAssemblers.length;
-                          
-                          return (
-                            <div key={assembler.id} className="relative group" style={{ display: isCollapsed && !isFirstInGroup ? 'none' : 'block' }}>
-                              {/* Machine Group Label - only on first item */}
-                              {isFirstInGroup && (
-                                <div 
-                                  className="absolute left-0 top-0 w-24 h-full bg-muted border-r border-border flex flex-col items-center justify-center z-10 cursor-pointer hover:bg-accent"
-                                  style={{ 
-                                    height: isCollapsed ? 'auto' : `${groupSize * 80}px`,
-                                    writingMode: 'vertical-rl', 
-                                    textOrientation: 'mixed' 
-                                  }}
-                                  onClick={() => toggleGroupCollapse(groupKey)}
-                                >
-                                  <span className="text-xs font-medium text-center">
-                                    {groupKey}
-                                  </span>
-                                  <span className="mt-1">
-                                    {isCollapsed ? '+' : '-'}
-                                  </span>
-                                </div>
-                              )}
-                              
-                              {/* SwimLane with offset for machine group column */}
-                              <div style={{ marginLeft: '96px' }}>
-                                <SwimLane
-                                  assembler={assembler}
-                                  assemblyCards={assemblyCards.filter(card => {
-                                    const baseCards = card.assignedTo === assembler.id;
-                                    return baseCards;
-                                  })}
-                                  allAssemblyCards={assemblyCards}
-                                  users={users}
-                                  onCardEdit={handleCardEdit}
-                                  onCardView={handleCardView}
-                                  startTimeOffset={getStartTimeOffset()}
-                                  isCardOverdue={isCardOverdue}
-                                  data-testid={`swim-lane-${assembler.id}`}
-                                />
-                              </div>
-                              
-                              {/* Lane Controls - visible on hover */}
-                              <div className="absolute left-28 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col space-y-1">
-                                {/* Delete Lane Button */}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 w-6 p-0 bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-700"
-                                  onClick={() => removeSwimLane(assembler.id)}
-                                  data-testid={`button-delete-lane-${assembler.id}`}
-                                  title="Remove lane"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            </div>
-                          );
+                  return (
+                    <div key={assembler.id} className="relative group">
+                      <SwimLane
+                        assembler={assembler}
+                        assemblyCards={assemblyCards.filter(card => {
+                          const baseCards = card.assignedTo === assembler.id;
+                          return baseCards;
                         })}
+                        allAssemblyCards={assemblyCards}
+                        users={users}
+                        onCardEdit={handleCardEdit}
+                        onCardView={handleCardView}
+                        startTimeOffset={getStartTimeOffset()}
+                        isCardOverdue={isCardOverdue}
+                        data-testid={`swim-lane-${assembler.id}`}
+                      />
+                      
+                      {/* Lane Controls - visible on hover */}
+                      <div className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col space-y-1">
+                        {/* Reorder Up Button */}
+                        {index > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 bg-white/80 hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                            onClick={() => moveSwimLaneUp(assembler.id)}
+                            data-testid={`button-move-up-${assembler.id}`}
+                            title="Move lane up"
+                          >
+                            <ChevronUp className="h-3 w-3" />
+                          </Button>
+                        )}
+                        
+                        {/* Reorder Down Button */}
+                        {index < activeLanes.length - 1 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 w-6 p-0 bg-white/80 hover:bg-blue-50 text-blue-600 hover:text-blue-700"
+                            onClick={() => moveSwimLaneDown(assembler.id)}
+                            data-testid={`button-move-down-${assembler.id}`}
+                            title="Move lane down"
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </Button>
+                        )}
+                        
+                        {/* Delete Lane Button */}
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 w-6 p-0 bg-white/80 hover:bg-red-50 text-red-600 hover:text-red-700"
+                          onClick={() => removeSwimLane(assembler.id)}
+                          data-testid={`button-delete-lane-${assembler.id}`}
+                          title="Remove lane"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </div>
-                    );
-                  });
-                })()}
+                    </div>
+                  );
+                })}
                 
                 {/* Current Time Progress Line */}
                 {(() => {
@@ -730,7 +683,7 @@ export default function Scheduler() {
                     <div
                       className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
                       style={{
-                        left: `${336 + timePosition}px`, // 96px for machine group + 240px for assembler column width
+                        left: `${240 + timePosition}px`, // 240px for assembler column width
                         boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
                       }}
                       data-testid="current-time-line"
