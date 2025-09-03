@@ -776,7 +776,7 @@ export default function Scheduler() {
                   return (
                     <div key={assembler.id} className="relative group flex items-center">
                       {/* Checkbox for lane selection */}
-                      <div className="w-6 flex justify-center items-center ml-6">
+                      <div className="w-6 flex justify-center items-center">
                         <Checkbox
                           checked={selectedLanes.includes(assemblerId)}
                           onCheckedChange={(checked) => handleLaneSelection(assemblerId, checked as boolean)}
