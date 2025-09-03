@@ -626,7 +626,6 @@ export default function Scheduler() {
 
   return (
     <div className="flex-1 p-6 overflow-x-auto">
-
       {/* Toolbar */}
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
@@ -736,7 +735,6 @@ export default function Scheduler() {
           </div>
         </div>
       </div>
-
       {/* Schedule Summary View */}
       {currentView === "schedule" && (
         <div className="flex flex-col h-screen">
@@ -783,16 +781,14 @@ export default function Scheduler() {
                           data-testid={`checkbox-lane-${assembler.id}`}
                         />
                       </div>
-                      
                       {/* Machine Group Column */}
                       <div className="w-10 border-l border-border px-1 flex items-center justify-center min-h-20">
                         {machineGroup && (
-                          <div className="writing-mode-vertical-rl text-xs font-medium text-center">
+                          <div className="writing-mode-vertical-rl text-xs text-center font-bold">
                             {machineGroup}
                           </div>
                         )}
                       </div>
-                      
                       {/* Swim Lane */}
                       <div className="flex-1">
                         <SwimLane
@@ -810,7 +806,6 @@ export default function Scheduler() {
                           data-testid={`swim-lane-${assembler.id}`}
                         />
                       </div>
-                      
                       {/* Lane Controls - visible on hover */}
                       <div className="absolute left-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 flex flex-col space-y-1">
                         {/* Reorder Up Button */}
@@ -887,7 +882,6 @@ export default function Scheduler() {
           </div>
         </div>
       )}
-
       {/* Gantt View */}
       {currentView === "gantt" && (
         <div className="flex flex-col h-screen">
@@ -947,7 +941,6 @@ export default function Scheduler() {
           </div>
         </div>
       )}
-
       {/* Assembly Card Modal */}
       <AssemblyCardModal
         card={selectedCard}
@@ -955,7 +948,6 @@ export default function Scheduler() {
         isOpen={isModalOpen}
         onClose={handleModalClose}
       />
-
       {/* Assembly Detail View */}
       <AssemblyDetailView
         card={selectedDetailCard}
@@ -963,7 +955,6 @@ export default function Scheduler() {
         onClose={handleDetailViewClose}
         onEdit={handleCardEdit}
       />
-
       {/* Machine Filter Modal */}
       <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
         <DialogContent className="max-w-md">
@@ -1019,7 +1010,6 @@ export default function Scheduler() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Group by Machine Modal */}
       <Dialog open={isGroupModalOpen} onOpenChange={setIsGroupModalOpen}>
         <DialogContent className="max-w-md">
@@ -1084,7 +1074,6 @@ export default function Scheduler() {
           </div>
         </DialogContent>
       </Dialog>
-
       {/* Dependency Legend */}
       <DependencyLegend />
     </div>
