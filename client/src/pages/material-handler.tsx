@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Package, ArrowLeft, AlertTriangle, Camera } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { CameraCapture } from "@/components/CameraCapture";
 
 const getPhaseClass = (phase: number) => {
   switch (phase) {
@@ -39,6 +49,10 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   const [pickingElapsed, setPickingElapsed] = useState(0);
+  const [showAndonDialog, setShowAndonDialog] = useState(false);
+  const [andonIssue, setAndonIssue] = useState("");
+  const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "material-card",
@@ -135,6 +149,110 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handlePhotoCapture = async (photoBlob: Blob) => {
+    try {
+      // Get upload URL
+      const uploadResponse = await fetch("/api/objects/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const { uploadURL } = await uploadResponse.json();
+      
+      // Upload photo to object storage
+      const uploadResult = await fetch(uploadURL, {
+        method: "PUT",
+        body: photoBlob,
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      });
+      
+      if (uploadResult.ok) {
+        setAttachedPhoto(uploadURL);
+        toast({
+          title: "Photo captured",
+          description: "Photo attached to Andon alert",
+        });
+      }
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      toast({
+        title: "Failed to upload photo",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+    setShowCamera(false);
+  };
+
+  const handleAndonAlert = async () => {
+    if (!andonIssue.trim()) {
+      toast({
+        title: "Please describe the issue",
+        description: "Enter details about the problem before sending alert",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    let photoPath = null;
+    if (attachedPhoto) {
+      try {
+        const response = await fetch("/api/andon-photos", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ photoURL: attachedPhoto }),
+        });
+        const data = await response.json();
+        photoPath = data.objectPath;
+      } catch (error) {
+        console.error("Error saving photo:", error);
+      }
+    }
+
+    try {
+      // Create Andon issue in database
+      const response = await fetch("/api/andon-issues", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          assemblyCardNumber: card.cardNumber,
+          description: andonIssue,
+          photoPath,
+          submittedBy: "Material Handler", // In real app, get from auth
+          status: "unresolved",
+        }),
+      });
+      
+      if (response.ok) {
+        const createdIssue = await response.json();
+        toast({
+          title: "Andon Alert Sent!",
+          description: `Issue ${createdIssue.issueNumber} created for ${card.cardNumber}${photoPath ? " with photo" : ""}`,
+        });
+      } else {
+        throw new Error("Failed to create issue");
+      }
+      
+      setShowAndonDialog(false);
+      setAndonIssue("");
+      setAttachedPhoto(null);
+    } catch (error) {
+      console.error("Error creating andon issue:", error);
+      toast({
+        title: "Failed to send alert",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div
       ref={drag}
@@ -225,6 +343,109 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         <div className="text-center text-sm font-medium text-green-800">
           ✓ Ready for Build
         </div>
+      )}
+
+      {/* Andon Alert Button */}
+      <div className="mt-2">
+        <Button
+          onClick={() => setShowAndonDialog(true)}
+          variant="destructive"
+          size="sm"
+          className="w-full"
+          data-testid={`button-andon-alert-${card.cardNumber}`}
+        >
+          <AlertTriangle className="mr-2 h-4 w-4" />
+          Andon Alert
+        </Button>
+      </div>
+
+      {/* Andon Issue Dialog */}
+      <Dialog open={showAndonDialog} onOpenChange={setShowAndonDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center">
+              <AlertTriangle className="mr-2 h-5 w-5" />
+              Andon Alert - {card.cardNumber}
+            </DialogTitle>
+            <DialogDescription>
+              Report an issue or request supervisor assistance for assembly card {card.cardNumber}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor={`andon-issue-${card.id}`} className="text-sm font-medium">
+                Describe the issue or problem:
+              </Label>
+              <Textarea
+                id={`andon-issue-${card.id}`}
+                placeholder="Please describe what help you need or what problem you're experiencing..."
+                value={andonIssue}
+                onChange={(e) => setAndonIssue(e.target.value)}
+                className="mt-2"
+                rows={4}
+                data-testid={`textarea-andon-issue-${card.cardNumber}`}
+              />
+            </div>
+            
+            {/* Photo Attachment Section */}
+            <div>
+              <Label className="text-sm font-medium">Photo (Optional):</Label>
+              <div className="mt-2 space-y-2">
+                {attachedPhoto ? (
+                  <div className="flex items-center justify-between p-2 bg-green-50 border border-green-200 rounded">
+                    <span className="text-sm text-green-700">Photo attached</span>
+                    <Button
+                      onClick={() => setAttachedPhoto(null)}
+                      variant="outline"
+                      size="sm"
+                      data-testid={`button-remove-photo-${card.cardNumber}`}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    onClick={() => setShowCamera(true)}
+                    variant="outline"
+                    className="w-full"
+                    data-testid={`button-take-photo-${card.cardNumber}`}
+                  >
+                    <Camera className="mr-2 h-4 w-4" />
+                    Take Photo
+                  </Button>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <Button 
+                onClick={handleAndonAlert}
+                variant="destructive"
+                className="flex-1"
+                data-testid={`button-send-andon-${card.cardNumber}`}
+              >
+                <AlertTriangle className="mr-2 h-4 w-4" />
+                Send Alert to Supervisor
+              </Button>
+              <Button 
+                onClick={() => setShowAndonDialog(false)}
+                variant="outline"
+                data-testid={`button-cancel-andon-${card.cardNumber}`}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Camera Dialog */}
+      {showCamera && (
+        <CameraCapture
+          onPhotoCapture={handlePhotoCapture}
+          onCancel={() => setShowCamera(false)}
+        />
       )}
     </div>
   );
