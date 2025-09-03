@@ -325,7 +325,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
 
   return (
     <div className="flex items-center border-b border-border hover:bg-accent/30 transition-colors min-w-max">
-      <div className="w-48 p-4 bg-card border-r border-border sticky left-32 z-20">
+      <div className="w-48 p-4 bg-card border-r border-border sticky left-0 z-20">
         <div className="font-semibold text-sm" data-testid={`assembler-name-${assembler.id}`}>
           {assembler.name}
         </div>
