@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type LoginUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
+import { type User, type InsertUser, type LoginUser, type Assembler, type InsertAssembler, type UpdateAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
 import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
@@ -21,7 +21,7 @@ export interface IStorage {
   getAssemblers(): Promise<Assembler[]>;
   getAssembler(id: string): Promise<Assembler | undefined>;
   createAssembler(assembler: InsertAssembler): Promise<Assembler>;
-  updateAssembler(id: string, assembler: Partial<InsertAssembler>): Promise<Assembler | undefined>;
+  updateAssembler(id: string, assembler: UpdateAssembler): Promise<Assembler | undefined>;
   
   // Assembly Cards
   getAssemblyCards(): Promise<AssemblyCard[]>;
@@ -127,20 +127,27 @@ export class MemStorage implements IStorage {
 
     // Initialize assemblers
     const defaultAssemblers: InsertAssembler[] = [
-      { name: "Mech Assy 1", type: "mechanical", status: "available" },
-      { name: "Mech Assy 2", type: "mechanical", status: "available" },
-      { name: "Mech Assy 3", type: "mechanical", status: "available" },
-      { name: "Mech Assy 4", type: "mechanical", status: "available" },
-      { name: "Elec Assy 1", type: "electrical", status: "available" },
-      { name: "Elec Assy 2", type: "electrical", status: "available" },
-      { name: "Elec Assy 3", type: "electrical", status: "available" },
-      { name: "Elec Assy 4", type: "electrical", status: "available" },
-      { name: "Run-in", type: "final", status: "available" },
+      { name: "Mech Assy 1", type: "mechanical", status: "available", machineType: "Turbo 505", machineNumber: "2002" },
+      { name: "Mech Assy 2", type: "mechanical", status: "available", machineType: "Turbo 505", machineNumber: "2002" },
+      { name: "Mech Assy 3", type: "mechanical", status: "available", machineType: null, machineNumber: null },
+      { name: "Mech Assy 4", type: "mechanical", status: "available", machineType: null, machineNumber: null },
+      { name: "Elec Assy 1", type: "electrical", status: "available", machineType: null, machineNumber: null },
+      { name: "Elec Assy 2", type: "electrical", status: "available", machineType: null, machineNumber: null },
+      { name: "Elec Assy 3", type: "electrical", status: "available", machineType: null, machineNumber: null },
+      { name: "Elec Assy 4", type: "electrical", status: "available", machineType: null, machineNumber: null },
+      { name: "Run-in", type: "final", status: "available", machineType: null, machineNumber: null },
     ];
 
     defaultAssemblers.forEach(assembler => {
       const id = randomUUID();
-      this.assemblers.set(id, { ...assembler, id, status: assembler.status || "available", assignedUser: null });
+      this.assemblers.set(id, { 
+        ...assembler, 
+        id, 
+        status: assembler.status || "available", 
+        assignedUser: null,
+        machineType: assembler.machineType || null,
+        machineNumber: assembler.machineNumber || null
+      });
     });
 
     // Initialize assembly cards
@@ -252,7 +259,10 @@ export class MemStorage implements IStorage {
         actualDuration: null,
         gembaDocLink: null,
         grounded: false,
-        subAssyArea: card.subAssyArea ?? null
+        subAssyArea: card.subAssyArea ?? null,
+        materialSeq: null,
+        operationSeq: null,
+        requiresCrane: false
       });
     });
   }
@@ -268,16 +278,23 @@ export class MemStorage implements IStorage {
 
   async createAssembler(assembler: InsertAssembler): Promise<Assembler> {
     const id = randomUUID();
-    const newAssembler: Assembler = { ...assembler, id, status: assembler.status || "available", assignedUser: assembler.assignedUser || null };
+    const newAssembler: Assembler = { 
+      ...assembler, 
+      id, 
+      status: assembler.status || "available", 
+      assignedUser: assembler.assignedUser || null,
+      machineType: assembler.machineType || null,
+      machineNumber: assembler.machineNumber || null
+    };
     this.assemblers.set(id, newAssembler);
     return newAssembler;
   }
 
-  async updateAssembler(id: string, assembler: Partial<InsertAssembler>): Promise<Assembler | undefined> {
+  async updateAssembler(id: string, update: UpdateAssembler): Promise<Assembler | undefined> {
     const existing = this.assemblers.get(id);
     if (!existing) return undefined;
     
-    const updated: Assembler = { ...existing, ...assembler };
+    const updated: Assembler = { ...existing, ...update };
     this.assemblers.set(id, updated);
     return updated;
   }
@@ -317,7 +334,10 @@ export class MemStorage implements IStorage {
       actualDuration: card.actualDuration || null,
       gembaDocLink: card.gembaDocLink || null,
       grounded: card.grounded ?? false,
-      subAssyArea: card.subAssyArea ?? null
+      subAssyArea: card.subAssyArea ?? null,
+      materialSeq: card.materialSeq || null,
+      operationSeq: card.operationSeq || null,
+      requiresCrane: card.requiresCrane ?? false
     };
     this.assemblyCards.set(id, newCard);
     return newCard;
