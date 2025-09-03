@@ -51,7 +51,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const isReady = card.status === "ready_for_build";
   const isPicking = card.status === "picking";
   const isDeliveredToPaint = card.status === "delivered_to_paint";
-  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : "bg-gray-400";
+  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : "bg-gray-400";
 
   // Timer for picking status
   useEffect(() => {
