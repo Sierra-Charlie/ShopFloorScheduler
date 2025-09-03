@@ -39,7 +39,7 @@ export default function MainHeader() {
       href: "/planning",
       label: "Planning",
       icon: ClipboardList,
-      permission: "scheduler_view"
+      permission: "planning_view"
     },
     {
       href: "/material-handler",

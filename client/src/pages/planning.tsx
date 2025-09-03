@@ -431,7 +431,7 @@ export default function Planning() {
   };
 
   // Check if user has permission to access this view
-  if (!currentUser || !canAccess(currentUser, 'scheduler_view')) {
+  if (!currentUser || !canAccess(currentUser, 'planning_view')) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="text-center">
