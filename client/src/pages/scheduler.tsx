@@ -650,15 +650,20 @@ export default function Scheduler() {
       const avgCycleTime = assemblersWithCards.length > 0 ? 
         assemblersWithCards.reduce((sum, [_, workload]) => sum + workload, 0) / assemblersWithCards.length : 0;
       
-      // Check dependency conflicts
+      // Check dependency conflicts - both same-lane and cross-lane dependencies
       let dependencyConflicts = 0;
       optimizedCards.forEach(card => {
         if (card.dependencies) {
           card.dependencies.forEach((depCardNumber: string) => {
             const depCard = optimizedCards.find(c => c.cardNumber === depCardNumber);
-            if (depCard && depCard.assignedTo === card.assignedTo) {
-              // Dependency should come BEFORE (lower position number) the dependent card
-              if ((depCard.position || 0) > (card.position || 0)) {
+            if (depCard) {
+              if (depCard.assignedTo === card.assignedTo) {
+                // Same lane: dependency should come BEFORE (lower position number) the dependent card
+                if ((depCard.position || 0) > (card.position || 0)) {
+                  dependencyConflicts++;
+                }
+              } else {
+                // Cross-lane dependency: always a conflict since cards can't coordinate timing across lanes
                 dependencyConflicts++;
               }
             }

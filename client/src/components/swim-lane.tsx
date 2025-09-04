@@ -286,15 +286,10 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         // Dependency card is in the same swim lane - check position order
         // Dependency should come BEFORE (lower position number) the dependent card
         return (depCard.position || 0) > (card.position || 0);
+      } else {
+        // Cross-lane dependency: always a conflict since cards can't coordinate timing across lanes
+        return true;
       }
-      
-      // Check timing conflicts for cards in different assemblers
-      if (card.startTime && depCard.endTime) {
-        return new Date(depCard.endTime) > new Date(card.startTime);
-      }
-      
-      // If no timing info, check status
-      return depCard.status === "blocked";
     });
 
     // Check crane dependency conflicts based on timeline position overlap
