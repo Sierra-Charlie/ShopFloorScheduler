@@ -51,6 +51,21 @@ const getStatusColor = (status: string) => {
   }
 };
 
+const getMiniStatusColor = (status: string) => {
+  switch (status) {
+    case "completed": return "bg-green-500 text-white";
+    case "assembling": return "bg-blue-500 text-white";
+    case "ready_for_build": return "bg-orange-500 text-white";
+    case "picking": return "bg-yellow-500 text-black";
+    case "delivered_to_paint": return "bg-purple-600 text-white";
+    case "cleared_for_picking": return "bg-white text-black border-2 border-black";
+    case "paused": return "bg-gray-500 text-white";
+    case "blocked": return "bg-red-500 text-white";
+    case "scheduled": return "bg-gray-300 text-black";
+    default: return "bg-gray-300 text-black";
+  }
+};
+
 export default function DraggableAssemblyCard({ 
   card, 
   currentArea, 
@@ -70,7 +85,7 @@ export default function DraggableAssemblyCard({
         ref={drag}
         className={cn(
           "relative rounded-lg p-2 cursor-move transition-all duration-200 hover:shadow-md min-h-[60px]",
-          card.type === "E" && card.status === "assembling" ? "bg-blue-500 text-white" : getPhaseBackgroundColor(card.phase),
+          getMiniStatusColor(card.status),
           isDragging && "opacity-50 rotate-2 scale-95"
         )}
         data-testid={`draggable-card-${card.cardNumber}`}
