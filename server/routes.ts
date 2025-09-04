@@ -2,11 +2,32 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema, insertThreadSchema, insertMessageSchema, updateThreadSchema, insertVoteSchema } from "@shared/schema";
+import { insertUserSchema, loginSchema, insertAssemblerSchema, insertAssemblyCardSchema, updateAssemblyCardSchema, insertAndonIssueSchema, updateAndonIssueSchema, insertThreadSchema, insertMessageSchema, updateThreadSchema, insertVoteSchema, fileUploadSchema } from "@shared/schema";
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
+import multer from "multer";
+import * as XLSX from "xlsx";
+import * as papa from "papaparse";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Configure multer for file uploads
+  const upload = multer({ 
+    dest: 'uploads/',
+    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+    fileFilter: (req, file, cb) => {
+      // Accept Excel and CSV files
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+        'text/csv', // .csv
+      ];
+      if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+      }
+    }
+  });
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
@@ -237,6 +258,208 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to validate dependencies" });
+    }
+  });
+
+  // File upload for assembly cards (Excel/CSV)
+  app.post("/api/assembly-cards/upload", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      let data: any[] = [];
+      const filePath = req.file.path;
+      const filename = req.file.originalname.toLowerCase();
+
+      try {
+        if (filename.endsWith('.csv')) {
+          // Parse CSV file
+          const fs = await import('fs');
+          const fileContent = fs.readFileSync(filePath, 'utf8');
+          const parsed = papa.parse(fileContent, { header: true, skipEmptyLines: true });
+          data = parsed.data;
+        } else if (filename.endsWith('.xlsx') || filename.endsWith('.xls')) {
+          // Parse Excel file
+          const workbook = XLSX.readFile(filePath);
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          data = XLSX.utils.sheet_to_json(worksheet);
+        }
+
+        // Clean up uploaded file
+        const fs = await import('fs');
+        fs.unlinkSync(filePath);
+
+        if (data.length === 0) {
+          return res.status(400).json({ message: "No data found in file" });
+        }
+
+        // Validate and transform data
+        const validatedCards = [];
+        const errors = [];
+
+        for (let i = 0; i < data.length; i++) {
+          const row = data[i];
+          try {
+            // Map CSV/Excel headers to our schema (case-insensitive)
+            const normalizedRow = {
+              cardNumber: row.cardNumber || row.CardNumber || row.card_number || row['Card Number'],
+              name: row.name || row.Name || row.NAME,
+              type: row.type || row.Type || row.TYPE,
+              duration: parseInt(row.duration || row.Duration || row.DURATION),
+              phase: parseInt(row.phase || row.Phase || row.PHASE),
+              assignedTo: row.assignedTo || row.AssignedTo || row.assigned_to || row['Assigned To'] || null,
+              status: row.status || row.Status || row.STATUS || 'scheduled',
+              dependencies: Array.isArray(row.dependencies) 
+                ? row.dependencies 
+                : (row.dependencies || row.Dependencies || row.DEPENDENCIES || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+              precedents: Array.isArray(row.precedents) 
+                ? row.precedents 
+                : (row.precedents || row.Precedents || row.PRECEDENTS || '').split(',').map((s: string) => s.trim()).filter(Boolean),
+              gembaDocLink: row.gembaDocLink || row.GembaDocLink || row.gemba_doc_link || row['Gemba Doc Link'] || null,
+              materialSeq: row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'] || null,
+              operationSeq: row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'] || null,
+              subAssyArea: row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area'] ? parseInt(row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area']) : null,
+              requiresCrane: Boolean(row.requiresCrane || row.RequiresCrane || row.requires_crane || row['Requires Crane']),
+            };
+
+            const validatedCard = fileUploadSchema.parse(normalizedRow);
+            validatedCards.push(validatedCard);
+          } catch (error) {
+            errors.push({
+              row: i + 1,
+              data: row,
+              error: error instanceof z.ZodError ? error.errors : error.message
+            });
+          }
+        }
+
+        if (errors.length > 0) {
+          return res.status(400).json({ 
+            message: "Validation errors found", 
+            errors,
+            validCount: validatedCards.length,
+            totalCount: data.length
+          });
+        }
+
+        // Create all valid assembly cards
+        const createdCards = [];
+        for (const cardData of validatedCards) {
+          try {
+            const card = await storage.createAssemblyCard(cardData);
+            createdCards.push(card);
+          } catch (error) {
+            console.error("Error creating card:", error);
+            errors.push({
+              cardNumber: cardData.cardNumber,
+              error: error.message
+            });
+          }
+        }
+
+        res.json({
+          message: `Successfully imported ${createdCards.length} assembly cards`,
+          imported: createdCards.length,
+          errors: errors.length > 0 ? errors : undefined
+        });
+
+      } catch (parseError) {
+        // Clean up uploaded file on error
+        try {
+          const fs = await import('fs');
+          fs.unlinkSync(filePath);
+        } catch {}
+        
+        console.error("File parsing error:", parseError);
+        return res.status(400).json({ message: "Failed to parse file. Please check the file format." });
+      }
+
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Failed to process file upload" });
+    }
+  });
+
+  // Generate template file endpoint
+  app.get("/api/assembly-cards/template", async (req, res) => {
+    try {
+      const format = req.query.format as string || 'xlsx';
+      
+      // Get current assembly cards to use as example data
+      const existingCards = await storage.getAssemblyCards();
+      
+      // Create template data with current cards as examples
+      const templateData = existingCards.length > 0 ? existingCards.map(card => ({
+        cardNumber: card.cardNumber,
+        name: card.name,
+        type: card.type,
+        duration: card.duration,
+        phase: card.phase,
+        assignedTo: card.assignedTo || '',
+        status: card.status,
+        dependencies: card.dependencies.join(','),
+        precedents: card.precedents.join(','),
+        gembaDocLink: card.gembaDocLink || '',
+        materialSeq: card.materialSeq || '',
+        operationSeq: card.operationSeq || '',
+        subAssyArea: card.subAssyArea || '',
+        requiresCrane: card.requiresCrane
+      })) : [
+        {
+          cardNumber: 'M1',
+          name: 'Example Mechanical Card',
+          type: 'M',
+          duration: 8,
+          phase: 1,
+          assignedTo: '',
+          status: 'scheduled',
+          dependencies: '',
+          precedents: 'E1,S1',
+          gembaDocLink: 'https://example.com/instructions',
+          materialSeq: 'Material sequence info',
+          operationSeq: 'Operation sequence info',
+          subAssyArea: '',
+          requiresCrane: false
+        },
+        {
+          cardNumber: 'E1',
+          name: 'Example Electrical Card',
+          type: 'E',
+          duration: 6,
+          phase: 1,
+          assignedTo: '',
+          status: 'scheduled',
+          dependencies: '',
+          precedents: '',
+          gembaDocLink: '',
+          materialSeq: '',
+          operationSeq: '',
+          subAssyArea: '',
+          requiresCrane: false
+        }
+      ];
+
+      if (format === 'csv') {
+        const csv = papa.unparse(templateData);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.csv');
+        res.send(csv);
+      } else {
+        // Generate Excel file
+        const worksheet = XLSX.utils.json_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Assembly Cards');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.xlsx');
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ message: "Failed to generate template" });
     }
   });
 

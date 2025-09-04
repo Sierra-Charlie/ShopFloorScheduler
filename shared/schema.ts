@@ -254,3 +254,23 @@ export type InsertVote = z.infer<typeof insertVoteSchema>;
 export type ThreadVote = typeof threadVotes.$inferSelect;
 
 export type ThreadParticipant = typeof threadParticipants.$inferSelect;
+
+// File Upload Schema for CSV/Excel import
+export const fileUploadSchema = z.object({
+  cardNumber: z.string(),
+  name: z.string(),
+  type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME"]),
+  duration: z.number().min(1),
+  phase: z.number().min(1).max(4),
+  assignedTo: z.string().nullable().optional(),
+  status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).default("scheduled"),
+  dependencies: z.array(z.string()).default([]),
+  precedents: z.array(z.string()).default([]),
+  gembaDocLink: z.string().url().nullable().optional(),
+  materialSeq: z.string().nullable().optional(),
+  operationSeq: z.string().nullable().optional(),
+  subAssyArea: z.number().min(1).max(6).nullable().optional(),
+  requiresCrane: z.boolean().default(false),
+});
+
+export type FileUploadData = z.infer<typeof fileUploadSchema>;

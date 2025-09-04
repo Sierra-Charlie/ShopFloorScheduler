@@ -14,6 +14,7 @@ import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
 import DependencyLegend from "@/components/dependency-legend";
+import { FileUpload } from "@/components/file-upload";
 import { AssemblyCard } from "@shared/schema";
 
 export default function GanttView() {
@@ -192,6 +193,7 @@ export default function GanttView() {
             <Package className="h-4 w-4 mr-2" />
             Add Card
           </Button>
+          <FileUpload />
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <PopoverTrigger asChild>
               <Button 
