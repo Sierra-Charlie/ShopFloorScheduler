@@ -1122,7 +1122,7 @@ export default function Scheduler() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="bg-white text-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-red-500">△</div>
-                    <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
+                    <span className="text-[10px]">Dependency Conflict</span>
                   </div>
                 </div>
               </div>
