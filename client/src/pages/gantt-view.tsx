@@ -7,9 +7,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Table, Save, Package, Filter, X } from "lucide-react";
 import { Link } from "wouter";
-import { useAssemblyCards } from "@/hooks/use-assembly-cards";
+import { useAssemblyCards, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser } from "@/contexts/user-context";
+import { useToast } from "@/hooks/use-toast";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
@@ -51,6 +52,9 @@ export default function GanttView() {
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  const resetAllStatusMutation = useResetAllAssemblyCardStatus();
+  const deleteAllCardsMutation = useDeleteAllAssemblyCards();
+  const { toast } = useToast();
 
   // Filter the assembly cards based on current filters
   const filteredAssemblyCards = useMemo(() => {
@@ -132,6 +136,54 @@ export default function GanttView() {
     setIsDetailViewOpen(true);
   };
 
+  // Bulk operations handlers
+  const handleResetAllCardStatus = async () => {
+    if (!window.confirm("Are you sure you want to reset all assembly cards to 'scheduled' status? This will clear all progress data.")) {
+      return;
+    }
+    
+    try {
+      await resetAllStatusMutation.mutateAsync();
+      toast({
+        title: "Status Reset Complete",
+        description: "All assembly cards have been reset to scheduled status.",
+      });
+    } catch (error) {
+      console.error("Reset error:", error);
+      toast({
+        title: "Reset Failed",
+        description: "Failed to reset assembly card statuses. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteAllCards = async () => {
+    if (!window.confirm("Are you sure you want to DELETE ALL assembly cards? This action cannot be undone and will permanently remove all cards from the database.")) {
+      return;
+    }
+    
+    // Double confirmation for destructive action
+    if (!window.confirm("FINAL WARNING: This will permanently delete ALL assembly cards and their data. Type 'DELETE ALL' in your mind and click OK if you're absolutely certain.")) {
+      return;
+    }
+    
+    try {
+      await deleteAllCardsMutation.mutateAsync();
+      toast({
+        title: "All Cards Deleted",
+        description: "All assembly cards have been permanently deleted from the database.",
+      });
+    } catch (error) {
+      console.error("Delete all error:", error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete all assembly cards. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (cardsLoading || assemblersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -194,6 +246,26 @@ export default function GanttView() {
             Add Card
           </Button>
           <FileUpload />
+          
+          <Button
+            onClick={handleResetAllCardStatus}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            data-testid="button-reset-all-status"
+          >
+            Reset All to Scheduled
+          </Button>
+          
+          <Button
+            onClick={handleDeleteAllCards}
+            variant="destructive"
+            size="sm"
+            className="text-xs"
+            data-testid="button-delete-all-cards"
+          >
+            Delete All Cards
+          </Button>
           <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
             <PopoverTrigger asChild>
               <Button 
