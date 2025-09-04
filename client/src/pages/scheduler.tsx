@@ -470,17 +470,19 @@ export default function Scheduler() {
         }
       });
       
-      // Step 5: Advanced constraint-based optimization
+      // Step 5: Advanced constraint-based optimization with workload balancing
       const optimizedCards: any[] = [];
-      const assemblerSchedules = new Map<string, any[]>();
-      const craneSchedule: any[] = []; // Global crane usage timeline
+      const assemblerWorkloads = new Map<string, number>();
+      const assemblerPositions = new Map<string, number>();
+      const craneUsage: Array<{assemblerId: string, startPos: number, endPos: number}> = [];
       
-      // Initialize assembler schedules
+      // Initialize assembler tracking
       activeLanes.forEach(assemblerId => {
-        assemblerSchedules.set(assemblerId, []);
+        assemblerWorkloads.set(assemblerId, 0);
+        assemblerPositions.set(assemblerId, 0);
       });
       
-      // Process cards in dependency order for optimal scheduling
+      // Process cards in dependency order
       for (const cardId of sorted) {
         const card = regularCards.find(c => c.id === cardId);
         if (!card || card.grounded) {
@@ -488,9 +490,8 @@ export default function Scheduler() {
           if (card) {
             optimizedCards.push(card);
             if (card.assignedTo) {
-              const schedule = assemblerSchedules.get(card.assignedTo) || [];
-              schedule.push({ ...card, position: card.position || 0 });
-              assemblerSchedules.set(card.assignedTo, schedule);
+              const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
+              assemblerWorkloads.set(card.assignedTo, currentWorkload + card.duration);
             }
           }
           continue;
@@ -503,46 +504,82 @@ export default function Scheduler() {
           continue;
         }
         
-        // Find optimal assembler considering all constraints
+        // Find best assembler using workload balancing
         let bestAssembler = null;
-        let bestPosition = 0;
         let bestScore = Infinity;
         
         for (const assembler of compatibleAssemblers) {
-          const currentSchedule = assemblerSchedules.get(assembler.id) || [];
+          let score = 0;
           
-          // Try different positions within this assembler's schedule
-          for (let pos = 0; pos <= currentSchedule.length; pos++) {
-            const score = pos * 1.5; // Simplified scoring for now
+          // 1. PRIORITIZE workload balancing - this minimizes cycle time
+          const currentWorkload = assemblerWorkloads.get(assembler.id) || 0;
+          score += currentWorkload * 5; // High weight for workload balancing
+          
+          // 2. Dependency satisfaction bonus - prefer assemblers where dependencies are already placed
+          let dependencyBonus = 0;
+          if (card.dependencies?.length) {
+            const dependenciesInAssembler = card.dependencies.filter(depNum => {
+              const depCard = optimizedCards.find(c => c.cardNumber === depNum);
+              return depCard?.assignedTo === assembler.id;
+            });
+            dependencyBonus = dependenciesInAssembler.length * -20; // Strong bonus for dependency satisfaction
+          }
+          score += dependencyBonus;
+          
+          // 3. Crane conflict avoidance
+          if (card.requiresCrane) {
+            const currentPos = assemblerPositions.get(assembler.id) || 0;
+            const cardStart = currentPos;
+            const cardEnd = currentPos + card.duration;
             
-            if (score < bestScore) {
-              bestScore = score;
-              bestAssembler = assembler;
-              bestPosition = pos;
+            // Check for crane conflicts with cards in different assemblers
+            const hasConflict = craneUsage.some(usage => {
+              if (usage.assemblerId === assembler.id) return false; // Same assembler OK
+              return cardStart < usage.endPos && usage.startPos < cardEnd;
+            });
+            
+            if (hasConflict) {
+              score += 100; // High penalty for crane conflicts
             }
+          }
+          
+          // 4. Minor movement penalty - allows distribution but prefers minimal movement
+          const originalLaneIndex = activeLanes.indexOf(card.assignedTo || "");
+          const newLaneIndex = activeLanes.indexOf(assembler.id);
+          if (originalLaneIndex >= 0) {
+            score += Math.abs(originalLaneIndex - newLaneIndex) * 0.5; // Very low weight
+          }
+          
+          if (score < bestScore) {
+            bestScore = score;
+            bestAssembler = assembler;
           }
         }
         
+        // Assign card to best assembler
         if (bestAssembler) {
-          const schedule = assemblerSchedules.get(bestAssembler.id) || [];
+          const position = assemblerPositions.get(bestAssembler.id) || 0;
+          
           const optimizedCard = {
             ...card,
             assignedTo: bestAssembler.id,
-            position: bestPosition
+            position: position
           };
           
-          // Insert at optimal position
-          schedule.splice(bestPosition, 0, optimizedCard);
-          // Update positions of cards after this one
-          schedule.forEach((c: any, idx: number) => { c.position = idx; });
-          assemblerSchedules.set(bestAssembler.id, schedule);
-          
-          // Update global crane schedule if needed
-          if (card.requiresCrane) {
-            craneSchedule.push({ cardId: card.id, position: bestPosition });
-          }
-          
           optimizedCards.push(optimizedCard);
+          
+          // Update tracking
+          assemblerWorkloads.set(bestAssembler.id, (assemblerWorkloads.get(bestAssembler.id) || 0) + card.duration);
+          assemblerPositions.set(bestAssembler.id, position + 1);
+          
+          // Track crane usage for conflict detection
+          if (card.requiresCrane) {
+            craneUsage.push({
+              assemblerId: bestAssembler.id,
+              startPos: position,
+              endPos: position + card.duration
+            });
+          }
         } else {
           optimizedCards.push(card);
         }
@@ -570,19 +607,52 @@ export default function Scheduler() {
         }
       }
       
-      // Step 8: Show comprehensive results
+      // Step 8: Show comprehensive results with cycle time metrics
       const totalCards = optimizedCards.length;
       const movedCards = optimizedCards.filter(card => {
         const original = assemblyCards.find(c => c.id === card.id);
         return original && original.assignedTo !== card.assignedTo;
       }).length;
       
-      // Calculate dependency conflicts resolved
-      const remainingConflicts = 0; // Simplified for now
+      // Calculate cycle time metrics
+      const assemblersWithCards = Array.from(assemblerWorkloads.entries())
+        .filter(([_, workload]) => workload > 0)
+        .sort(([,a], [,b]) => b - a);
+      
+      const maxCycleTime = assemblersWithCards.length > 0 ? assemblersWithCards[0][1] : 0;
+      const avgCycleTime = assemblersWithCards.length > 0 ? 
+        assemblersWithCards.reduce((sum, [_, workload]) => sum + workload, 0) / assemblersWithCards.length : 0;
+      
+      // Check dependency conflicts
+      let dependencyConflicts = 0;
+      optimizedCards.forEach(card => {
+        if (card.dependencies) {
+          card.dependencies.forEach(depCardNumber => {
+            const depCard = optimizedCards.find(c => c.cardNumber === depCardNumber);
+            if (depCard && depCard.assignedTo === card.assignedTo) {
+              if ((depCard.position || 0) >= (card.position || 0)) {
+                dependencyConflicts++;
+              }
+            }
+          });
+        }
+      });
+      
+      // Check crane conflicts
+      let craneConflicts = 0;
+      craneUsage.forEach((usage1, i) => {
+        craneUsage.slice(i + 1).forEach(usage2 => {
+          if (usage1.assemblerId !== usage2.assemblerId) {
+            if (usage1.startPos < usage2.endPos && usage2.startPos < usage1.endPos) {
+              craneConflicts++;
+            }
+          }
+        });
+      });
       
       toast({
-        title: "Advanced Build Sequence Optimization Complete",
-        description: `Optimized ${successCount}/${totalCards} cards. ${movedCards} cards reassigned. Dependency conflicts: ${remainingConflicts}. Total build length minimized with crane conflicts resolved.`,
+        title: "Build Sequence Optimized for Cycle Time",
+        description: `Optimized ${successCount}/${totalCards} cards. ${movedCards} moved. Max cycle: ${maxCycleTime}h, Avg: ${avgCycleTime.toFixed(1)}h. Dependencies: ${dependencyConflicts}, Crane conflicts: ${craneConflicts}.`,
         duration: 6000,
       });
       
