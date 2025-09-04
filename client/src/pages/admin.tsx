@@ -140,6 +140,7 @@ export default function AdminPage() {
       scheduler: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
       material_handler: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
       assembler: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200",
+      engineer: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
     };
     
     return (
@@ -245,6 +246,7 @@ export default function AdminPage() {
                     <SelectItem value="scheduler">Scheduler</SelectItem>
                     <SelectItem value="material_handler">Material Handler</SelectItem>
                     <SelectItem value="assembler">Assembler</SelectItem>
+                    <SelectItem value="engineer">Engineer</SelectItem>
                   </SelectContent>
                 </Select>
                 {createForm.formState.errors.role && (
@@ -408,6 +410,7 @@ export default function AdminPage() {
                     <SelectItem value="scheduler">Scheduler</SelectItem>
                     <SelectItem value="material_handler">Material Handler</SelectItem>
                     <SelectItem value="assembler">Assembler</SelectItem>
+                    <SelectItem value="engineer">Engineer</SelectItem>
                   </SelectContent>
                 </Select>
                 {editForm.formState.errors.role && (

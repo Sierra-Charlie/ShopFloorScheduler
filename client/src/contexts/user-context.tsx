@@ -104,6 +104,9 @@ export function canAccess(user: User | null, feature: string): boolean {
     
     // Assembler can view their assignments and report issues
     assembler: ['assembler_view', 'andon_alerts', 'messages_view'],
+    
+    // Engineer can view schedules and manage data like schedulers
+    engineer: ['dashboard', 'schedule_view', 'gantt_view', 'planning_view', 'edit_cards', 'create_cards', 'messages_view'],
   };
 
   const userPermissions = permissions[user.role] || [];

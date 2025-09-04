@@ -24,6 +24,7 @@ export default function UserRoleSelector() {
       case 'assembler': return 'Assembler';
       case 'scheduler': return 'Scheduler';
       case 'admin': return 'Admin';
+      case 'engineer': return 'Engineer';
       default: return role;
     }
   };
@@ -35,6 +36,7 @@ export default function UserRoleSelector() {
       case 'scheduler': return 'secondary';
       case 'material_handler': return 'outline';
       case 'assembler': return 'secondary';
+      case 'engineer': return 'default';
       default: return 'outline';
     }
   };

@@ -6,7 +6,7 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
-  role: text("role").notNull(), // "production_supervisor", "assembler", "material_handler", "scheduler", "admin"
+  role: text("role").notNull(), // "production_supervisor", "assembler", "material_handler", "scheduler", "admin", "engineer"
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -92,7 +92,7 @@ export const updateUserSchema = z.object({
     (email) => email.endsWith('@vikingeng.com') || email.endsWith('@stonetreeinvest.com'),
     { message: 'Email must be from @vikingeng.com or @stonetreeinvest.com domain' }
   ).optional(),
-  role: z.enum(["production_supervisor", "assembler", "material_handler", "scheduler", "admin"]).optional(),
+  role: z.enum(["production_supervisor", "assembler", "material_handler", "scheduler", "admin", "engineer"]).optional(),
   password: z.string().min(6, 'Password must be at least 6 characters').optional(),
 });
 
