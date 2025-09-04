@@ -1062,7 +1062,7 @@ export default function Scheduler() {
                 <h4 className="font-medium text-xs text-muted-foreground">Assembly Card Status Colors</h4>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-300 border border-gray-400 rounded"></div>
+                    <div className="w-3 h-3 border border-gray-400 rounded bg-[#9ca3af]"></div>
                     <span className="text-[10px]">Scheduled</span>
                   </div>
                   <div className="flex items-center space-x-2">
