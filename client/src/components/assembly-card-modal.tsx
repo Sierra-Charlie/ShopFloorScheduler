@@ -39,6 +39,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       operationSeq: "",
       grounded: false,
       requiresCrane: false,
+      priority: "B" as "A" | "B" | "C",
     },
   });
 
@@ -56,6 +57,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         operationSeq: card.operationSeq || "",
         grounded: card.grounded || false,
         requiresCrane: card.requiresCrane || false,
+        priority: (card.priority as "A" | "B" | "C") || "B",
       });
     } else {
       // Reset to default values for new cards
@@ -71,6 +73,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         operationSeq: "",
         grounded: false,
         requiresCrane: false,
+        priority: "B" as "A" | "B" | "C",
       });
     }
   }, [card, form]);
@@ -213,7 +216,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                   )}
                 />
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name="duration"
@@ -253,6 +256,32 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                             <SelectItem value="2">Phase 2</SelectItem>
                             <SelectItem value="3">Phase 3</SelectItem>
                             <SelectItem value="4">Phase 4</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="priority"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Priority</FormLabel>
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-priority">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="A">A</SelectItem>
+                            <SelectItem value="B">B</SelectItem>
+                            <SelectItem value="C">C</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

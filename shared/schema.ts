@@ -46,6 +46,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   grounded: boolean("grounded").default(false), // true if card is locked in place and cannot be moved
   subAssyArea: integer("sub_assy_area"), // SUB ASSY AREA 1-6 assignment for S and P type cards
   requiresCrane: boolean("requires_crane").default(false), // true if assembly requires crane assistance
+  priority: text("priority").default("B"), // A, B, C priority for scheduling within delivery phases
 });
 
 export const andonIssues = pgTable("andon_issues", {
@@ -142,6 +143,7 @@ export const updateAssemblyCardSchema = z.object({
   grounded: z.boolean().optional(),
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().optional(),
+  priority: z.enum(["A", "B", "C"]).optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -299,6 +301,7 @@ export const fileUploadSchema = z.object({
   operationSeq: z.string().nullable().optional(),
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().default(false),
+  priority: z.enum(["A", "B", "C"]).default("B"),
 });
 
 export type FileUploadData = z.infer<typeof fileUploadSchema>;

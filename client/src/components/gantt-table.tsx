@@ -68,6 +68,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
       if (editValues.requiresCrane !== undefined) updateData.requiresCrane = editValues.requiresCrane;
+      if (editValues.priority !== undefined) updateData.priority = editValues.priority;
       // Always include subAssyArea if it exists in editValues
       updateData.subAssyArea = editValues.subAssyArea;
       
@@ -158,6 +159,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Phase
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Priority
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Material Seq
@@ -357,6 +361,28 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     ) : (
                       <span className="text-sm" data-testid={`text-phase-${card.cardNumber}`}>
                         Phase {card.phase}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Select
+                        value={editValues.priority || card.priority || "B"}
+                        onValueChange={(value) => setEditValues(prev => ({ ...prev, priority: value }))}
+                      >
+                        <SelectTrigger className="w-full" data-testid={`select-priority-${card.cardNumber}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="A">A</SelectItem>
+                          <SelectItem value="B">B</SelectItem>
+                          <SelectItem value="C">C</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm" data-testid={`text-priority-${card.cardNumber}`}>
+                        {card.priority || "B"}
                       </span>
                     )}
                   </td>
