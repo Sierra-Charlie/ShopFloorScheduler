@@ -324,7 +324,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
           )}
         </div>
         <div className="text-xs bg-black text-white px-2 py-1 rounded">
-          Phase {card.phase}
+          Priority: {card.priority || "B"}
         </div>
       </div>
       <div className="text-sm mb-2" title={getSequenceTypeLabel(card.type)}>
