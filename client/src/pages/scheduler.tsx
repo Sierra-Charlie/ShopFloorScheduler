@@ -536,8 +536,8 @@ export default function Scheduler() {
       
       // Step 5: Sort cards by Phase and Priority within dependency order
       // Convert sorted cardIds back to card objects and sort by phase and priority
-      const sortedCards = sorted.map(cardId => regularCards.find(c => c.id === cardId)).filter(Boolean);
-      const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+      const sortedCards = sorted.map(cardId => regularCards.find(c => c.id === cardId)).filter(Boolean) as AssemblyCard[];
+      const priorityOrder: { [key: string]: number } = { 'A': 1, 'B': 2, 'C': 3 };
       
       // Sort cards by Phase first (1-4), then Priority (A-C) within each phase
       sortedCards.sort((a, b) => {
@@ -566,20 +566,36 @@ export default function Scheduler() {
         assemblerPositions.set(assemblerId, 0);
       });
       
-      // Process cards in dependency and phase-priority order
-      for (const cardId of sortedByPhasePriority) {
-        const card = regularCards.find(c => c.id === cardId);
-        if (!card || card.grounded) {
-          // Skip grounded cards - they cannot be moved
-          if (card) {
-            optimizedCards.push(card);
-            if (card.assignedTo) {
-              const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
-              assemblerWorkloads.set(card.assignedTo, currentWorkload + card.duration);
-            }
-          }
-          continue;
+      // First, handle grounded cards - preserve their exact position and assignment
+      const groundedCards = regularCards.filter(card => card.grounded);
+      groundedCards.forEach(card => {
+        optimizedCards.push({
+          ...card,
+          // Preserve exact original assignment and position - never move grounded cards
+          assignedTo: card.assignedTo,
+          position: card.position || 0
+        });
+        
+        // Update workload tracking for grounded cards
+        if (card.assignedTo) {
+          const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
+          assemblerWorkloads.set(card.assignedTo, currentWorkload + card.duration);
+          
+          // Update position tracking to account for grounded card positions
+          const currentPos = assemblerPositions.get(card.assignedTo) || 0;
+          assemblerPositions.set(card.assignedTo, Math.max(currentPos, (card.position || 0) + 1));
         }
+      });
+      
+      // Process non-grounded cards in dependency and phase-priority order
+      const nonGroundedSorted = sortedByPhasePriority.filter(cardId => {
+        const card = regularCards.find(c => c.id === cardId);
+        return card && !card.grounded;
+      });
+      
+      for (const cardId of nonGroundedSorted) {
+        const card = regularCards.find(c => c.id === cardId);
+        if (!card) continue;
         
         const compatibleAssemblers = getCompatibleAssemblers(card);
         
@@ -690,10 +706,50 @@ export default function Scheduler() {
         }
       }
       
-      // Step 6: Strategic dead time insertion to resolve remaining conflicts
-      const finalCards = optimizedCards; // Simplified for now
+      // Step 7: Strategic dead time insertion to resolve remaining conflicts
+      // Create Dead Time cards to fill gaps and resolve scheduling conflicts
+      const finalCards = [...optimizedCards];
       
-      // Step 7: Apply optimized assignments
+      // Identify gaps in each assembler's schedule where Dead Time cards could be inserted
+      activeLanes.forEach(assemblerId => {
+        const assemblerCards = finalCards
+          .filter(card => card.assignedTo === assemblerId)
+          .sort((a, b) => (a.position || 0) - (b.position || 0));
+        
+        if (assemblerCards.length === 0) return;
+        
+        // Check for gaps in position sequence and insert Dead Time cards if needed
+        for (let i = 0; i < assemblerCards.length - 1; i++) {
+          const currentCard = assemblerCards[i];
+          const nextCard = assemblerCards[i + 1];
+          const currentPos = currentCard.position || 0;
+          const nextPos = nextCard.position || 0;
+          
+          // If there's a gap larger than 1 position, consider inserting Dead Time
+          if (nextPos - currentPos > 1) {
+            const gapSize = nextPos - currentPos - 1;
+            
+            // Only insert Dead Time if gap is significant (more than 2 hours worth)
+            if (gapSize >= 2) {
+              // Find available Dead Time cards to insert
+              const availableDeadTime = deadTimeCards.find(dt => !dt.assignedTo);
+              
+              if (availableDeadTime) {
+                const deadTimeCard = {
+                  ...availableDeadTime,
+                  assignedTo: assemblerId,
+                  position: currentPos + 1,
+                  duration: Math.min(gapSize, availableDeadTime.duration || 4) // Limit Dead Time duration
+                };
+                
+                finalCards.push(deadTimeCard);
+              }
+            }
+          }
+        }
+      });
+      
+      // Step 8: Apply optimized assignments
       let successCount = 0;
       for (const card of finalCards) {
         try {
@@ -712,7 +768,7 @@ export default function Scheduler() {
         }
       }
       
-      // Step 8: Show comprehensive results with cycle time metrics
+      // Step 9: Show comprehensive results with cycle time metrics
       const totalCards = optimizedCards.length;
       const movedCards = optimizedCards.filter(card => {
         const original = assemblyCards.find(c => c.id === card.id);
