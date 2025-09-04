@@ -1053,7 +1053,7 @@ export default function Scheduler() {
           </div>
 
           {/* Assembly Card Visual Key/Legend - Outside scrollable area */}
-          <div className="bg-card border-t border-border p-4">
+          <div className="bg-card border-t border-border p-4" style={{ marginTop: '400px' }}>
             <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
