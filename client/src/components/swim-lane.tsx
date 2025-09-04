@@ -472,25 +472,33 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       >
         {assemblyCards
           .sort((a, b) => (a.position || 0) - (b.position || 0))
-          .map((card) => (
-            <div
-              key={`${card.id}-${card.duration}-${card.name}`}
-              className="absolute"
-              style={{
-                left: `${(card.position || 0) * 60}px`, // Position based on database position * 60px per hour
-                top: '12px' // Center vertically within the swim lane
-              }}
-            >
-              <AssemblyCardComponent
-                card={card}
-                onEdit={onCardEdit}
-                onView={onCardView}
-                hasWarning={!!getCardWarnings(card)}
-                conflictDetails={getDependencyConflictDetails(card)}
-                isOverdue={isCardOverdue ? isCardOverdue(card) : false}
-              />
-            </div>
-          ))}
+          .map((card, index) => {
+            // Calculate vertical offset for cards at the same position
+            const cardsAtSamePosition = assemblyCards.filter(c => c.position === card.position);
+            const cardIndexAtPosition = cardsAtSamePosition.findIndex(c => c.id === card.id);
+            const verticalOffset = cardIndexAtPosition * 4; // 4px spacing between stacked cards
+            
+            return (
+              <div
+                key={`${card.id}-${card.duration}-${card.name}`}
+                className="absolute"
+                style={{
+                  left: `${(card.position || 0) * 60}px`, // Position based on database position * 60px per hour
+                  top: `${12 + verticalOffset}px`, // Stack cards vertically if at same position
+                  zIndex: index + 1 // Higher z-index for later cards
+                }}
+              >
+                <AssemblyCardComponent
+                  card={card}
+                  onEdit={onCardEdit}
+                  onView={onCardView}
+                  hasWarning={!!getCardWarnings(card)}
+                  conflictDetails={getDependencyConflictDetails(card)}
+                  isOverdue={isCardOverdue ? isCardOverdue(card) : false}
+                />
+              </div>
+            );
+          })}
       </div>
     </div>
   );
