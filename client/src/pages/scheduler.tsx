@@ -690,14 +690,16 @@ export default function Scheduler() {
         
         // Assign card to best assembler
         if (bestAssembler) {
-          // Calculate position based on cumulative duration of existing cards
-          const existingCards = optimizedCards
-            .filter(c => c.assignedTo === bestAssembler.id)
-            .sort((a, b) => (a.position || 0) - (b.position || 0));
+          // Calculate position based on cumulative duration of ALL cards on this assembler
+          // Include both optimized cards and cards that might be on this assembler already
+          const allCardsOnAssembler = [
+            ...optimizedCards.filter(c => c.assignedTo === bestAssembler.id),
+            ...regularCards.filter(c => c.assignedTo === bestAssembler.id && !optimizedCards.find(opt => opt.id === c.id))
+          ].sort((a, b) => (a.position || 0) - (b.position || 0));
           
           // Calculate next available time position based on cumulative durations
           let timePosition = 0;
-          for (const existingCard of existingCards) {
+          for (const existingCard of allCardsOnAssembler) {
             const cardStart = existingCard.position || 0;
             const cardEnd = cardStart + existingCard.duration;
             timePosition = Math.max(timePosition, cardEnd);
