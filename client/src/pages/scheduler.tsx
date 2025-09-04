@@ -796,7 +796,7 @@ export default function Scheduler() {
   }
 
   return (
-    <div className="flex-1 p-6 overflow-x-auto">
+    <div className="flex-1 p-6 overflow-x-auto" style={{ minHeight: 'calc(100vh + 400px)' }}>
       {/* Toolbar */}
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
