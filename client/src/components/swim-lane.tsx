@@ -476,7 +476,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             // Calculate vertical offset for cards at the same position
             const cardsAtSamePosition = assemblyCards.filter(c => c.position === card.position);
             const cardIndexAtPosition = cardsAtSamePosition.findIndex(c => c.id === card.id);
-            const verticalOffset = cardIndexAtPosition * 4; // 4px spacing between stacked cards
+            const verticalOffset = cardIndexAtPosition * 76; // 76px spacing between stacked cards (card height + margin)
             
             return (
               <div
