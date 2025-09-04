@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AssemblyCardComponent from "./assembly-card";
 import { cn } from "@/lib/utils";
+import { queryClient } from "@/lib/queryClient";
 
 interface SwimLaneProps {
   assembler: Assembler;
@@ -252,6 +253,9 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                   }
                 }
                 
+                // Invalidate the cache to refresh the UI
+                queryClient.invalidateQueries({ queryKey: ['/api/assembly-cards'] });
+                
                 toast({
                   title: "Card reordered",
                   description: `${item.cardNumber} moved to position ${newPosition + 1}`,
@@ -277,6 +281,9 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             assignedTo: assembler.id,
             position: newPosition,
           });
+          // Invalidate the cache to refresh the UI
+          queryClient.invalidateQueries({ queryKey: ['/api/assembly-cards'] });
+          
           toast({
             title: "Card moved successfully",
             description: `${item.cardNumber} assigned to ${assembler.name}`,
