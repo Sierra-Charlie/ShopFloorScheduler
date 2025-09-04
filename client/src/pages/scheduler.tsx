@@ -581,9 +581,11 @@ export default function Scheduler() {
           const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
           assemblerWorkloads.set(card.assignedTo, currentWorkload + card.duration);
           
-          // Update position tracking to account for grounded card positions
+          // Update position tracking to account for grounded card positions AND their duration
+          // A grounded card at position 0 with duration 2 means next card should be at position 2
+          const groundedCardEndTime = (card.position || 0) + card.duration;
           const currentPos = assemblerPositions.get(card.assignedTo) || 0;
-          assemblerPositions.set(card.assignedTo, Math.max(currentPos, (card.position || 0) + 1));
+          assemblerPositions.set(card.assignedTo, Math.max(currentPos, groundedCardEndTime));
         }
       });
       
