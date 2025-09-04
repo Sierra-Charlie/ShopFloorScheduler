@@ -711,7 +711,7 @@ export default function Scheduler() {
             let maxDepEndTime = -1;
             
             card.dependencies.forEach(depNum => {
-              const depCard = existingCards.find(c => c.cardNumber === depNum);
+              const depCard = allCardsOnAssembler.find(c => c.cardNumber === depNum);
               if (depCard) {
                 const depEndTime = (depCard.position || 0) + depCard.duration;
                 maxDepEndTime = Math.max(maxDepEndTime, depEndTime);
@@ -982,16 +982,16 @@ export default function Scheduler() {
       });
       
       // Recalculate positions for each assembler
-      for (const [assemblerId, cards] of cardsByAssembler) {
+      for (const [assemblerId, cards] of Array.from(cardsByAssembler.entries())) {
         // Sort cards by current position to maintain order
-        const sortedCards = cards.sort((a, b) => (a.position || 0) - (b.position || 0));
+        const sortedCards = cards.sort((a: AssemblyCard, b: AssemblyCard) => (a.position || 0) - (b.position || 0));
         
         // Recalculate positions based on cumulative duration
         let cumulativePosition = 0;
         for (const card of sortedCards) {
           if (card.position !== cumulativePosition) {
             console.log(`Updating ${card.cardNumber} from position ${card.position} to ${cumulativePosition}`);
-            await updateCard.mutateAsync({
+            await updateCardMutation.mutateAsync({
               id: card.id,
               position: cumulativePosition,
             });
@@ -1015,7 +1015,7 @@ export default function Scheduler() {
   };
 
   // Auto-run position recalculation on component mount if positions seem wrong
-  React.useEffect(() => {
+  useEffect(() => {
     if (assemblyCards.length > 0) {
       // Check if any assembler has cards with sequential positions that don't account for duration
       let needsRecalculation = false;
@@ -1030,8 +1030,8 @@ export default function Scheduler() {
         }
       });
       
-      for (const [, cards] of cardsByAssembler) {
-        const sortedCards = cards.sort((a, b) => (a.position || 0) - (b.position || 0));
+      for (const [, cards] of Array.from(cardsByAssembler.entries())) {
+        const sortedCards = cards.sort((a: AssemblyCard, b: AssemblyCard) => (a.position || 0) - (b.position || 0));
         let expectedPosition = 0;
         
         for (const card of sortedCards) {
