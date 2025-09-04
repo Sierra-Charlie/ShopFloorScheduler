@@ -297,20 +297,26 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     });
 
     // Check crane dependency conflicts
-    const hasCraneConflict = card.requiresCrane && card.startTime && card.endTime && 
+    const hasCraneConflict = card.requiresCrane && 
       allAssemblyCards?.some(otherCard => {
-        if (otherCard.id === card.id || !otherCard.requiresCrane || !otherCard.startTime || !otherCard.endTime || otherCard.assignedTo === card.assignedTo) {
-          return false; // Skip same card, non-crane cards, cards without timing, or cards in same lane
+        if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
+          return false; // Skip same card, non-crane cards, or cards in same lane
         }
         
-        // Check if time periods overlap
-        const cardStart = new Date(card.startTime!);
-        const cardEnd = new Date(card.endTime!);
-        const otherStart = new Date(otherCard.startTime!);
-        const otherEnd = new Date(otherCard.endTime!);
+        // If both cards have timing information, check time overlap
+        if (card.startTime && card.endTime && otherCard.startTime && otherCard.endTime) {
+          const cardStart = new Date(card.startTime);
+          const cardEnd = new Date(card.endTime);
+          const otherStart = new Date(otherCard.startTime);
+          const otherEnd = new Date(otherCard.endTime);
+          
+          // Time periods overlap if: start1 < end2 && start2 < end1
+          return cardStart < otherEnd && otherStart < cardEnd;
+        }
         
-        // Time periods overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        // For cards without timing info, assume they conflict if both require crane
+        // This provides early warning for scheduling conflicts
+        return true;
       });
     
     return hasDependencyConflict || hasCraneConflict;
@@ -342,24 +348,34 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     }
     
     // Check crane dependency conflicts
-    if (card.requiresCrane && card.startTime && card.endTime && allAssemblyCards) {
+    if (card.requiresCrane && allAssemblyCards) {
       const craneConflicts = allAssemblyCards.filter(otherCard => {
-        if (otherCard.id === card.id || !otherCard.requiresCrane || !otherCard.startTime || !otherCard.endTime || otherCard.assignedTo === card.assignedTo) {
-          return false; // Skip same card, non-crane cards, cards without timing, or cards in same lane
+        if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
+          return false; // Skip same card, non-crane cards, or cards in same lane
         }
         
-        // Check if time periods overlap
-        const cardStart = new Date(card.startTime!);
-        const cardEnd = new Date(card.endTime!);
-        const otherStart = new Date(otherCard.startTime!);
-        const otherEnd = new Date(otherCard.endTime!);
+        // If both cards have timing information, check time overlap
+        if (card.startTime && card.endTime && otherCard.startTime && otherCard.endTime) {
+          const cardStart = new Date(card.startTime);
+          const cardEnd = new Date(card.endTime);
+          const otherStart = new Date(otherCard.startTime);
+          const otherEnd = new Date(otherCard.endTime);
+          
+          // Time periods overlap if: start1 < end2 && start2 < end1
+          return cardStart < otherEnd && otherStart < cardEnd;
+        }
         
-        // Time periods overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        // For cards without timing info, assume they conflict if both require crane
+        // This provides early warning for scheduling conflicts
+        return true;
       });
       
       craneConflicts.forEach(conflictCard => {
-        conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times`);
+        if (card.startTime && card.endTime && conflictCard.startTime && conflictCard.endTime) {
+          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times`);
+        } else {
+          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane (schedule timing needed)`);
+        }
       });
     }
     
