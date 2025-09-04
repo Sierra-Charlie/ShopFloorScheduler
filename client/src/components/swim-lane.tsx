@@ -311,14 +311,25 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         }
         
         // For cards without timing info, check timeline position overlap
-        // Calculate horizontal positions based on position and duration
-        const cardStart = (card.position || 0) * 60; // position in pixels (60px per hour)
-        const cardEnd = cardStart + (card.duration * 60);
-        const otherStart = (otherCard.position || 0) * 60;
-        const otherEnd = otherStart + (otherCard.duration * 60);
+        // Calculate timeline positions based on position and duration (position = hours from 6am)
+        const cardStart = card.position || 0;
+        const cardEnd = cardStart + card.duration;
+        const otherStart = otherCard.position || 0;
+        const otherEnd = otherStart + otherCard.duration;
+        
+        // Debug logging for crane conflicts
+        if (card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") {
+          console.log(`Crane conflict check: ${card.cardNumber} (pos ${cardStart}-${cardEnd}) vs ${otherCard.cardNumber} (pos ${otherStart}-${otherEnd})`);
+        }
         
         // Timeline positions overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        const hasOverlap = cardStart < otherEnd && otherStart < cardEnd;
+        
+        if ((card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") && hasOverlap) {
+          console.log(`OVERLAP DETECTED: ${card.cardNumber} vs ${otherCard.cardNumber}`);
+        }
+        
+        return hasOverlap;
       });
     
     return hasDependencyConflict || hasCraneConflict;
@@ -369,14 +380,25 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         }
         
         // For cards without timing info, check timeline position overlap
-        // Calculate horizontal positions based on position and duration
-        const cardStart = (card.position || 0) * 60; // position in pixels (60px per hour)
-        const cardEnd = cardStart + (card.duration * 60);
-        const otherStart = (otherCard.position || 0) * 60;
-        const otherEnd = otherStart + (otherCard.duration * 60);
+        // Calculate timeline positions based on position and duration (position = hours from 6am)
+        const cardStart = card.position || 0;
+        const cardEnd = cardStart + card.duration;
+        const otherStart = otherCard.position || 0;
+        const otherEnd = otherStart + otherCard.duration;
+        
+        // Debug logging for crane conflicts
+        if (card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") {
+          console.log(`Crane conflict check: ${card.cardNumber} (pos ${cardStart}-${cardEnd}) vs ${otherCard.cardNumber} (pos ${otherStart}-${otherEnd})`);
+        }
         
         // Timeline positions overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        const hasOverlap = cardStart < otherEnd && otherStart < cardEnd;
+        
+        if ((card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") && hasOverlap) {
+          console.log(`OVERLAP DETECTED: ${card.cardNumber} vs ${otherCard.cardNumber}`);
+        }
+        
+        return hasOverlap;
       });
       
       craneConflicts.forEach(conflictCard => {
