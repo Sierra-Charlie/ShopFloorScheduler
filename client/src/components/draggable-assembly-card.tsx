@@ -56,7 +56,7 @@ const getMiniStatusColor = (status: string) => {
     case "completed": return "bg-green-500 text-white";
     case "assembling": return "bg-blue-500 text-white";
     case "ready_for_build": return "bg-orange-500 text-white";
-    case "picking": return "bg-yellow-500 text-black";
+    case "picking": return "bg-[#f97316] text-white";
     case "delivered_to_paint": return "bg-orange-500 text-white";
     case "cleared_for_picking": return "bg-white text-black border-2 border-black";
     case "paused": return "bg-gray-500 text-white";
