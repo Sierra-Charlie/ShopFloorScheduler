@@ -24,7 +24,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
         cb(null, true);
       } else {
-        cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'), false);
+        cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'));
       }
     }
   });
@@ -407,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             const validatedCard = fileUploadSchema.parse(normalizedRow);
             validatedCards.push(validatedCard);
-          } catch (error) {
+          } catch (error: any) {
             errors.push({
               row: i + 1,
               data: row,
@@ -431,7 +431,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           try {
             const card = await storage.createAssemblyCard(cardData);
             createdCards.push(card);
-          } catch (error) {
+          } catch (error: any) {
             console.error("Error creating card:", error);
             errors.push({
               cardNumber: cardData.cardNumber,
