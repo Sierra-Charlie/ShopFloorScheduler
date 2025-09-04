@@ -1051,106 +1051,106 @@ export default function Scheduler() {
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Assembly Card Visual Key/Legend - Moved outside scrollable area */}
-        <div className="bg-card border-t border-border p-4">
-          <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Phase Colors */}
-            <div className="space-y-2">
-              <h4 className="font-medium text-xs text-muted-foreground">Phase Colors</h4>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
-                  <span className="text-[10px]">Phase 1 - Planning</span>
+          {/* Assembly Card Visual Key/Legend - Outside scrollable area */}
+          <div className="bg-card border-t border-border p-4">
+            <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Phase Colors */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Phase Colors</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                    <span className="text-[10px]">Phase 1 - Planning</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
+                    <span className="text-[10px]">Phase 2 - Material Prep</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></div>
+                    <span className="text-[10px]">Phase 3 - Pre-Assembly</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                    <span className="text-[10px]">Phase 4 - Assembly</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
+                    <span className="text-[10px]">Phase 5 - Quality Control</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                    <span className="text-[10px]">Phase 6 - Completion</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
-                  <span className="text-[10px]">Phase 2 - Material Prep</span>
+              </div>
+
+              {/* Status Indicators */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
+                    <span className="text-[10px]">Picking in Progress (Green P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-black">P</div>
+                    <span className="text-[10px]">Ready for Picking (White P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
+                    <span className="text-[10px]">Overdue (Red Exclamation)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">⚠</div>
+                    <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></div>
-                  <span className="text-[10px]">Phase 3 - Pre-Assembly</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-                  <span className="text-[10px]">Phase 4 - Assembly</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
-                  <span className="text-[10px]">Phase 5 - Quality Control</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
-                  <span className="text-[10px]">Phase 6 - Completion</span>
+              </div>
+
+              {/* Card Elements & Time/States Combined */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Card Elements</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">Phase #</div>
+                    <span className="text-[10px]">Phase Number Badge</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-[10px]">CARD001</span>
+                    <span className="text-[10px]">Card Number (Bold)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
+                    <span className="text-[10px]">Current Time Line (Red)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-200 border border-gray-400 rounded opacity-50"></div>
+                    <span className="text-[10px]">Not Started (Faded)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
+                    <span className="text-[10px]">In Progress (Normal)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-200 border-2 border-green-400 rounded"></div>
+                    <span className="text-[10px]">Completed (Thick Border)</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Status Indicators */}
-            <div className="space-y-2">
-              <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <div className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
-                  <span className="text-[10px]">Picking in Progress (Green P)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-black">P</div>
-                  <span className="text-[10px]">Ready for Picking (White P)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
-                  <span className="text-[10px]">Overdue (Red Exclamation)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">⚠</div>
-                  <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
-                </div>
+            {/* Compact Quick Reference */}
+            <div className="mt-3 pt-2 border-t border-border">
+              <div className="flex flex-wrap gap-4 text-[10px] text-muted-foreground">
+                <div><strong>Drag & Drop:</strong> Move cards</div>
+                <div><strong>Click:</strong> View details</div>
+                <div><strong>Double-Click:</strong> Edit card</div>
+                <div><strong>Time Grid:</strong> 4-day schedule (6am-2pm)</div>
               </div>
-            </div>
-
-            {/* Card Elements & Time/States Combined */}
-            <div className="space-y-2">
-              <h4 className="font-medium text-xs text-muted-foreground">Card Elements</h4>
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">Phase #</div>
-                  <span className="text-[10px]">Phase Number Badge</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-[10px]">CARD001</span>
-                  <span className="text-[10px]">Card Number (Bold)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
-                  <span className="text-[10px]">Current Time Line (Red)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-gray-200 border border-gray-400 rounded opacity-50"></div>
-                  <span className="text-[10px]">Not Started (Faded)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
-                  <span className="text-[10px]">In Progress (Normal)</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-3 h-3 bg-green-200 border-2 border-green-400 rounded"></div>
-                  <span className="text-[10px]">Completed (Thick Border)</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Compact Quick Reference */}
-          <div className="mt-3 pt-2 border-t border-border">
-            <div className="flex flex-wrap gap-4 text-[10px] text-muted-foreground">
-              <div><strong>Drag & Drop:</strong> Move cards</div>
-              <div><strong>Click:</strong> View details</div>
-              <div><strong>Double-Click:</strong> Edit card</div>
-              <div><strong>Time Grid:</strong> 4-day schedule (6am-2pm)</div>
             </div>
           </div>
         </div>
