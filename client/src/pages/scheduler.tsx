@@ -511,22 +511,36 @@ export default function Scheduler() {
         for (const assembler of compatibleAssemblers) {
           let score = 0;
           
-          // 1. PRIORITIZE workload balancing - this minimizes cycle time
+          // 1. Calculate projected workload after adding this card
           const currentWorkload = assemblerWorkloads.get(assembler.id) || 0;
-          score += currentWorkload * 15; // Very high weight for workload balancing
+          const projectedWorkload = currentWorkload + card.duration;
           
-          // 2. Dependency satisfaction bonus - prefer assemblers where dependencies are already placed
+          // 2. Calculate workload imbalance - penalize assemblers that would become overloaded
+          const otherWorkloads = Array.from(assemblerWorkloads.values()).filter((_, idx) => 
+            Array.from(assemblerWorkloads.keys())[idx] !== assembler.id
+          );
+          const avgOtherWorkload = otherWorkloads.length > 0 ? 
+            otherWorkloads.reduce((sum, w) => sum + w, 0) / otherWorkloads.length : 0;
+          
+          // Heavy penalty for creating workload imbalance
+          const workloadImbalance = Math.max(0, projectedWorkload - avgOtherWorkload);
+          score += workloadImbalance * 50; // Very high penalty for imbalance
+          
+          // 3. Base workload penalty to encourage using less loaded assemblers
+          score += currentWorkload * 10;
+          
+          // 4. Dependency satisfaction bonus - but much smaller than workload penalty
           let dependencyBonus = 0;
           if (card.dependencies?.length) {
             const dependenciesInAssembler = card.dependencies.filter(depNum => {
               const depCard = optimizedCards.find(c => c.cardNumber === depNum);
               return depCard?.assignedTo === assembler.id;
             });
-            dependencyBonus = dependenciesInAssembler.length * -10; // Moderate bonus for dependency satisfaction
+            dependencyBonus = dependenciesInAssembler.length * -3; // Very small bonus
           }
           score += dependencyBonus;
           
-          // 3. Crane conflict avoidance
+          // 5. Crane conflict avoidance
           if (card.requiresCrane) {
             const currentPos = assemblerPositions.get(assembler.id) || 0;
             const cardStart = currentPos;
@@ -543,11 +557,11 @@ export default function Scheduler() {
             }
           }
           
-          // 4. Minor movement penalty - allows distribution but prefers minimal movement
+          // 6. Minimal movement penalty
           const originalLaneIndex = activeLanes.indexOf(card.assignedTo || "");
           const newLaneIndex = activeLanes.indexOf(assembler.id);
           if (originalLaneIndex >= 0) {
-            score += Math.abs(originalLaneIndex - newLaneIndex) * 0.5; // Very low weight
+            score += Math.abs(originalLaneIndex - newLaneIndex) * 0.1; // Tiny weight
           }
           
           if (score < bestScore) {
