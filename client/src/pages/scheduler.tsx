@@ -1066,7 +1066,7 @@ export default function Scheduler() {
                     <span className="text-[10px]">Scheduled</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-300 border-2 border-red-500 rounded"></div>
+                    <div className="w-3 h-3 border-2 border-red-500 rounded bg-[#9ca3af]"></div>
                     <span className="text-[10px]">Dependency Conflict</span>
                   </div>
                   <div className="flex items-center space-x-2">
