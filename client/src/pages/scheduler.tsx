@@ -910,7 +910,7 @@ export default function Scheduler() {
       {currentView === "schedule" && (
         <div className="flex flex-col h-screen">
           {/* Shared scroll container for header and content */}
-          <div className="flex-1 overflow-auto" style={{ height: 'calc(100vh - 200px)' }}>
+          <div className="flex-1 overflow-auto" style={{ height: 'calc(100vh + 200px)' }}>
             <div className="min-w-max">
               {/* Time Header - sticky within the scroll container */}
               <div className="bg-card border-b border-border px-6 py-3 sticky top-0 z-30">
