@@ -633,14 +633,23 @@ export default function Scheduler() {
           let dependencyPenalty = 0;
           if (card.dependencies?.length) {
             card.dependencies.forEach(depNum => {
-              const depCard = optimizedCards.find(c => c.cardNumber === depNum);
+              // Check both processed cards and remaining unprocessed cards
+              let depCard = optimizedCards.find(c => c.cardNumber === depNum);
+              if (!depCard) {
+                depCard = regularCards.find(c => c.cardNumber === depNum);
+              }
+              
               if (depCard) {
+                // If dependency is already on this assembler, that's good
                 if (depCard.assignedTo === assembler.id) {
-                  // Same lane: small bonus for keeping dependencies together
-                  dependencyPenalty -= 2;
-                } else {
+                  // Same lane: bonus for keeping dependencies together
+                  dependencyPenalty -= 5;
+                } else if (depCard.assignedTo && depCard.assignedTo !== assembler.id) {
                   // Different lane: huge penalty for cross-lane dependency
-                  dependencyPenalty += 100; // Very high penalty to avoid cross-lane deps
+                  dependencyPenalty += 200; // Very high penalty to avoid cross-lane deps
+                } else {
+                  // Dependency is not assigned yet - encourage this assembler to take it
+                  dependencyPenalty -= 10; // Good to keep dependencies on same assembler
                 }
               }
             });
@@ -679,7 +688,26 @@ export default function Scheduler() {
         
         // Assign card to best assembler
         if (bestAssembler) {
-          const position = assemblerPositions.get(bestAssembler.id) || 0;
+          let position = assemblerPositions.get(bestAssembler.id) || 0;
+          
+          // Smart position assignment: if this card has dependencies on the same assembler,
+          // ensure it comes after all its dependencies
+          if (card.dependencies?.length) {
+            const assemblerCards = optimizedCards.filter(c => c.assignedTo === bestAssembler.id);
+            let maxDepPosition = -1;
+            
+            card.dependencies.forEach(depNum => {
+              const depCard = assemblerCards.find(c => c.cardNumber === depNum);
+              if (depCard && (depCard.position || 0) >= maxDepPosition) {
+                maxDepPosition = (depCard.position || 0);
+              }
+            });
+            
+            // Position after all dependencies
+            if (maxDepPosition >= 0) {
+              position = Math.max(position, maxDepPosition + 1);
+            }
+          }
           
           const optimizedCard = {
             ...card,
@@ -691,7 +719,7 @@ export default function Scheduler() {
           
           // Update tracking
           assemblerWorkloads.set(bestAssembler.id, (assemblerWorkloads.get(bestAssembler.id) || 0) + card.duration);
-          assemblerPositions.set(bestAssembler.id, position + 1);
+          assemblerPositions.set(bestAssembler.id, Math.max(assemblerPositions.get(bestAssembler.id) || 0, position + 1));
           
           // Track crane usage for conflict detection
           if (card.requiresCrane) {
