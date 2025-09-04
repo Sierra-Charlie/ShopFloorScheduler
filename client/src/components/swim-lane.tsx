@@ -296,7 +296,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       return depCard.status === "blocked";
     });
 
-    // Check crane dependency conflicts
+    // Check crane dependency conflicts based on timeline position overlap
     const hasCraneConflict = card.requiresCrane && 
       allAssemblyCards?.some(otherCard => {
         if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
@@ -314,9 +314,15 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           return cardStart < otherEnd && otherStart < cardEnd;
         }
         
-        // For cards without timing info, assume they conflict if both require crane
-        // This provides early warning for scheduling conflicts
-        return true;
+        // For cards without timing info, check timeline position overlap
+        // Calculate horizontal positions based on position and duration
+        const cardStart = (card.position || 0) * 60; // position in pixels (60px per hour)
+        const cardEnd = cardStart + (card.duration * 60);
+        const otherStart = (otherCard.position || 0) * 60;
+        const otherEnd = otherStart + (otherCard.duration * 60);
+        
+        // Timeline positions overlap if: start1 < end2 && start2 < end1
+        return cardStart < otherEnd && otherStart < cardEnd;
       });
     
     return hasDependencyConflict || hasCraneConflict;
@@ -347,7 +353,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       });
     }
     
-    // Check crane dependency conflicts
+    // Check crane dependency conflicts based on timeline position overlap
     if (card.requiresCrane && allAssemblyCards) {
       const craneConflicts = allAssemblyCards.filter(otherCard => {
         if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
@@ -365,16 +371,22 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           return cardStart < otherEnd && otherStart < cardEnd;
         }
         
-        // For cards without timing info, assume they conflict if both require crane
-        // This provides early warning for scheduling conflicts
-        return true;
+        // For cards without timing info, check timeline position overlap
+        // Calculate horizontal positions based on position and duration
+        const cardStart = (card.position || 0) * 60; // position in pixels (60px per hour)
+        const cardEnd = cardStart + (card.duration * 60);
+        const otherStart = (otherCard.position || 0) * 60;
+        const otherEnd = otherStart + (otherCard.duration * 60);
+        
+        // Timeline positions overlap if: start1 < end2 && start2 < end1
+        return cardStart < otherEnd && otherStart < cardEnd;
       });
       
       craneConflicts.forEach(conflictCard => {
         if (card.startTime && card.endTime && conflictCard.startTime && conflictCard.endTime) {
           conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times`);
         } else {
-          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane (schedule timing needed)`);
+          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane at overlapping timeline positions`);
         }
       });
     }
