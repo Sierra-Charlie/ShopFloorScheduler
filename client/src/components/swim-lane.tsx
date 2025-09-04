@@ -6,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AssemblyCardComponent from "./assembly-card";
 import { cn } from "@/lib/utils";
-import { queryClient } from "@/lib/queryClient";
 
 interface SwimLaneProps {
   assembler: Assembler;
@@ -231,30 +230,16 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                 const [movedCard] = reorderedCards.splice(currentIndex, 1);
                 reorderedCards.splice(newPosition, 0, movedCard);
                 
-                // Update positions - maintain visual positioning without forcing strict sequencing
+                // Update positions for all cards using duration-based positioning
+                let cumulativePosition = 0;
                 for (let i = 0; i < reorderedCards.length; i++) {
-                  // Keep original positions for cards that aren't being reordered
-                  // Only update position for cards that were actually moved
-                  if (reorderedCards[i].id === item.id) {
-                    // For the moved card, calculate position based on visual drop location
-                    // Use the target position directly instead of cumulative duration
-                    const targetPosition = Math.max(0, newPosition);
-                    
-                    await updateCardMutation.mutateAsync({
-                      id: reorderedCards[i].id,
-                      position: targetPosition,
-                    });
-                  } else if (i >= newPosition) {
-                    // Only shift cards that come after the drop position
-                    await updateCardMutation.mutateAsync({
-                      id: reorderedCards[i].id,
-                      position: reorderedCards[i].position || 0,
-                    });
-                  }
+                  await updateCardMutation.mutateAsync({
+                    id: reorderedCards[i].id,
+                    position: cumulativePosition,
+                  });
+                  // Next card starts after this card's duration
+                  cumulativePosition += reorderedCards[i].duration;
                 }
-                
-                // Invalidate the cache to refresh the UI
-                queryClient.invalidateQueries({ queryKey: ['/api/assembly-cards'] });
                 
                 toast({
                   title: "Card reordered",
@@ -281,9 +266,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             assignedTo: assembler.id,
             position: newPosition,
           });
-          // Invalidate the cache to refresh the UI
-          queryClient.invalidateQueries({ queryKey: ['/api/assembly-cards'] });
-          
           toast({
             title: "Card moved successfully",
             description: `${item.cardNumber} assigned to ${assembler.name}`,
@@ -464,7 +446,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       <div
         ref={drop}
         className={cn(
-          "swim-lane relative p-3 min-h-20 flex-1",
+          "swim-lane flex items-center p-3 min-h-20 flex-1",
           isOver && canDrop && "drag-over"
         )}
         style={{ paddingLeft: `${3 * 4 + startTimeOffset + 10}px` }} // 3 * 4px (p-3) + start time offset + 10px (align with 8a line)
@@ -472,33 +454,17 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       >
         {assemblyCards
           .sort((a, b) => (a.position || 0) - (b.position || 0))
-          .map((card, index) => {
-            // Calculate vertical offset for cards at the same position
-            const cardsAtSamePosition = assemblyCards.filter(c => c.position === card.position);
-            const cardIndexAtPosition = cardsAtSamePosition.findIndex(c => c.id === card.id);
-            const verticalOffset = cardIndexAtPosition * 76; // 76px spacing between stacked cards (card height + margin)
-            
-            return (
-              <div
-                key={`${card.id}-${card.duration}-${card.name}`}
-                className="absolute"
-                style={{
-                  left: `${(card.position || 0) * 60}px`, // Position based on database position * 60px per hour
-                  top: `${12 + verticalOffset}px`, // Stack cards vertically if at same position
-                  zIndex: index + 1 // Higher z-index for later cards
-                }}
-              >
-                <AssemblyCardComponent
-                  card={card}
-                  onEdit={onCardEdit}
-                  onView={onCardView}
-                  hasWarning={!!getCardWarnings(card)}
-                  conflictDetails={getDependencyConflictDetails(card)}
-                  isOverdue={isCardOverdue ? isCardOverdue(card) : false}
-                />
-              </div>
-            );
-          })}
+          .map((card) => (
+            <AssemblyCardComponent
+              key={`${card.id}-${card.duration}-${card.name}`}
+              card={card}
+              onEdit={onCardEdit}
+              onView={onCardView}
+              hasWarning={!!getCardWarnings(card)}
+              conflictDetails={getDependencyConflictDetails(card)}
+              isOverdue={isCardOverdue ? isCardOverdue(card) : false}
+            />
+          ))}
       </div>
     </div>
   );
