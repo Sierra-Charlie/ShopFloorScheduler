@@ -517,6 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(issue);
     } catch (error) {
+      console.error('Error creating andon issue:', error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
