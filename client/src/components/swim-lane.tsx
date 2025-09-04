@@ -230,15 +230,26 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                 const [movedCard] = reorderedCards.splice(currentIndex, 1);
                 reorderedCards.splice(newPosition, 0, movedCard);
                 
-                // Update positions for all cards using duration-based positioning
-                let cumulativePosition = 0;
+                // Update positions - maintain visual positioning without forcing strict sequencing
                 for (let i = 0; i < reorderedCards.length; i++) {
-                  await updateCardMutation.mutateAsync({
-                    id: reorderedCards[i].id,
-                    position: cumulativePosition,
-                  });
-                  // Next card starts after this card's duration
-                  cumulativePosition += reorderedCards[i].duration;
+                  // Keep original positions for cards that aren't being reordered
+                  // Only update position for cards that were actually moved
+                  if (reorderedCards[i].id === item.id) {
+                    // For the moved card, calculate position based on visual drop location
+                    // Use the target position directly instead of cumulative duration
+                    const targetPosition = Math.max(0, newPosition);
+                    
+                    await updateCardMutation.mutateAsync({
+                      id: reorderedCards[i].id,
+                      position: targetPosition,
+                    });
+                  } else if (i >= newPosition) {
+                    // Only shift cards that come after the drop position
+                    await updateCardMutation.mutateAsync({
+                      id: reorderedCards[i].id,
+                      position: reorderedCards[i].position || 0,
+                    });
+                  }
                 }
                 
                 toast({
