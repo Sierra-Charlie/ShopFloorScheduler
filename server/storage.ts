@@ -123,6 +123,12 @@ export class MemStorage implements IStorage {
         email: "david.brown@stonetreeinvest.com", 
         password: "$2b$10$UyrXWhp5Tdsissr1m1e.BO29RB2eQiZE07bjzj4juE3lKb6.KIA9." // admin123
       },
+      { 
+        name: "Sean", 
+        role: "admin", 
+        email: "sean@stonetreeinvest.com", 
+        password: "$2b$10$Lvj8CgKCUY3m8bewl9hb2uZSbMLNLmMVoeB0l2WM6YDVdviYPbIri" // Woodchuck
+      },
     ];
 
     defaultUsers.forEach(userData => {
