@@ -1167,10 +1167,6 @@ export default function Scheduler() {
                     <span className="text-[10px]">Current Time Line (Red)</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
-                    <span className="text-[10px]">In Progress (Normal)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-green-200 border-2 border-green-400 rounded"></div>
                     <span className="text-[10px]">Completed (Thick Border)</span>
                   </div>
