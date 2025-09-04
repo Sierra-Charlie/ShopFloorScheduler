@@ -464,7 +464,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       <div
         ref={drop}
         className={cn(
-          "swim-lane flex items-center p-3 min-h-20 flex-1",
+          "swim-lane relative p-3 min-h-20 flex-1",
           isOver && canDrop && "drag-over"
         )}
         style={{ paddingLeft: `${3 * 4 + startTimeOffset + 10}px` }} // 3 * 4px (p-3) + start time offset + 10px (align with 8a line)
@@ -473,15 +473,23 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         {assemblyCards
           .sort((a, b) => (a.position || 0) - (b.position || 0))
           .map((card) => (
-            <AssemblyCardComponent
+            <div
               key={`${card.id}-${card.duration}-${card.name}`}
-              card={card}
-              onEdit={onCardEdit}
-              onView={onCardView}
-              hasWarning={!!getCardWarnings(card)}
-              conflictDetails={getDependencyConflictDetails(card)}
-              isOverdue={isCardOverdue ? isCardOverdue(card) : false}
-            />
+              className="absolute"
+              style={{
+                left: `${(card.position || 0) * 60}px`, // Position based on database position * 60px per hour
+                top: '12px' // Center vertically within the swim lane
+              }}
+            >
+              <AssemblyCardComponent
+                card={card}
+                onEdit={onCardEdit}
+                onView={onCardView}
+                hasWarning={!!getCardWarnings(card)}
+                conflictDetails={getDependencyConflictDetails(card)}
+                isOverdue={isCardOverdue ? isCardOverdue(card) : false}
+              />
+            </div>
           ))}
       </div>
     </div>
