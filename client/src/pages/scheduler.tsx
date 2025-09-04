@@ -1078,7 +1078,7 @@ export default function Scheduler() {
                     <span className="text-[10px]">Delivery Sequence 2</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-400 border border-green-500 rounded"></div>
+                    <div className="w-3 h-3 bg-purple-400 border border-purple-500 rounded"></div>
                     <span className="text-[10px]">Delivery Sequence 3</span>
                   </div>
                   <div className="flex items-center space-x-2">
