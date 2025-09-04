@@ -398,8 +398,9 @@ export default function Scheduler() {
       // Iterative optimization - try multiple times until we get a valid solution
       let bestSolution = null;
       let bestCycleTime = Infinity;
+      let bestConflictCount = Infinity;
       let attempts = 0;
-      const maxAttempts = 5;
+      const maxAttempts = 20; // Increased attempts for better exploration
       
       for (attempts = 0; attempts < maxAttempts; attempts++) {
       
@@ -542,16 +543,23 @@ export default function Scheduler() {
           // 3. Base workload penalty to encourage using less loaded assemblers
           score += currentWorkload * 10;
           
-          // 4. Dependency satisfaction bonus - but much smaller than workload penalty
-          let dependencyBonus = 0;
+          // 4. Dependency conflict avoidance - heavily penalize cross-lane dependencies
+          let dependencyPenalty = 0;
           if (card.dependencies?.length) {
-            const dependenciesInAssembler = card.dependencies.filter(depNum => {
+            card.dependencies.forEach(depNum => {
               const depCard = optimizedCards.find(c => c.cardNumber === depNum);
-              return depCard?.assignedTo === assembler.id;
+              if (depCard) {
+                if (depCard.assignedTo === assembler.id) {
+                  // Same lane: small bonus for keeping dependencies together
+                  dependencyPenalty -= 2;
+                } else {
+                  // Different lane: huge penalty for cross-lane dependency
+                  dependencyPenalty += 100; // Very high penalty to avoid cross-lane deps
+                }
+              }
             });
-            dependencyBonus = dependenciesInAssembler.length * -3; // Very small bonus
           }
-          score += dependencyBonus;
+          score += dependencyPenalty;
           
           // 5. Crane conflict avoidance
           if (card.requiresCrane) {
@@ -697,28 +705,42 @@ export default function Scheduler() {
       
       // Check if this is a valid solution (no conflicts) and better than previous
       const isValidSolution = dependencyConflicts === 0 && craneConflicts === 0;
+      const totalConflicts = dependencyConflicts + craneConflicts;
       const isBetterSolution = maxCycleTime < bestCycleTime;
+      const isFewerConflicts = totalConflicts < bestConflictCount;
       
-      if (isValidSolution && isBetterSolution) {
+      // Prioritize solutions with fewer conflicts, then better cycle time
+      const shouldUpdateSolution = 
+        isValidSolution && (isBetterSolution || !bestSolution || bestConflictCount > 0) ||
+        (!isValidSolution && isFewerConflicts) ||
+        (!isValidSolution && totalConflicts === bestConflictCount && isBetterSolution);
+      
+      if (shouldUpdateSolution) {
         bestSolution = currentSolution;
         bestCycleTime = maxCycleTime;
-        // Found optimal solution, no need to continue
-        break;
-      } else if (!bestSolution && isBetterSolution) {
-        // If no valid solution yet, keep the best invalid one
-        bestSolution = currentSolution;
-        bestCycleTime = maxCycleTime;
+        bestConflictCount = totalConflicts;
+        
+        // If we found a perfect solution, we can stop
+        if (isValidSolution) {
+          break;
+        }
       }
       
-      // If we found a perfect solution, stop here
-      if (isValidSolution) {
-        break;
-      }
-      
-      // Add some randomness for next attempt by slightly shuffling the topological order
+      // Strategy for next attempt: try different approaches to resolve conflicts
       if (attempts < maxAttempts - 1) {
-        // Shuffle cards with same priority level to try different arrangements
-        regularCards.sort(() => Math.random() - 0.5);
+        if (attempts < 5) {
+          // First few attempts: shuffle topological order
+          regularCards.sort(() => Math.random() - 0.5);
+        } else if (attempts < 10) {
+          // Middle attempts: prioritize cards with dependencies first
+          regularCards.sort((a, b) => (b.dependencies?.length || 0) - (a.dependencies?.length || 0));
+        } else if (attempts < 15) {
+          // Later attempts: group cards by type to encourage same-lane assignments
+          regularCards.sort((a, b) => a.type.localeCompare(b.type));
+        } else {
+          // Final attempts: random exploration
+          regularCards.sort(() => Math.random() - 0.5);
+        }
       }
       
       } // End of attempts loop
