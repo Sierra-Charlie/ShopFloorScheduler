@@ -289,6 +289,9 @@ export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, user
         },
         body: JSON.stringify({
           assemblyCardNumber: currentCard?.cardNumber,
+          issueType: "General",
+          priority: "medium",
+          reporterName: "Current Assembler",
           description: andonIssue,
           photoPath,
           submittedBy: "Current Assembler", // In real app, get from auth

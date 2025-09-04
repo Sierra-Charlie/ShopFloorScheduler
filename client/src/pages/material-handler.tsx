@@ -225,6 +225,9 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         },
         body: JSON.stringify({
           assemblyCardNumber: card.cardNumber,
+          issueType: "General",
+          priority: "medium",
+          reporterName: "Material Handler",
           description: andonIssue,
           photoPath,
           submittedBy: "Material Handler", // In real app, get from auth

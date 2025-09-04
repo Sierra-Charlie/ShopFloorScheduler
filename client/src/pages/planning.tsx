@@ -159,6 +159,9 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
         },
         body: JSON.stringify({
           assemblyCardNumber: card.cardNumber,
+          issueType: "General",
+          priority: "medium",
+          reporterName: "Scheduler",
           description: andonIssue,
           photoPath,
           submittedBy: "Scheduler", // Planning role submitting
