@@ -284,7 +284,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       // Check position-based conflicts within the same assembler
       if (depCard.assignedTo === card.assignedTo) {
         // Dependency card is in the same swim lane - check position order
-        return (depCard.position || 0) >= (card.position || 0);
+        // Dependency should come BEFORE (lower position number) the dependent card
+        return (depCard.position || 0) > (card.position || 0);
       }
       
       // Check timing conflicts for cards in different assemblers
@@ -339,7 +340,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           conflicts.push(`Card ${dep} not found`);
         } else if (depCard.assignedTo === card.assignedTo) {
           // Same assembler - check position order
-          if ((depCard.position || 0) >= (card.position || 0)) {
+          // Dependency should come BEFORE (lower position number) the dependent card
+          if ((depCard.position || 0) > (card.position || 0)) {
             conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
           }
         } else if (card.startTime && depCard.endTime) {
