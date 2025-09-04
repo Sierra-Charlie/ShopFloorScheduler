@@ -36,7 +36,7 @@ export default function BuildBayMap() {
         case "paint":
           return card.status === "delivered_to_paint";
         case "mechanical-pre":
-          return card.type === "P" && card.status === "ready_for_build";
+          return card.type === "P" && (card.status === "ready_for_build" || card.status === "assembling");
         case "electrical-pre":
           return card.type === "E" && card.status === "ready_for_build";
         case "sub-assy":
@@ -46,7 +46,8 @@ export default function BuildBayMap() {
           );
         case "building":
           return (card.type === "M" && card.status === "ready_for_build") ||
-                 ((card.type === "M" || card.type === "S" || card.type === "P" || card.type === "E") && card.status === "assembling");
+                 ((card.type === "M" || card.type === "S" || card.type === "P" || card.type === "E") && card.status === "assembling") ||
+                 (card.type === "P" && card.status === "completed" && !card.subAssyArea);
         default:
           return false;
       }
