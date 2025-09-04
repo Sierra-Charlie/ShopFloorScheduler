@@ -38,7 +38,7 @@ export default function AssemblerView() {
     : assemblyCards;
 
   const activeCards = relevantCards.filter(card => 
-    card.status === 'in_progress' || card.status === 'ready_for_build'
+    card.status === 'in_progress' || card.status === 'ready_for_build' || card.status === 'assembling'
   );
   
   const upcomingCards = relevantCards.filter(card => 
@@ -48,6 +48,7 @@ export default function AssemblerView() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'in_progress': return <Play className="h-4 w-4" />;
+      case 'assembling': return <Play className="h-4 w-4" />;
       case 'completed': return <CheckCircle className="h-4 w-4" />;
       case 'ready_for_build': return <Clock className="h-4 w-4" />;
       default: return <Clock className="h-4 w-4" />;
@@ -57,6 +58,7 @@ export default function AssemblerView() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'in_progress': return { variant: 'default' as const, label: 'In Progress' };
+      case 'assembling': return { variant: 'default' as const, label: 'Assembling' };
       case 'completed': return { variant: 'default' as const, label: 'Completed' };
       case 'ready_for_build': return { variant: 'secondary' as const, label: 'Ready for Build' };
       case 'scheduled': return { variant: 'outline' as const, label: 'Scheduled' };
