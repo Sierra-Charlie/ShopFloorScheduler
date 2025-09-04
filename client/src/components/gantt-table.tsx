@@ -64,7 +64,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.assignedTo !== undefined) updateData.assignedTo = editValues.assignedTo;
       if (editValues.status !== undefined) updateData.status = editValues.status;
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
-      if (editValues.precedents !== undefined) updateData.precedents = editValues.precedents;
       if (editValues.materialSeq !== undefined) updateData.materialSeq = editValues.materialSeq;
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
@@ -156,9 +155,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Dependencies
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Precedents
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Phase
@@ -341,58 +337,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     )}
                   </td>
                   
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    {isEditing ? (
-                      <Select
-                        value={""}
-                        onValueChange={(value) => {
-                          const currentPrec = editValues.precedents || card.precedents || [];
-                          if (!currentPrec.includes(value)) {
-                            setEditValues(prev => ({ 
-                              ...prev, 
-                              precedents: [...currentPrec, value]
-                            }));
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-32" data-testid={`select-precedents-${card.cardNumber}`}>
-                          <SelectValue placeholder="Add precedent" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {assemblyCards
-                            .filter(c => c.cardNumber !== card.cardNumber)
-                            .map(c => (
-                              <SelectItem key={c.id} value={c.cardNumber}>
-                                {c.cardNumber} - {c.name}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <span className="text-sm" data-testid={`text-precedents-${card.cardNumber}`}>
-                        {card.precedents?.join(", ") || "None"}
-                      </span>
-                    )}
-                    {isEditing && (editValues.precedents || card.precedents || []).length > 0 && (
-                      <div className="mt-1">
-                        {(editValues.precedents || card.precedents || []).map(prec => (
-                          <span 
-                            key={prec} 
-                            className="inline-block text-xs bg-accent text-accent-foreground px-2 py-1 rounded mr-1 mb-1 cursor-pointer"
-                            onClick={() => {
-                              const currentPrec = editValues.precedents || card.precedents || [];
-                              setEditValues(prev => ({ 
-                                ...prev, 
-                                precedents: currentPrec.filter(p => p !== prec)
-                              }));
-                            }}
-                          >
-                            {prec} ×
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (

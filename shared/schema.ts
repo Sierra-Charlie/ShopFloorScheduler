@@ -34,7 +34,6 @@ export const assemblyCards = pgTable("assembly_cards", {
   assignedMaterialHandler: varchar("assigned_material_handler").references(() => users.id), // Material handler assigned to pick this card
   status: text("status").notNull().default("scheduled"), // "scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
-  precedents: text("precedents").array().notNull().default([]), // array of card numbers that depend on this one
   gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
   materialSeq: text("material_seq"), // Material sequence information - free form text
   operationSeq: text("operation_seq"), // Operation sequence information - free form text
@@ -131,7 +130,6 @@ export const updateAssemblyCardSchema = z.object({
   assignedMaterialHandler: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).optional(),
   dependencies: z.array(z.string()).optional(),
-  precedents: z.array(z.string()).optional(),
   gembaDocLink: z.string().url().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
   operationSeq: z.string().nullable().optional(),
@@ -296,7 +294,6 @@ export const fileUploadSchema = z.object({
   assignedTo: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).default("scheduled"),
   dependencies: z.array(z.string()).default([]),
-  precedents: z.array(z.string()).default([]),
   gembaDocLink: z.string().url().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
   operationSeq: z.string().nullable().optional(),

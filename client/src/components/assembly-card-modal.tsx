@@ -35,7 +35,6 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       phase: 1,
       assignedTo: "",
       dependencies: [] as string[],
-      precedents: [] as string[],
       materialSeq: "",
       operationSeq: "",
       grounded: false,
@@ -53,7 +52,6 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         phase: card.phase,
         assignedTo: card.assignedTo || "",
         dependencies: card.dependencies || [],
-        precedents: card.precedents || [],
         materialSeq: card.materialSeq || "",
         operationSeq: card.operationSeq || "",
         grounded: card.grounded || false,
@@ -69,7 +67,6 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         phase: 1,
         assignedTo: "",
         dependencies: [] as string[],
-        precedents: [] as string[],
         materialSeq: "",
         operationSeq: "",
         grounded: false,
@@ -332,30 +329,6 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="precedents"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Precedents</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      value={field.value.join(", ")}
-                      onChange={(e) => field.onChange(
-                        e.target.value.split(",").map(s => s.trim()).filter(Boolean)
-                      )}
-                      placeholder="Enter card numbers separated by commas"
-                      data-testid="input-precedents"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Cards that depend on this one being completed
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             
             <FormField
               control={form.control}

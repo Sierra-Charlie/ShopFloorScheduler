@@ -156,7 +156,14 @@ export class MemStorage implements IStorage {
 
     defaultAssemblers.forEach(assembler => {
       const id = randomUUID();
-      this.assemblers.set(id, { ...assembler, id, status: assembler.status || "available", assignedUser: null });
+      this.assemblers.set(id, { 
+        ...assembler, 
+        id, 
+        status: assembler.status || "available", 
+        assignedUser: null,
+        machineType: null,
+        machineNumber: null 
+      });
     });
 
     // Initialize assembly cards
@@ -174,7 +181,7 @@ export class MemStorage implements IStorage {
         assignedTo: mechanicalAssembler1Id,
         status: "in_progress",
         dependencies: [],
-        precedents: ["M5"],
+
         startTime: new Date(),
         endTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
         position: 0,
@@ -188,7 +195,7 @@ export class MemStorage implements IStorage {
         assignedTo: mechanicalAssembler1Id,
         status: "scheduled",
         dependencies: [],
-        precedents: ["M5"],
+
         startTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
         endTime: new Date(Date.now() + 7 * 60 * 60 * 1000),
         position: 1,
@@ -202,7 +209,6 @@ export class MemStorage implements IStorage {
         assignedTo: mechanicalAssembler1Id,
         status: "blocked",
         dependencies: ["M4", "S4"],
-        precedents: ["M6"],
         startTime: new Date(Date.now() + 7 * 60 * 60 * 1000),
         endTime: new Date(Date.now() + 13 * 60 * 60 * 1000),
         position: 2,
@@ -216,7 +222,7 @@ export class MemStorage implements IStorage {
         assignedTo: electricalAssembler1Id,
         status: "in_progress",
         dependencies: [],
-        precedents: [],
+
         startTime: new Date(),
         endTime: new Date(Date.now() + 5 * 60 * 60 * 1000),
         position: 0,
@@ -230,7 +236,7 @@ export class MemStorage implements IStorage {
         assignedTo: electricalAssembler1Id,
         status: "scheduled",
         dependencies: ["E7"],
-        precedents: [],
+
         startTime: new Date(Date.now() + 5 * 60 * 60 * 1000),
         endTime: new Date(Date.now() + 9 * 60 * 60 * 1000),
         position: 1,
@@ -244,7 +250,7 @@ export class MemStorage implements IStorage {
         assignedTo: runinId,
         status: "scheduled",
         dependencies: ["M5"],
-        precedents: [],
+
         startTime: new Date(Date.now() + 13 * 60 * 60 * 1000),
         endTime: new Date(Date.now() + 21 * 60 * 60 * 1000),
         position: 0,
@@ -258,7 +264,7 @@ export class MemStorage implements IStorage {
         id, 
         status: card.status || "scheduled",
         dependencies: card.dependencies || [],
-        precedents: card.precedents || [],
+  
         position: card.position || 0,
         assignedTo: card.assignedTo || null,
         startTime: card.startTime || null,
@@ -284,7 +290,14 @@ export class MemStorage implements IStorage {
 
   async createAssembler(assembler: InsertAssembler): Promise<Assembler> {
     const id = randomUUID();
-    const newAssembler: Assembler = { ...assembler, id, status: assembler.status || "available", assignedUser: assembler.assignedUser || null };
+    const newAssembler: Assembler = { 
+      ...assembler, 
+      id, 
+      status: assembler.status || "available", 
+      assignedUser: assembler.assignedUser || null,
+      machineType: assembler.machineType || null,
+      machineNumber: assembler.machineNumber || null 
+    };
     this.assemblers.set(id, newAssembler);
     return newAssembler;
   }
@@ -323,7 +336,7 @@ export class MemStorage implements IStorage {
       id, 
       status: card.status || "scheduled",
       dependencies: card.dependencies || [],
-      precedents: card.precedents || [],
+
       position: card.position || 0,
       assignedTo: card.assignedTo || null,
       startTime: card.startTime || null,
@@ -853,7 +866,7 @@ export class DatabaseStorage implements IStorage {
       ...card,
       status: card.status || "scheduled",
       dependencies: card.dependencies || [],
-      precedents: card.precedents || [],
+
       position: card.position || 0,
       elapsedTime: card.elapsedTime || 0,
       grounded: card.grounded ?? false
@@ -1205,7 +1218,7 @@ async function initializeDatabaseData() {
           assignedTo: mechanicalAssembler1?.id || null,
           status: "in_progress",
           dependencies: [],
-          precedents: ["M5"],
+  
           startTime: new Date(),
           endTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
           position: 0,
@@ -1219,7 +1232,7 @@ async function initializeDatabaseData() {
           assignedTo: mechanicalAssembler1?.id || null,
           status: "scheduled",
           dependencies: [],
-          precedents: ["M5"],
+  
           startTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
           endTime: new Date(Date.now() + 7 * 60 * 60 * 1000),
           position: 1,
@@ -1233,7 +1246,7 @@ async function initializeDatabaseData() {
           assignedTo: electricalAssembler1?.id || null,
           status: "in_progress",
           dependencies: [],
-          precedents: [],
+  
           startTime: new Date(Date.now() - 30 * 60 * 1000),
           endTime: new Date(Date.now() + 4.5 * 60 * 60 * 1000),
           position: 0,
@@ -1247,7 +1260,7 @@ async function initializeDatabaseData() {
           assignedTo: runin?.id || null,
           status: "completed",
           dependencies: [],
-          precedents: [],
+  
           startTime: new Date(Date.now() - 3 * 60 * 60 * 1000),
           endTime: new Date(Date.now() - 30 * 60 * 1000),
           actualDuration: 3,
