@@ -1,5 +1,5 @@
-import { type User, type InsertUser, type LoginUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant } from "@shared/schema";
-import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants } from "@shared/schema";
+import { type User, type InsertUser, type LoginUser, type Assembler, type InsertAssembler, type AssemblyCard, type InsertAssemblyCard, type UpdateAssemblyCard, type AndonIssue, type InsertAndonIssue, type UpdateAndonIssue, type MessageThread, type InsertThread, type UpdateThread, type Message, type InsertMessage, type ThreadVote, type InsertVote, type ThreadParticipant, type Setting, type InsertSetting, type UpdateSetting } from "@shared/schema";
+import { users, assemblers, assemblyCards, andonIssues, messageThreads, messages, threadVotes, threadParticipants, settings } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { db } from "./db";
 import { eq, and, desc } from "drizzle-orm";
@@ -54,6 +54,13 @@ export interface IStorage {
   addThreadParticipants(threadId: string, userIds: string[]): Promise<void>;
   getThreadParticipants(threadId: string): Promise<ThreadParticipant[]>;
   removeThreadParticipant(threadId: string, userId: string): Promise<void>;
+  
+  // Settings
+  getSettings(): Promise<Setting[]>;
+  getSetting(key: string): Promise<Setting | undefined>;
+  createSetting(setting: InsertSetting): Promise<Setting>;
+  updateSetting(update: UpdateSetting): Promise<Setting | undefined>;
+  deleteSetting(key: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
@@ -65,7 +72,9 @@ export class MemStorage implements IStorage {
   private messages: Map<string, Message>;
   private threadVotes: Map<string, ThreadVote>;
   private threadParticipants: Map<string, ThreadParticipant>;
+  private settings: Map<string, Setting>;
   private nextIssueId: number = 1;
+  private nextSettingId: number = 1;
   constructor() {
     this.users = new Map();
     this.assemblers = new Map();
@@ -75,6 +84,7 @@ export class MemStorage implements IStorage {
     this.messages = new Map();
     this.threadVotes = new Map();
     this.threadParticipants = new Map();
+    this.settings = new Map();
     this.initializeData();
   }
 
@@ -504,6 +514,9 @@ export class MemStorage implements IStorage {
       id,
       issueNumber,
       assemblyCardNumber: issue.assemblyCardNumber,
+      issueType: issue.issueType || 'General',
+      priority: issue.priority || 'medium',
+      reporterName: issue.reporterName || issue.submittedBy,
       description: issue.description,
       photoPath: issue.photoPath || null,
       submittedBy: issue.submittedBy,
@@ -697,6 +710,44 @@ export class MemStorage implements IStorage {
     if (participant) {
       this.threadParticipants.delete(participant.id);
     }
+  }
+
+  // Settings stub methods for SMS integration
+  async getSettings(): Promise<Setting[]> {
+    return [{
+      id: 1,
+      key: 'sms_alert_phone_number',
+      value: '+13177375614',
+      description: 'Phone number for Andon Alert SMS notifications',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }];
+  }
+
+  async getSetting(key: string): Promise<Setting | undefined> {
+    if (key === 'sms_alert_phone_number') {
+      return {
+        id: 1,
+        key: 'sms_alert_phone_number',
+        value: '+13177375614',
+        description: 'Phone number for Andon Alert SMS notifications',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    return undefined;
+  }
+
+  async createSetting(): Promise<Setting> {
+    throw new Error('Not implemented');
+  }
+
+  async updateSetting(): Promise<Setting | undefined> {
+    throw new Error('Not implemented');
+  }
+
+  async deleteSetting(): Promise<boolean> {
+    return false;
   }
 }
 
@@ -904,6 +955,9 @@ export class DatabaseStorage implements IStorage {
     const issueData = {
       ...issue,
       issueNumber,
+      issueType: issue.issueType || 'General',
+      priority: issue.priority || 'medium',
+      reporterName: issue.reporterName || issue.submittedBy,
       status: issue.status || "unresolved"
     };
     
@@ -1025,6 +1079,44 @@ export class DatabaseStorage implements IStorage {
   async removeThreadParticipant(threadId: string, userId: string): Promise<void> {
     await db.delete(threadParticipants)
       .where(and(eq(threadParticipants.threadId, threadId), eq(threadParticipants.userId, userId)));
+  }
+
+  // Settings stub methods for SMS integration
+  async getSettings(): Promise<Setting[]> {
+    return [{
+      id: 1,
+      key: 'sms_alert_phone_number',
+      value: '+13177375614',
+      description: 'Phone number for Andon Alert SMS notifications',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }];
+  }
+
+  async getSetting(key: string): Promise<Setting | undefined> {
+    if (key === 'sms_alert_phone_number') {
+      return {
+        id: 1,
+        key: 'sms_alert_phone_number',
+        value: '+13177375614',
+        description: 'Phone number for Andon Alert SMS notifications',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+    return undefined;
+  }
+
+  async createSetting(): Promise<Setting> {
+    throw new Error('Not implemented');
+  }
+
+  async updateSetting(): Promise<Setting | undefined> {
+    throw new Error('Not implemented');
+  }
+
+  async deleteSetting(): Promise<boolean> {
+    return false;
   }
 }
 

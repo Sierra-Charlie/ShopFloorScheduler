@@ -490,6 +490,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertAndonIssueSchema.parse(req.body);
       const issue = await storage.createAndonIssue(validatedData);
+
+      // Send SMS notification for new Andon issues
+      try {
+        const { smsService } = await import('./sms-service');
+        
+        // Get alert phone number from settings
+        const alertPhoneSetting = await storage.getSetting('sms_alert_phone_number');
+        const alertPhoneNumber = alertPhoneSetting?.value || '+13177375614'; // Default to your number
+
+        // Get assembly card for more context
+        const assemblyCard = await storage.getAssemblyCardByNumber(issue.assemblyCardNumber);
+
+        // Send SMS notification
+        await smsService.sendAndonAlert({
+          issue,
+          assemblyCard,
+          alertPhoneNumber
+        });
+
+        console.log('SMS notification sent for Andon issue:', issue.issueNumber);
+      } catch (smsError) {
+        console.error('Failed to send SMS notification:', smsError);
+        // Don't fail the API call if SMS fails
+      }
+
       res.status(201).json(issue);
     } catch (error) {
       if (error instanceof z.ZodError) {

@@ -52,6 +52,9 @@ export const andonIssues = pgTable("andon_issues", {
   id: serial("id").primaryKey(),
   issueNumber: varchar("issue_number").notNull().unique(), // Auto-generated issue number like "AI-001"
   assemblyCardNumber: text("assembly_card_number").notNull(),
+  issueType: text("issue_type").notNull(), // Type of issue for categorization
+  priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "critical"
+  reporterName: text("reporter_name").notNull(), // Name of person who reported the issue
   description: text("description").notNull(),
   photoPath: text("photo_path"), // Path to photo in object storage
   submittedBy: text("submitted_by").notNull(), // Name of assembler who submitted
@@ -254,6 +257,31 @@ export type InsertVote = z.infer<typeof insertVoteSchema>;
 export type ThreadVote = typeof threadVotes.$inferSelect;
 
 export type ThreadParticipant = typeof threadParticipants.$inferSelect;
+
+// SMS Settings Table
+export const settings = pgTable("settings", {
+  id: serial("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  value: text("value").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const insertSettingSchema = createInsertSchema(settings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const updateSettingSchema = z.object({
+  id: z.number(),
+  value: z.string(),
+});
+
+export type InsertSetting = z.infer<typeof insertSettingSchema>;
+export type Setting = typeof settings.$inferSelect;
+export type UpdateSetting = z.infer<typeof updateSettingSchema>;
 
 // File Upload Schema for CSV/Excel import
 export const fileUploadSchema = z.object({
