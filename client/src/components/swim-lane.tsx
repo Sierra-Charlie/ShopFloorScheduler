@@ -278,7 +278,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
   const getCardWarnings = (card: AssemblyCard) => {
     // Check standard dependency conflicts
     const hasDependencyConflict = card.dependencies?.some(dep => {
-      const depCard = assemblyCards.find(c => c.cardNumber === dep);
+      const depCard = allAssemblyCards?.find(c => c.cardNumber === dep);
       if (!depCard) return true; // Card not found
       
       // Check position-based conflicts within the same assembler
@@ -334,7 +334,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     // Check standard dependency conflicts
     if (card.dependencies?.length) {
       card.dependencies.forEach(dep => {
-        const depCard = assemblyCards.find(c => c.cardNumber === dep);
+        const depCard = allAssemblyCards?.find(c => c.cardNumber === dep);
         if (!depCard) {
           conflicts.push(`Card ${dep} not found`);
         } else if (depCard.assignedTo === card.assignedTo) {

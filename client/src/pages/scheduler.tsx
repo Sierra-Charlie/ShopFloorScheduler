@@ -402,7 +402,7 @@ export default function Scheduler() {
       // Build the dependency graph
       regularCards.forEach(card => {
         if (card.dependencies) {
-          card.dependencies.forEach(depCardNumber => {
+          card.dependencies.forEach((depCardNumber: string) => {
             const depCard = regularCards.find(c => c.cardNumber === depCardNumber);
             if (depCard) {
               dependencyGraph.get(depCard.id).push(card.id);
@@ -513,7 +513,7 @@ export default function Scheduler() {
           
           // 1. PRIORITIZE workload balancing - this minimizes cycle time
           const currentWorkload = assemblerWorkloads.get(assembler.id) || 0;
-          score += currentWorkload * 5; // High weight for workload balancing
+          score += currentWorkload * 15; // Very high weight for workload balancing
           
           // 2. Dependency satisfaction bonus - prefer assemblers where dependencies are already placed
           let dependencyBonus = 0;
@@ -522,7 +522,7 @@ export default function Scheduler() {
               const depCard = optimizedCards.find(c => c.cardNumber === depNum);
               return depCard?.assignedTo === assembler.id;
             });
-            dependencyBonus = dependenciesInAssembler.length * -20; // Strong bonus for dependency satisfaction
+            dependencyBonus = dependenciesInAssembler.length * -10; // Moderate bonus for dependency satisfaction
           }
           score += dependencyBonus;
           
@@ -627,7 +627,7 @@ export default function Scheduler() {
       let dependencyConflicts = 0;
       optimizedCards.forEach(card => {
         if (card.dependencies) {
-          card.dependencies.forEach(depCardNumber => {
+          card.dependencies.forEach((depCardNumber: string) => {
             const depCard = optimizedCards.find(c => c.cardNumber === depCardNumber);
             if (depCard && depCard.assignedTo === card.assignedTo) {
               if ((depCard.position || 0) >= (card.position || 0)) {
