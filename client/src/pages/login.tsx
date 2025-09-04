@@ -129,11 +129,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
 
           <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
             <p>Authorized domains: @vikingeng.com, @stonetreeinvest.com</p>
-            <p className="mt-2 text-xs">
-              Default credentials for testing:
-              <br />
-              david.brown@stonetreeinvest.com / admin123
-            </p>
           </div>
 
           <div className="mt-4 space-y-3">
