@@ -127,7 +127,7 @@ export class MemStorage implements IStorage {
         name: "Sean", 
         role: "admin", 
         email: "sean@stonetreeinvest.com", 
-        password: "$2b$10$Lvj8CgKCUY3m8bewl9hb2uZSbMLNLmMVoeB0l2WM6YDVdviYPbIri" // Woodchuck
+        password: "$2b$10$9MczcH3kIYA7jafdiB.SyO7.R9.ZUxmuak2Fgx6tHh/2Djvgokruq" // Woodchuck
       },
     ];
 
@@ -1166,6 +1166,12 @@ async function initializeDatabaseData() {
           role: "admin", 
           email: "david.brown@stonetreeinvest.com",
           password: await bcrypt.hash("admin123", 10)
+        },
+        { 
+          name: "Sean Caetano", 
+          role: "admin", 
+          email: "sean@stonetreeinvest.com",
+          password: await bcrypt.hash("Woodchuck", 10)
         },
       ];
       await db.insert(users).values(defaultUsers);
