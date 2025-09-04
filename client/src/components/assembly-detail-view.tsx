@@ -97,13 +97,14 @@ export default function AssemblyDetailView({ card, isOpen, onClose, onEdit, user
         }, 1000);
       } else {
         // Card is assembling but no startTime yet - server is setting it
-        // Use current time as fallback and let next effect update with server time
+        // Use current time as fallback and preserve any existing elapsed time from pause
         const fallbackStart = new Date();
+        const preservedElapsed = currentCard.elapsedTime || 0;
         setIsTimerRunning(true);
-        setElapsedTime(0);
+        setElapsedTime(preservedElapsed);
         
         interval = setInterval(() => {
-          setElapsedTime(Math.max(0, Math.floor((Date.now() - fallbackStart.getTime()) / 1000)));
+          setElapsedTime(preservedElapsed + Math.floor((Date.now() - fallbackStart.getTime()) / 1000));
         }, 1000);
       }
     } else if (currentCard?.status === "paused") {
