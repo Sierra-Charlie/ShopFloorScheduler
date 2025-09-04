@@ -1056,38 +1056,7 @@ export default function Scheduler() {
           <div className="bg-card border-t border-border p-4">
             <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Phase Colors */}
-              <div className="space-y-2">
-                <h4 className="font-medium text-xs text-muted-foreground">Phase Colors</h4>
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
-                    <span className="text-[10px]">Phase 1 - Planning</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
-                    <span className="text-[10px]">Phase 2 - Material Prep</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></div>
-                    <span className="text-[10px]">Phase 3 - Pre-Assembly</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
-                    <span className="text-[10px]">Phase 4 - Assembly</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
-                    <span className="text-[10px]">Phase 5 - Quality Control</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
-                    <span className="text-[10px]">Phase 6 - Completion</span>
-                  </div>
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status Indicators */}
               <div className="space-y-2">
                 <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
