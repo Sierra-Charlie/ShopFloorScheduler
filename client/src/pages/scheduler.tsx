@@ -1056,7 +1056,46 @@ export default function Scheduler() {
           <div className="bg-card border-t border-border p-4">
             <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Assembly Card Status Colors */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Assembly Card Status Colors</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-300 border border-gray-400 rounded"></div>
+                    <span className="text-[10px]">Scheduled</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-300 border-2 border-red-500 rounded"></div>
+                    <span className="text-[10px]">Dependency Conflict</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-orange-400 border border-orange-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 1</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 2</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-400 border border-green-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 3</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-sky-400 border border-sky-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 4</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 border border-blue-600 rounded"></div>
+                    <span className="text-[10px]">Assembling</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-600 border border-green-700 rounded"></div>
+                    <span className="text-[10px]">Complete</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Status Indicators */}
               <div className="space-y-2">
                 <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
