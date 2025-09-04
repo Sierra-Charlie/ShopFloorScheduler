@@ -1,8 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Table, Save, Package, Filter } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Calendar, Table, Save, Package, Filter, X } from "lucide-react";
 import { Link } from "wouter";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
@@ -21,6 +24,16 @@ export default function GanttView() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
+  // Filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [filters, setFilters] = useState({
+    status: [] as string[],
+    type: [] as string[],
+    phase: [] as string[],
+    assignedTo: [] as string[],
+    cardNumber: "",
+  });
+  
   // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
@@ -37,6 +50,76 @@ export default function GanttView() {
   
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+
+  // Filter the assembly cards based on current filters
+  const filteredAssemblyCards = useMemo(() => {
+    return assemblyCards.filter(card => {
+      // Status filter
+      if (filters.status.length > 0 && !filters.status.includes(card.status)) {
+        return false;
+      }
+      
+      // Type filter
+      if (filters.type.length > 0 && !filters.type.includes(card.type)) {
+        return false;
+      }
+      
+      // Phase filter
+      if (filters.phase.length > 0 && !filters.phase.includes(card.phase.toString())) {
+        return false;
+      }
+      
+      // Assigned to filter
+      if (filters.assignedTo.length > 0) {
+        if (!card.assignedTo || !filters.assignedTo.includes(card.assignedTo)) {
+          return false;
+        }
+      }
+      
+      // Card number filter (partial match)
+      if (filters.cardNumber && !card.cardNumber.toLowerCase().includes(filters.cardNumber.toLowerCase())) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [assemblyCards, filters]);
+
+  // Get unique values for filter options
+  const filterOptions = useMemo(() => {
+    const statusSet = new Set(assemblyCards.map(card => card.status));
+    const typeSet = new Set(assemblyCards.map(card => card.type));
+    const phaseSet = new Set(assemblyCards.map(card => card.phase.toString()));
+    const assignedToSet = new Set(assemblyCards.map(card => card.assignedTo));
+    
+    const statuses = Array.from(statusSet).filter(Boolean);
+    const types = Array.from(typeSet).filter(Boolean);
+    const phases = Array.from(phaseSet).filter(Boolean);
+    const assignedToIds = Array.from(assignedToSet).filter(Boolean);
+    
+    return {
+      statuses,
+      types,
+      phases,
+      assignedToIds
+    };
+  }, [assemblyCards]);
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      status: [],
+      type: [],
+      phase: [],
+      assignedTo: [],
+      cardNumber: "",
+    });
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(filters).some(filter => 
+    Array.isArray(filter) ? filter.length > 0 : filter !== ""
+  );
 
   const handleCardEdit = (card: AssemblyCard) => {
     setSelectedCard(card);
@@ -109,17 +192,165 @@ export default function GanttView() {
             <Package className="h-4 w-4 mr-2" />
             Add Card
           </Button>
-          <Button variant="secondary" data-testid="button-filter">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
+          <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="secondary" 
+                data-testid="button-filter"
+                className={hasActiveFilters ? "bg-primary/10 border-primary" : ""}
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filter
+                {hasActiveFilters && (
+                  <span className="ml-2 bg-primary text-primary-foreground rounded-full text-xs px-1.5 py-0.5">
+                    {Object.values(filters).flat().filter(Boolean).length}
+                  </span>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80" align="start">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Filter Cards</h4>
+                  {hasActiveFilters && (
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      <X className="h-3 w-3 mr-1" />
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                
+                {/* Card Number Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Card Number</Label>
+                  <Input
+                    placeholder="Search by card number..."
+                    value={filters.cardNumber}
+                    onChange={(e) => setFilters(prev => ({ ...prev, cardNumber: e.target.value }))}
+                    data-testid="filter-card-number"
+                  />
+                </div>
+                
+                {/* Status Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Status</Label>
+                  <div className="space-y-2">
+                    {filterOptions.statuses.map(status => (
+                      <div key={status} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`status-${status}`}
+                          checked={filters.status.includes(status)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFilters(prev => ({ ...prev, status: [...prev.status, status] }));
+                            } else {
+                              setFilters(prev => ({ ...prev, status: prev.status.filter(s => s !== status) }));
+                            }
+                          }}
+                          data-testid={`filter-status-${status}`}
+                        />
+                        <Label htmlFor={`status-${status}`} className="text-sm capitalize">
+                          {status.replace('_', ' ')}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Type Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Type</Label>
+                  <div className="space-y-2">
+                    {filterOptions.types.map(type => (
+                      <div key={type} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`type-${type}`}
+                          checked={filters.type.includes(type)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFilters(prev => ({ ...prev, type: [...prev.type, type] }));
+                            } else {
+                              setFilters(prev => ({ ...prev, type: prev.type.filter(t => t !== type) }));
+                            }
+                          }}
+                          data-testid={`filter-type-${type}`}
+                        />
+                        <Label htmlFor={`type-${type}`} className="text-sm">
+                          {type}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Phase Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Phase</Label>
+                  <div className="space-y-2">
+                    {filterOptions.phases.map(phase => (
+                      <div key={phase} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`phase-${phase}`}
+                          checked={filters.phase.includes(phase)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setFilters(prev => ({ ...prev, phase: [...prev.phase, phase] }));
+                            } else {
+                              setFilters(prev => ({ ...prev, phase: prev.phase.filter(p => p !== phase) }));
+                            }
+                          }}
+                          data-testid={`filter-phase-${phase}`}
+                        />
+                        <Label htmlFor={`phase-${phase}`} className="text-sm">
+                          Phase {phase}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Assembler Filter */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Assigned To</Label>
+                  <div className="space-y-2">
+                    {filterOptions.assignedToIds.map(assemblerId => {
+                      const assembler = assemblers.find(a => a.id === assemblerId);
+                      return (
+                        <div key={assemblerId} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`assembler-${assemblerId}`}
+                            checked={filters.assignedTo.includes(assemblerId)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFilters(prev => ({ ...prev, assignedTo: [...prev.assignedTo, assemblerId] }));
+                              } else {
+                                setFilters(prev => ({ ...prev, assignedTo: prev.assignedTo.filter(a => a !== assemblerId) }));
+                              }
+                            }}
+                            data-testid={`filter-assembler-${assemblerId}`}
+                          />
+                          <Label htmlFor={`assembler-${assemblerId}`} className="text-sm">
+                            {assembler?.name || `Assembler ${assemblerId}`}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                
+                <div className="text-xs text-muted-foreground">
+                  Showing {filteredAssemblyCards.length} of {assemblyCards.length} cards
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <DependencyLegend />
 
         <div className="bg-card rounded-lg border">
           <GanttTable
-            assemblyCards={assemblyCards}
+            assemblyCards={filteredAssemblyCards}
             assemblers={assemblers}
             onCardEdit={handleCardEdit}
             onCardView={handleCardView}
