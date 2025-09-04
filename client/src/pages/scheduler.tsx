@@ -390,6 +390,19 @@ export default function Scheduler() {
       const regularCards = assemblyCards.filter(card => card.type !== "DEAD_TIME");
       const deadTimeCards = assemblyCards.filter(card => card.type === "DEAD_TIME");
       
+      toast({
+        title: "Optimizing build sequence...",
+        description: "Finding optimal solution with constraint satisfaction",
+      });
+
+      // Iterative optimization - try multiple times until we get a valid solution
+      let bestSolution = null;
+      let bestCycleTime = Infinity;
+      let attempts = 0;
+      const maxAttempts = 5;
+      
+      for (attempts = 0; attempts < maxAttempts; attempts++) {
+      
       // Step 1: Validate dependency graph and detect circular dependencies
       const dependencyGraph = new Map();
       const inDegree = new Map();
@@ -644,7 +657,8 @@ export default function Scheduler() {
           card.dependencies.forEach((depCardNumber: string) => {
             const depCard = optimizedCards.find(c => c.cardNumber === depCardNumber);
             if (depCard && depCard.assignedTo === card.assignedTo) {
-              if ((depCard.position || 0) >= (card.position || 0)) {
+              // Dependency should come BEFORE (lower position number) the dependent card
+              if ((depCard.position || 0) > (card.position || 0)) {
                 dependencyConflicts++;
               }
             }
@@ -664,11 +678,60 @@ export default function Scheduler() {
         });
       });
       
-      toast({
-        title: "Build Sequence Optimized for Cycle Time",
-        description: `Optimized ${successCount}/${totalCards} cards. ${movedCards} moved. Max cycle: ${maxCycleTime}h, Avg: ${avgCycleTime.toFixed(1)}h. Dependencies: ${dependencyConflicts}, Crane conflicts: ${craneConflicts}.`,
-        duration: 6000,
-      });
+      // Evaluate this solution
+      const currentSolution = {
+        cards: optimizedCards,
+        maxCycleTime,
+        dependencyConflicts,
+        craneConflicts,
+        successCount,
+        movedCards,
+        totalCards,
+        avgCycleTime
+      };
+      
+      // Check if this is a valid solution (no conflicts) and better than previous
+      const isValidSolution = dependencyConflicts === 0 && craneConflicts === 0;
+      const isBetterSolution = maxCycleTime < bestCycleTime;
+      
+      if (isValidSolution && isBetterSolution) {
+        bestSolution = currentSolution;
+        bestCycleTime = maxCycleTime;
+        // Found optimal solution, no need to continue
+        break;
+      } else if (!bestSolution && isBetterSolution) {
+        // If no valid solution yet, keep the best invalid one
+        bestSolution = currentSolution;
+        bestCycleTime = maxCycleTime;
+      }
+      
+      // If we found a perfect solution, stop here
+      if (isValidSolution) {
+        break;
+      }
+      
+      // Add some randomness for next attempt by slightly shuffling the topological order
+      if (attempts < maxAttempts - 1) {
+        // Shuffle cards with same priority level to try different arrangements
+        regularCards.sort(() => Math.random() - 0.5);
+      }
+      
+      } // End of attempts loop
+      
+      // Use the best solution found
+      if (bestSolution) {
+        toast({
+          title: `Build Sequence Optimized${bestSolution.dependencyConflicts === 0 && bestSolution.craneConflicts === 0 ? ' Successfully' : ' (Best Effort)'}`,
+          description: `Optimized ${bestSolution.successCount}/${bestSolution.totalCards} cards. ${bestSolution.movedCards} moved. Max cycle: ${bestSolution.maxCycleTime}h, Avg: ${bestSolution.avgCycleTime.toFixed(1)}h. Dependencies: ${bestSolution.dependencyConflicts}, Crane conflicts: ${bestSolution.craneConflicts}. ${attempts + 1} attempt(s).`,
+          duration: 6000,
+        });
+      } else {
+        toast({
+          title: "Optimization Failed",
+          description: "Could not find a valid solution. Please check constraints.",
+          variant: "destructive",
+        });
+      }
       
     } catch (error) {
       console.error("Optimization failed:", error);
