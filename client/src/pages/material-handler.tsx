@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, ArrowLeft, AlertTriangle, Camera } from "lucide-react";
+import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
+import { useUsers } from "@/hooks/use-users";
 import { useToast } from "@/hooks/use-toast";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
@@ -14,6 +15,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { CameraCapture } from "@/components/CameraCapture";
@@ -48,11 +56,20 @@ interface MaterialCardProps {
 function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const { data: users = [] } = useUsers();
   const [pickingElapsed, setPickingElapsed] = useState(0);
   const [showAndonDialog, setShowAndonDialog] = useState(false);
   const [andonIssue, setAndonIssue] = useState("");
   const [attachedPhoto, setAttachedPhoto] = useState<string | null>(null);
   const [showCamera, setShowCamera] = useState(false);
+
+  // Filter users to only show material handlers
+  const materialHandlers = users.filter(user => user.role === "material_handler");
+  
+  // Find the assigned material handler
+  const assignedMaterialHandler = card.assignedMaterialHandler 
+    ? users.find(user => user.id === card.assignedMaterialHandler)
+    : null;
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "material-card",
@@ -189,6 +206,30 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     setShowCamera(false);
   };
 
+  const handleMaterialHandlerAssignment = async (materialHandlerId: string | null) => {
+    try {
+      await updateCardMutation.mutateAsync({
+        id: card.id,
+        assignedMaterialHandler: materialHandlerId === "unassigned" ? null : materialHandlerId,
+      });
+      
+      const handlerName = materialHandlerId === "unassigned" || !materialHandlerId 
+        ? "Unassigned" 
+        : materialHandlers.find(h => h.id === materialHandlerId)?.name || "Unknown";
+      
+      toast({
+        title: "Material Handler Updated",
+        description: `${card.cardNumber} assigned to ${handlerName}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to assign material handler",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAndonAlert = async () => {
     if (!andonIssue.trim()) {
       toast({
@@ -291,6 +332,46 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       </div>
       <div className="text-xs mb-3 text-gray-700">
         {card.duration} hrs • {getSequenceTypeLabel(card.type)}
+      </div>
+
+      {/* Material Handler Assignment Dropdown */}
+      <div className="mb-3">
+        <Label className="text-xs text-gray-600 mb-1 block">Assigned Material Handler:</Label>
+        <Select
+          value={card.assignedMaterialHandler || "unassigned"}
+          onValueChange={handleMaterialHandlerAssignment}
+          disabled={updateCardMutation.isPending}
+        >
+          <SelectTrigger 
+            className="w-full h-8 text-xs"
+            data-testid={`select-material-handler-${card.cardNumber}`}
+          >
+            <div className="flex items-center">
+              <UserCheck className="mr-2 h-3 w-3" />
+              <SelectValue placeholder="Select handler..." />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="unassigned" data-testid={`option-unassigned-${card.cardNumber}`}>
+              <span className="text-gray-500">Unassigned</span>
+            </SelectItem>
+            {materialHandlers.map((handler) => (
+              <SelectItem 
+                key={handler.id} 
+                value={handler.id}
+                data-testid={`option-handler-${handler.id}-${card.cardNumber}`}
+              >
+                {handler.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {assignedMaterialHandler && (
+          <div className="text-xs text-green-600 mt-1 flex items-center">
+            <UserCheck className="mr-1 h-3 w-3" />
+            Assigned to {assignedMaterialHandler.name}
+          </div>
+        )}
       </div>
       
       {isPicking && (

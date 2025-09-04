@@ -31,6 +31,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   duration: integer("duration").notNull(), // in hours
   phase: integer("phase").notNull(), // 1, 2, 3, 4
   assignedTo: varchar("assigned_to").references(() => assemblers.id),
+  assignedMaterialHandler: varchar("assigned_material_handler").references(() => users.id), // Material handler assigned to pick this card
   status: text("status").notNull().default("scheduled"), // "scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   precedents: text("precedents").array().notNull().default([]), // array of card numbers that depend on this one
@@ -106,6 +107,7 @@ export const insertAssemblyCardSchema = createInsertSchema(assemblyCards).omit({
   id: true,
 }).extend({
   assignedTo: z.string().nullable().optional().transform(val => val === '' ? null : val),
+  assignedMaterialHandler: z.string().nullable().optional().transform(val => val === '' ? null : val),
 });
 
 export const updateAssemblerSchema = z.object({
@@ -126,6 +128,7 @@ export const updateAssemblyCardSchema = z.object({
   duration: z.number().min(1).optional(),
   phase: z.number().min(1).max(4).optional(),
   assignedTo: z.string().nullable().optional(),
+  assignedMaterialHandler: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).optional(),
   dependencies: z.array(z.string()).optional(),
   precedents: z.array(z.string()).optional(),
