@@ -80,18 +80,22 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
 
   const onSubmit = async (data: any) => {
     try {
+      console.log("Form submission data:", data);
       if (isEditing && card) {
         // Update existing card
-        await updateCardMutation.mutateAsync({
+        const updateData = {
           id: card.id,
           ...data,
-        });
+        };
+        console.log("Updating card with data:", updateData);
+        await updateCardMutation.mutateAsync(updateData);
         toast({
           title: "Card updated successfully",
           description: `Assembly card ${data.cardNumber} has been updated`,
         });
       } else {
         // Create new card
+        console.log("Creating new card with data:", data);
         await createCardMutation.mutateAsync(data);
         toast({
           title: "Card created successfully",
@@ -100,6 +104,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       }
       onClose();
     } catch (error) {
+      console.error("Form submission error:", error);
       toast({
         title: isEditing ? "Failed to update card" : "Failed to create card",
         description: "Please check your inputs and try again",
