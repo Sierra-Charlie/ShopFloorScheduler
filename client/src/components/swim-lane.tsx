@@ -231,14 +231,16 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                 reorderedCards.splice(newPosition, 0, movedCard);
                 
                 // Update positions for all cards using duration-based positioning
+                // Use displayDuration (actualDuration for completed cards, otherwise planned duration)
                 let cumulativePosition = 0;
                 for (let i = 0; i < reorderedCards.length; i++) {
                   await updateCardMutation.mutateAsync({
                     id: reorderedCards[i].id,
                     position: cumulativePosition,
                   });
-                  // Next card starts after this card's duration
-                  cumulativePosition += reorderedCards[i].duration;
+                  // Next card starts after this card's display duration
+                  const displayDuration = reorderedCards[i].status === "completed" && reorderedCards[i].actualDuration ? reorderedCards[i].actualDuration : reorderedCards[i].duration;
+                  cumulativePosition += displayDuration;
                 }
                 
                 toast({
@@ -257,7 +259,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           
           let newPosition = 0;
           for (const existingCard of sortedCards) {
-            const cardEnd = (existingCard.position || 0) + existingCard.duration;
+            const displayDuration = existingCard.status === "completed" && existingCard.actualDuration ? existingCard.actualDuration : existingCard.duration;
+            const cardEnd = (existingCard.position || 0) + displayDuration;
             newPosition = Math.max(newPosition, cardEnd);
           }
           

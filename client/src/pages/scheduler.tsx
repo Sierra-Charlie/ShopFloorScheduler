@@ -698,10 +698,12 @@ export default function Scheduler() {
           ].sort((a, b) => (a.position || 0) - (b.position || 0));
           
           // Calculate next available time position based on cumulative durations
+          // Use displayDuration (actualDuration for completed cards, otherwise planned duration)
           let timePosition = 0;
           for (const existingCard of allCardsOnAssembler) {
             const cardStart = existingCard.position || 0;
-            const cardEnd = cardStart + existingCard.duration;
+            const displayDuration = existingCard.status === "completed" && existingCard.actualDuration ? existingCard.actualDuration : existingCard.duration;
+            const cardEnd = cardStart + displayDuration;
             timePosition = Math.max(timePosition, cardEnd);
           }
           
@@ -713,7 +715,8 @@ export default function Scheduler() {
             card.dependencies.forEach(depNum => {
               const depCard = allCardsOnAssembler.find(c => c.cardNumber === depNum);
               if (depCard) {
-                const depEndTime = (depCard.position || 0) + depCard.duration;
+                const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
+                const depEndTime = (depCard.position || 0) + depDisplayDuration;
                 maxDepEndTime = Math.max(maxDepEndTime, depEndTime);
               }
             });
