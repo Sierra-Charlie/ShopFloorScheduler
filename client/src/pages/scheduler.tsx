@@ -1070,6 +1070,10 @@ export default function Scheduler() {
                     <span className="text-[10px]">Ready for Picking (White P)</span>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <div className="bg-purple-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
+                    <span className="text-[10px]">Delivered to Paint (Purple P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
                     <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
                     <span className="text-[10px]">Overdue (Red Exclamation)</span>
                   </div>
