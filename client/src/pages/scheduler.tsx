@@ -1089,7 +1089,7 @@ export default function Scheduler() {
                 <h4 className="font-medium text-xs text-muted-foreground">Card Elements</h4>
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
-                    <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">Phase #</div>
+                    <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">XX</div>
                     <span className="text-[10px]">Dependency constraints - what assembly operation needs to be completed before this assembly operation can start</span>
                   </div>
                   <div className="flex items-center space-x-2">
