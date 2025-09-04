@@ -1093,7 +1093,7 @@ export default function Scheduler() {
                     <span className="text-[10px]">Dependency constraints - what assembly operation needs to be completed before this assembly operation can start</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="font-bold text-[10px]">CARD001</span>
+                    <span className="font-bold text-[10px]">XX</span>
                     <span className="text-[10px]">Card Number (Bold)</span>
                   </div>
                   <div className="flex items-center space-x-2">
