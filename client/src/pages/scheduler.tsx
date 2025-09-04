@@ -1051,154 +1051,106 @@ export default function Scheduler() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Assembly Card Visual Key/Legend */}
-          <div className="bg-card border-t border-border p-6">
-            <h3 className="text-lg font-semibold mb-4">Assembly Card Visual Indicators</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Phase Colors */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Phase Colors</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-                    <span className="text-xs">Phase 1 - Planning</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-orange-100 border border-orange-300 rounded"></div>
-                    <span className="text-xs">Phase 2 - Material Prep</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-yellow-100 border border-yellow-300 rounded"></div>
-                    <span className="text-xs">Phase 3 - Pre-Assembly</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                    <span className="text-xs">Phase 4 - Assembly</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
-                    <span className="text-xs">Phase 5 - Quality Control</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                    <span className="text-xs">Phase 6 - Completion</span>
-                  </div>
+        {/* Assembly Card Visual Key/Legend - Moved outside scrollable area */}
+        <div className="bg-card border-t border-border p-4">
+          <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Phase Colors */}
+            <div className="space-y-2">
+              <h4 className="font-medium text-xs text-muted-foreground">Phase Colors</h4>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-red-100 border border-red-300 rounded"></div>
+                  <span className="text-[10px]">Phase 1 - Planning</span>
                 </div>
-              </div>
-
-              {/* Status Indicators */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Status Indicators</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-green-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">P</div>
-                    <span className="text-xs">Picking in Progress (Green P)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-white text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold border-2 border-black">P</div>
-                    <span className="text-xs">Ready for Picking (White P)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">!</div>
-                    <span className="text-xs">Overdue (Red Exclamation)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="bg-yellow-500 text-black rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold">⚠</div>
-                    <span className="text-xs">Dependency Conflict (Yellow Warning)</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-orange-100 border border-orange-300 rounded"></div>
+                  <span className="text-[10px]">Phase 2 - Material Prep</span>
                 </div>
-              </div>
-
-              {/* Card Layout Elements */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Card Elements</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="text-xs bg-black text-white px-2 py-1 rounded">Phase #</div>
-                    <span className="text-xs">Phase Number Badge</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="font-bold text-sm">CARD001</span>
-                    <span className="text-xs">Card Number (Bold)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-gray-600">2 hrs • Type</span>
-                    <span className="text-xs">Duration & Sequence Type</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-2 h-6 bg-blue-500 rounded-l"></div>
-                    <span className="text-xs">Left Border (Status Color)</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded"></div>
+                  <span className="text-[10px]">Phase 3 - Pre-Assembly</span>
                 </div>
-              </div>
-
-              {/* Time Indicators */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Time Elements</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-0.5 h-6 bg-red-500 shadow-md"></div>
-                    <span className="text-xs">Current Time Line (Red)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-xs bg-red-500 text-white px-2 py-1 rounded">12:30 CT</div>
-                    <span className="text-xs">Current Time Display</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-xs text-muted-foreground">6a 7a 8a 9a...</span>
-                    <span className="text-xs">Hourly Time Markers</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                  <span className="text-[10px]">Phase 4 - Assembly</span>
                 </div>
-              </div>
-
-              {/* Card States */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Card States</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded opacity-50"></div>
-                    <span className="text-xs">Not Started (Faded)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded"></div>
-                    <span className="text-xs">In Progress (Normal Color)</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-4 h-4 bg-green-200 border border-green-400 rounded border-2"></div>
-                    <span className="text-xs">Completed (Thick Border)</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-purple-100 border border-purple-300 rounded"></div>
+                  <span className="text-[10px]">Phase 5 - Quality Control</span>
                 </div>
-              </div>
-
-              {/* Dependencies */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Dependencies</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center">
-                      <div className="w-3 h-0.5 bg-gray-400"></div>
-                      <div className="w-2 h-2 border-2 border-gray-400 bg-white transform rotate-45"></div>
-                    </div>
-                    <span className="text-xs">Dependency Arrow</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="text-xs text-orange-600 font-medium">⚠ Blocked</div>
-                    <span className="text-xs">Dependency Warning</span>
-                  </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-100 border border-green-300 rounded"></div>
+                  <span className="text-[10px]">Phase 6 - Completion</span>
                 </div>
               </div>
             </div>
 
-            {/* Quick Reference */}
-            <div className="mt-6 pt-4 border-t border-border">
-              <div className="flex flex-wrap gap-6 text-xs text-muted-foreground">
-                <div><strong>Drag & Drop:</strong> Move cards between swim lanes</div>
-                <div><strong>Click Card:</strong> View detailed information</div>
-                <div><strong>Double-Click:</strong> Edit card properties</div>
-                <div><strong>Time Grid:</strong> Shows 4-day schedule from 6am-2pm</div>
+            {/* Status Indicators */}
+            <div className="space-y-2">
+              <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
+                  <span className="text-[10px]">Picking in Progress (Green P)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-black">P</div>
+                  <span className="text-[10px]">Ready for Picking (White P)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
+                  <span className="text-[10px]">Overdue (Red Exclamation)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">⚠</div>
+                  <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
+                </div>
               </div>
+            </div>
+
+            {/* Card Elements & Time/States Combined */}
+            <div className="space-y-2">
+              <h4 className="font-medium text-xs text-muted-foreground">Card Elements</h4>
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">Phase #</div>
+                  <span className="text-[10px]">Phase Number Badge</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-[10px]">CARD001</span>
+                  <span className="text-[10px]">Card Number (Bold)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
+                  <span className="text-[10px]">Current Time Line (Red)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-gray-200 border border-gray-400 rounded opacity-50"></div>
+                  <span className="text-[10px]">Not Started (Faded)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
+                  <span className="text-[10px]">In Progress (Normal)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-200 border-2 border-green-400 rounded"></div>
+                  <span className="text-[10px]">Completed (Thick Border)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Compact Quick Reference */}
+          <div className="mt-3 pt-2 border-t border-border">
+            <div className="flex flex-wrap gap-4 text-[10px] text-muted-foreground">
+              <div><strong>Drag & Drop:</strong> Move cards</div>
+              <div><strong>Click:</strong> View details</div>
+              <div><strong>Double-Click:</strong> Edit card</div>
+              <div><strong>Time Grid:</strong> 4-day schedule (6am-2pm)</div>
             </div>
           </div>
         </div>
