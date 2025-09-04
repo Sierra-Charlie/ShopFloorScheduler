@@ -1096,6 +1096,29 @@ export default function Scheduler() {
                     <span className="font-bold text-[10px]">XX</span>
                     <span className="text-[10px]">Card Number (Bold)</span>
                   </div>
+                  {/* Sequence Codes Sub-bullets */}
+                  <div className="ml-4 space-y-0.5">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">M</span>
+                      <span className="text-[9px]">Mechanical Install</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">E</span>
+                      <span className="text-[9px]">Electrical Install</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">S</span>
+                      <span className="text-[9px]">Sub-Assembly</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">P</span>
+                      <span className="text-[9px]">Pre-Assembly</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">KB</span>
+                      <span className="text-[9px]">Kanban</span>
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
                     <span className="text-[10px]">Current Time Line (Red)</span>
