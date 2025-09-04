@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import vikingLogo from "@assets/Viking-logo-2_1756864041230.jpg";
@@ -19,6 +20,8 @@ interface LoginPageProps {
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
   const { toast } = useToast();
   const [error, setError] = useState<string>("");
+  const [phoneNumber, setPhoneNumber] = useState<string>("");
+  const [agreedToSms, setAgreedToSms] = useState<boolean>(false);
 
   const form = useForm<LoginUser>({
     resolver: zodResolver(loginSchema),
@@ -133,10 +136,40 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             </p>
           </div>
 
-          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border text-xs text-gray-600 dark:text-gray-400">
-            <p className="text-left">
-              By providing your mobile number and selecting 'I Agree,' you consent to receive SMS text message notifications from Viking Engineering regarding real-time Andon Alerts from Viking Engineering production. Message frequency may vary depending on production events. Message and data rates may apply. You may opt out at any time by replying STOP. For help, reply HELP. Your mobile number will only be used for production-related Andon notifications and will not be shared with third parties.
-            </p>
+          <div className="mt-4 space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber" className="text-sm">Mobile Number (for SMS alerts)</Label>
+              <Input
+                id="phoneNumber"
+                type="tel"
+                placeholder="(555) 123-4567"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                data-testid="input-phone-number"
+                className="w-full"
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="agreedToSms"
+                checked={agreedToSms}
+                onCheckedChange={(checked) => setAgreedToSms(!!checked)}
+                data-testid="checkbox-agree-sms"
+              />
+              <Label
+                htmlFor="agreedToSms"
+                className="text-sm leading-none cursor-pointer"
+              >
+                I Agree to receive SMS notifications
+              </Label>
+            </div>
+
+            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md border text-xs text-gray-600 dark:text-gray-400">
+              <p className="text-left">
+                By providing your mobile number and selecting 'I Agree,' you consent to receive SMS text message notifications from Viking Engineering regarding real-time Andon Alerts from Viking Engineering production. Message frequency may vary depending on production events. Message and data rates may apply. You may opt out at any time by replying STOP. For help, reply HELP. Your mobile number will only be used for production-related Andon notifications and will not be shared with third parties.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
