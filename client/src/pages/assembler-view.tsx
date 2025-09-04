@@ -38,7 +38,7 @@ export default function AssemblerView() {
     : assemblyCards;
 
   const activeCards = relevantCards.filter(card => 
-    card.status === 'in_progress' || card.status === 'ready_for_build' || card.status === 'assembling'
+    card.status === 'in_progress' || card.status === 'ready_for_build' || card.status === 'assembling' || card.status === 'paused'
   );
   
   const upcomingCards = relevantCards.filter(card => 
