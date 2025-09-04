@@ -189,6 +189,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate template file endpoint - MUST be before the /:id route
+  app.get("/api/assembly-cards/template", async (req, res) => {
+    try {
+      const format = req.query.format as string || 'xlsx';
+      
+      // Get current assembly cards to use as example data
+      const existingCards = await storage.getAssemblyCards();
+      
+      // Create template data with current cards as examples
+      const templateData = existingCards.length > 0 ? existingCards.map(card => ({
+        cardNumber: card.cardNumber,
+        name: card.name,
+        type: card.type,
+        duration: card.duration,
+        phase: card.phase,
+        assignedTo: card.assignedTo || '',
+        status: card.status,
+        dependencies: card.dependencies.join(','),
+        precedents: card.precedents.join(','),
+        gembaDocLink: card.gembaDocLink || '',
+        materialSeq: card.materialSeq || '',
+        operationSeq: card.operationSeq || '',
+        subAssyArea: card.subAssyArea || '',
+        requiresCrane: card.requiresCrane
+      })) : [
+        {
+          cardNumber: 'M1',
+          name: 'Example Mechanical Card',
+          type: 'M',
+          duration: 8,
+          phase: 1,
+          assignedTo: '',
+          status: 'scheduled',
+          dependencies: '',
+          precedents: 'E1,S1',
+          gembaDocLink: 'https://example.com/instructions',
+          materialSeq: 'Material sequence info',
+          operationSeq: 'Operation sequence info',
+          subAssyArea: '',
+          requiresCrane: false
+        },
+        {
+          cardNumber: 'E1',
+          name: 'Example Electrical Card',
+          type: 'E',
+          duration: 6,
+          phase: 1,
+          assignedTo: '',
+          status: 'scheduled',
+          dependencies: '',
+          precedents: '',
+          gembaDocLink: '',
+          materialSeq: '',
+          operationSeq: '',
+          subAssyArea: '',
+          requiresCrane: false
+        }
+      ];
+
+      if (format === 'csv') {
+        const csv = papa.unparse(templateData);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.csv');
+        res.send(csv);
+      } else {
+        // Generate Excel file
+        const worksheet = XLSX.utils.json_to_sheet(templateData);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'Assembly Cards');
+        
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.xlsx');
+        res.send(buffer);
+      }
+    } catch (error) {
+      console.error("Template generation error:", error);
+      res.status(500).json({ message: "Failed to generate template" });
+    }
+  });
+
   app.get("/api/assembly-cards/:id", async (req, res) => {
     try {
       const card = await storage.getAssemblyCard(req.params.id);
@@ -382,86 +463,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate template file endpoint
-  app.get("/api/assembly-cards/template", async (req, res) => {
-    try {
-      const format = req.query.format as string || 'xlsx';
-      
-      // Get current assembly cards to use as example data
-      const existingCards = await storage.getAssemblyCards();
-      
-      // Create template data with current cards as examples
-      const templateData = existingCards.length > 0 ? existingCards.map(card => ({
-        cardNumber: card.cardNumber,
-        name: card.name,
-        type: card.type,
-        duration: card.duration,
-        phase: card.phase,
-        assignedTo: card.assignedTo || '',
-        status: card.status,
-        dependencies: card.dependencies.join(','),
-        precedents: card.precedents.join(','),
-        gembaDocLink: card.gembaDocLink || '',
-        materialSeq: card.materialSeq || '',
-        operationSeq: card.operationSeq || '',
-        subAssyArea: card.subAssyArea || '',
-        requiresCrane: card.requiresCrane
-      })) : [
-        {
-          cardNumber: 'M1',
-          name: 'Example Mechanical Card',
-          type: 'M',
-          duration: 8,
-          phase: 1,
-          assignedTo: '',
-          status: 'scheduled',
-          dependencies: '',
-          precedents: 'E1,S1',
-          gembaDocLink: 'https://example.com/instructions',
-          materialSeq: 'Material sequence info',
-          operationSeq: 'Operation sequence info',
-          subAssyArea: '',
-          requiresCrane: false
-        },
-        {
-          cardNumber: 'E1',
-          name: 'Example Electrical Card',
-          type: 'E',
-          duration: 6,
-          phase: 1,
-          assignedTo: '',
-          status: 'scheduled',
-          dependencies: '',
-          precedents: '',
-          gembaDocLink: '',
-          materialSeq: '',
-          operationSeq: '',
-          subAssyArea: '',
-          requiresCrane: false
-        }
-      ];
-
-      if (format === 'csv') {
-        const csv = papa.unparse(templateData);
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.csv');
-        res.send(csv);
-      } else {
-        // Generate Excel file
-        const worksheet = XLSX.utils.json_to_sheet(templateData);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, 'Assembly Cards');
-        
-        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.xlsx');
-        res.send(buffer);
-      }
-    } catch (error) {
-      console.error("Template generation error:", error);
-      res.status(500).json({ message: "Failed to generate template" });
-    }
-  });
 
   // Andon Issues routes
   app.get("/api/andon-issues", async (req, res) => {
