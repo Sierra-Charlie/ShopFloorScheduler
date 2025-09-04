@@ -534,7 +534,27 @@ export default function Scheduler() {
         }
       });
       
-      // Step 5: Advanced constraint-based optimization with workload balancing
+      // Step 5: Sort cards by Phase and Priority within dependency order
+      // Convert sorted cardIds back to card objects and sort by phase and priority
+      const sortedCards = sorted.map(cardId => regularCards.find(c => c.id === cardId)).filter(Boolean);
+      const priorityOrder = { 'A': 1, 'B': 2, 'C': 3 };
+      
+      // Sort cards by Phase first (1-4), then Priority (A-C) within each phase
+      sortedCards.sort((a, b) => {
+        // Primary sort: Phase
+        if (a.phase !== b.phase) {
+          return a.phase - b.phase;
+        }
+        // Secondary sort: Priority within the same phase
+        const priorityA = priorityOrder[a.priority || 'B'] || 2;
+        const priorityB = priorityOrder[b.priority || 'B'] || 2;
+        return priorityA - priorityB;
+      });
+      
+      // Convert back to array of card IDs for processing
+      const sortedByPhasePriority = sortedCards.map(card => card.id);
+      
+      // Step 6: Advanced constraint-based optimization with workload balancing
       const optimizedCards: any[] = [];
       const assemblerWorkloads = new Map<string, number>();
       const assemblerPositions = new Map<string, number>();
@@ -546,8 +566,8 @@ export default function Scheduler() {
         assemblerPositions.set(assemblerId, 0);
       });
       
-      // Process cards in dependency order
-      for (const cardId of sorted) {
+      // Process cards in dependency and phase-priority order
+      for (const cardId of sortedByPhasePriority) {
         const card = regularCards.find(c => c.id === cardId);
         if (!card || card.grounded) {
           // Skip grounded cards - they cannot be moved
