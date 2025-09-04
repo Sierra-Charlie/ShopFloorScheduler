@@ -132,6 +132,12 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
               david.brown@stonetreeinvest.com / admin123
             </p>
           </div>
+
+          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md border text-xs text-gray-600 dark:text-gray-400">
+            <p className="text-left">
+              By providing your mobile number and selecting 'I Agree,' you consent to receive SMS text message notifications from Viking Engineering regarding real-time Andon Alerts from Viking Engineering production. Message frequency may vary depending on production events. Message and data rates may apply. You may opt out at any time by replying STOP. For help, reply HELP. Your mobile number will only be used for production-related Andon notifications and will not be shared with third parties.
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
