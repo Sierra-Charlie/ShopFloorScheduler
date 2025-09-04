@@ -909,103 +909,6 @@ export default function Scheduler() {
       {/* Schedule Summary View */}
       {currentView === "schedule" && (
         <div className="flex flex-col h-screen">
-          {/* Assembly Card Visual Key/Legend - At top for better swim lane visibility */}
-          <div className="bg-card border-b border-border p-3">
-            <h3 className="text-base font-semibold mb-2">Assembly Card Visual Indicators</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {/* Assembly Card Status Colors */}
-              <div className="space-y-1">
-                <h4 className="font-medium text-xs text-muted-foreground">Assembly Card Status Colors</h4>
-                <div className="space-y-0.5">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-300 border border-gray-400 rounded"></div>
-                    <span className="text-[10px]">Scheduled</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-gray-300 border-2 border-red-500 rounded"></div>
-                    <span className="text-[10px]">Dependency Conflict</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-orange-400 border border-orange-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 1</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 2</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-400 border border-purple-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 3</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-sky-400 border border-sky-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 4</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-blue-500 border border-blue-600 rounded"></div>
-                    <span className="text-[10px]">Assembling</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-600 border border-green-700 rounded"></div>
-                    <span className="text-[10px]">Complete</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Indicators */}
-              <div className="space-y-1">
-                <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
-                <div className="space-y-0.5">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
-                    <span className="text-[10px]">Picking in Progress (Green P)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-black">P</div>
-                    <span className="text-[10px]">Ready for Picking (White P)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-purple-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
-                    <span className="text-[10px]">Delivered to Paint (Purple P)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
-                    <span className="text-[10px]">Overdue (Red Exclamation)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">△</div>
-                    <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Card Elements & Quick Reference Combined */}
-              <div className="space-y-1">
-                <h4 className="font-medium text-xs text-muted-foreground">Card Elements & Usage</h4>
-                <div className="space-y-0.5">
-                  <div className="flex items-center space-x-2">
-                    <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">XX</div>
-                    <span className="text-[9px]">Dependency constraints</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-[9px]">XX</span>
-                    <span className="text-[9px]">Card Number (M/E/S/P/KB)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-0.5 h-3 bg-red-500"></div>
-                    <span className="text-[9px]">Current Time Line</span>
-                  </div>
-                  <div className="text-[9px] text-muted-foreground space-y-0.5">
-                    <div><strong>Drag & Drop:</strong> Move cards</div>
-                    <div><strong>Click:</strong> View details</div>
-                    <div><strong>Grid:</strong> 4-day schedule (6am-2pm)</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           {/* Shared scroll container for header and content */}
           <div className="flex-1 overflow-auto">
             <div className="min-w-max">
@@ -1149,6 +1052,142 @@ export default function Scheduler() {
             </div>
           </div>
 
+          {/* Assembly Card Visual Key/Legend - Outside scrollable area */}
+          <div className="bg-card border-t border-border p-4">
+            <h3 className="text-lg font-semibold mb-3">Assembly Card Visual Indicators</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Assembly Card Status Colors */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Assembly Card Status Colors</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-300 border border-gray-400 rounded"></div>
+                    <span className="text-[10px]">Scheduled</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-300 border-2 border-red-500 rounded"></div>
+                    <span className="text-[10px]">Dependency Conflict</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-orange-400 border border-orange-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 1</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 2</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-purple-400 border border-purple-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 3</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-sky-400 border border-sky-500 rounded"></div>
+                    <span className="text-[10px]">Delivery Sequence 4</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-500 border border-blue-600 rounded"></div>
+                    <span className="text-[10px]">Assembling</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-600 border border-green-700 rounded"></div>
+                    <span className="text-[10px]">Complete</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status Indicators */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Status Indicators</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-green-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
+                    <span className="text-[10px]">Picking in Progress (Green P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-white text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold border border-black">P</div>
+                    <span className="text-[10px]">Ready for Picking (White P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-purple-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">P</div>
+                    <span className="text-[10px]">Delivered to Paint (Purple P)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">!</div>
+                    <span className="text-[10px]">Overdue (Red Exclamation)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">△</div>
+                    <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card Elements & Time/States Combined */}
+              <div className="space-y-2">
+                <h4 className="font-medium text-xs text-muted-foreground">Card Elements</h4>
+                <div className="space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <div className="text-[8px] bg-black text-white px-1 py-0.5 rounded">XX</div>
+                    <span className="text-[10px]">Dependency constraints - what assembly operation needs to be completed before this assembly operation can start</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-bold text-[10px]">XX</span>
+                    <span className="text-[10px]">Card Number (Bold)</span>
+                  </div>
+                  {/* Sequence Codes Sub-bullets */}
+                  <div className="ml-4 space-y-0.5">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">M</span>
+                      <span className="text-[9px]">Mechanical Install</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">E</span>
+                      <span className="text-[9px]">Electrical Install</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">S</span>
+                      <span className="text-[9px]">Sub-Assembly</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">P</span>
+                      <span className="text-[9px]">Pre-Assembly</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">KB</span>
+                      <span className="text-[9px]">Kanban</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
+                    <span className="text-[10px]">Current Time Line (Red)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-200 border border-gray-400 rounded opacity-50"></div>
+                    <span className="text-[10px]">Not Started (Faded)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-blue-200 border border-blue-400 rounded"></div>
+                    <span className="text-[10px]">In Progress (Normal)</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-green-200 border-2 border-green-400 rounded"></div>
+                    <span className="text-[10px]">Completed (Thick Border)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Compact Quick Reference */}
+            <div className="mt-3 pt-2 border-t border-border">
+              <div className="flex flex-wrap gap-4 text-[10px] text-muted-foreground">
+                <div><strong>Drag & Drop:</strong> Move cards</div>
+                <div><strong>Click:</strong> View details</div>
+                <div><strong>Double-Click:</strong> Edit card</div>
+                <div><strong>Time Grid:</strong> 4-day schedule (6am-2pm)</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
       {/* Gantt View */}
