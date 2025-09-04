@@ -222,7 +222,7 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
         {card.duration} hrs • {getSequenceTypeLabel(card.type)}
       </div>
       
-      {!isClearedForPicking && card.status !== "completed" && card.status !== "assembling" && (
+      {!isClearedForPicking && card.status === "scheduled" && (
         <div className="space-y-2">
           <Button
             onClick={handleClearedForPicking}
