@@ -299,11 +299,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     // Check crane dependency conflicts based on timeline position overlap
     const hasCraneConflict = card.requiresCrane && 
       allAssemblyCards?.some(otherCard => {
-        // Quick test for P1 and S3
-        if (card.cardNumber === "P1" || card.cardNumber === "S3") {
-          console.log(`Testing ${card.cardNumber}: position ${card.position}, duration ${card.duration}, requires crane: ${card.requiresCrane}`);
-          console.log(`Checking against ${otherCard.cardNumber}: position ${otherCard.position}, duration ${otherCard.duration}, requires crane: ${otherCard.requiresCrane}, same lane: ${otherCard.assignedTo === card.assignedTo}`);
-        }
         if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
           return false; // Skip same card, non-crane cards, or cards in same lane
         }
