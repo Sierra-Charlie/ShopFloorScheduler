@@ -688,38 +688,39 @@ export default function Scheduler() {
         
         // Assign card to best assembler
         if (bestAssembler) {
-          // Find next available position for this assembler
-          // Check what positions are already taken by cards assigned to this assembler
-          const existingCards = optimizedCards.filter(c => c.assignedTo === bestAssembler.id);
-          const usedPositions = existingCards.map(c => c.position || 0);
+          // Calculate position based on cumulative duration of existing cards
+          const existingCards = optimizedCards
+            .filter(c => c.assignedTo === bestAssembler.id)
+            .sort((a, b) => (a.position || 0) - (b.position || 0));
           
-          let position = 0;
-          // Find the first available position
-          while (usedPositions.includes(position)) {
-            position++;
+          // Calculate next available time position based on cumulative durations
+          let timePosition = 0;
+          for (const existingCard of existingCards) {
+            const cardStart = existingCard.position || 0;
+            const cardEnd = cardStart + existingCard.duration;
+            timePosition = Math.max(timePosition, cardEnd);
           }
           
           // Smart position assignment: if this card has dependencies on the same assembler,
           // ensure it comes after all its dependencies
           if (card.dependencies?.length) {
-            let maxDepPosition = -1;
+            let maxDepEndTime = -1;
             
             card.dependencies.forEach(depNum => {
               const depCard = existingCards.find(c => c.cardNumber === depNum);
-              if (depCard && (depCard.position || 0) >= maxDepPosition) {
-                maxDepPosition = (depCard.position || 0);
+              if (depCard) {
+                const depEndTime = (depCard.position || 0) + depCard.duration;
+                maxDepEndTime = Math.max(maxDepEndTime, depEndTime);
               }
             });
             
             // Position after all dependencies
-            if (maxDepPosition >= 0) {
-              position = Math.max(position, maxDepPosition + 1);
-              // Ensure this position is also not taken
-              while (usedPositions.includes(position)) {
-                position++;
-              }
+            if (maxDepEndTime >= 0) {
+              timePosition = Math.max(timePosition, maxDepEndTime);
             }
           }
+          
+          const position = timePosition;
           
           const optimizedCard = {
             ...card,
