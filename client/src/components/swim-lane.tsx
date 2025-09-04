@@ -230,12 +230,15 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                 const [movedCard] = reorderedCards.splice(currentIndex, 1);
                 reorderedCards.splice(newPosition, 0, movedCard);
                 
-                // Update positions for all cards
+                // Update positions for all cards using duration-based positioning
+                let cumulativePosition = 0;
                 for (let i = 0; i < reorderedCards.length; i++) {
                   await updateCardMutation.mutateAsync({
                     id: reorderedCards[i].id,
-                    position: i,
+                    position: cumulativePosition,
                   });
+                  // Next card starts after this card's duration
+                  cumulativePosition += reorderedCards[i].duration;
                 }
                 
                 toast({
@@ -247,13 +250,21 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           }
         } else {
           // Card is being moved to a different assembler
-          // Calculate new position (add to end of current cards)
-          const maxPosition = Math.max(-1, ...assemblyCards.map(c => c.position || 0));
+          // Calculate new position based on cumulative duration of existing cards
+          const sortedCards = assemblyCards
+            .filter(c => c.assignedTo === assembler.id)
+            .sort((a, b) => (a.position || 0) - (b.position || 0));
+          
+          let newPosition = 0;
+          for (const existingCard of sortedCards) {
+            const cardEnd = (existingCard.position || 0) + existingCard.duration;
+            newPosition = Math.max(newPosition, cardEnd);
+          }
           
           await updateCardMutation.mutateAsync({
             id: item.id,
             assignedTo: assembler.id,
-            position: maxPosition + 1,
+            position: newPosition,
           });
           toast({
             title: "Card moved successfully",
