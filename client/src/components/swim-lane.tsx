@@ -276,7 +276,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
 
   // Check for dependency warnings and generate conflict details
   const getCardWarnings = (card: AssemblyCard) => {
-    return card.dependencies?.some(dep => {
+    // Check standard dependency conflicts
+    const hasDependencyConflict = card.dependencies?.some(dep => {
       const depCard = assemblyCards.find(c => c.cardNumber === dep);
       if (!depCard) return true; // Card not found
       
@@ -294,31 +295,73 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       // If no timing info, check status
       return depCard.status === "blocked";
     });
+
+    // Check crane dependency conflicts
+    const hasCraneConflict = card.requiresCrane && card.startTime && card.endTime && 
+      allAssemblyCards?.some(otherCard => {
+        if (otherCard.id === card.id || !otherCard.requiresCrane || !otherCard.startTime || !otherCard.endTime || otherCard.assignedTo === card.assignedTo) {
+          return false; // Skip same card, non-crane cards, cards without timing, or cards in same lane
+        }
+        
+        // Check if time periods overlap
+        const cardStart = new Date(card.startTime!);
+        const cardEnd = new Date(card.endTime!);
+        const otherStart = new Date(otherCard.startTime!);
+        const otherEnd = new Date(otherCard.endTime!);
+        
+        // Time periods overlap if: start1 < end2 && start2 < end1
+        return cardStart < otherEnd && otherStart < cardEnd;
+      });
+    
+    return hasDependencyConflict || hasCraneConflict;
   };
 
   const getDependencyConflictDetails = (card: AssemblyCard) => {
-    if (!card.dependencies?.length) return null;
-    
     const conflicts: string[] = [];
     
-    card.dependencies.forEach(dep => {
-      const depCard = assemblyCards.find(c => c.cardNumber === dep);
-      if (!depCard) {
-        conflicts.push(`Card ${dep} not found`);
-      } else if (depCard.assignedTo === card.assignedTo) {
-        // Same assembler - check position order
-        if ((depCard.position || 0) >= (card.position || 0)) {
-          conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
+    // Check standard dependency conflicts
+    if (card.dependencies?.length) {
+      card.dependencies.forEach(dep => {
+        const depCard = assemblyCards.find(c => c.cardNumber === dep);
+        if (!depCard) {
+          conflicts.push(`Card ${dep} not found`);
+        } else if (depCard.assignedTo === card.assignedTo) {
+          // Same assembler - check position order
+          if ((depCard.position || 0) >= (card.position || 0)) {
+            conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
+          }
+        } else if (card.startTime && depCard.endTime) {
+          // Different assemblers - check timing
+          if (new Date(depCard.endTime) > new Date(card.startTime)) {
+            conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts`);
+          }
+        } else if (depCard.status === "blocked") {
+          conflicts.push(`Card ${dep} is blocked`);
         }
-      } else if (card.startTime && depCard.endTime) {
-        // Different assemblers - check timing
-        if (new Date(depCard.endTime) > new Date(card.startTime)) {
-          conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts`);
+      });
+    }
+    
+    // Check crane dependency conflicts
+    if (card.requiresCrane && card.startTime && card.endTime && allAssemblyCards) {
+      const craneConflicts = allAssemblyCards.filter(otherCard => {
+        if (otherCard.id === card.id || !otherCard.requiresCrane || !otherCard.startTime || !otherCard.endTime || otherCard.assignedTo === card.assignedTo) {
+          return false; // Skip same card, non-crane cards, cards without timing, or cards in same lane
         }
-      } else if (depCard.status === "blocked") {
-        conflicts.push(`Card ${dep} is blocked`);
-      }
-    });
+        
+        // Check if time periods overlap
+        const cardStart = new Date(card.startTime!);
+        const cardEnd = new Date(card.endTime!);
+        const otherStart = new Date(otherCard.startTime!);
+        const otherEnd = new Date(otherCard.endTime!);
+        
+        // Time periods overlap if: start1 < end2 && start2 < end1
+        return cardStart < otherEnd && otherStart < cardEnd;
+      });
+      
+      craneConflicts.forEach(conflictCard => {
+        conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times`);
+      });
+    }
     
     return conflicts.length > 0 ? conflicts.join('; ') : null;
   };
@@ -381,7 +424,7 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
               card={card}
               onEdit={onCardEdit}
               onView={onCardView}
-              hasWarning={getCardWarnings(card)}
+              hasWarning={!!getCardWarnings(card)}
               conflictDetails={getDependencyConflictDetails(card)}
               isOverdue={isCardOverdue ? isCardOverdue(card) : false}
             />
