@@ -1070,6 +1070,10 @@ export default function Scheduler() {
                     <span className="text-[10px]">Dependency Conflict</span>
                   </div>
                   <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 bg-gray-400 border-2 border-orange-500 rounded"></div>
+                    <span className="text-[10px]">Grounded</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-orange-400 border border-orange-500 rounded"></div>
                     <span className="text-[10px]">Delivery Sequence 1</span>
                   </div>
