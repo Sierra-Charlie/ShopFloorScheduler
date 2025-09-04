@@ -55,6 +55,34 @@ export function useDeleteAssemblyCard() {
   });
 }
 
+export function useResetAllAssemblyCardStatus() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/assembly-cards/bulk/reset-status");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+    },
+  });
+}
+
+export function useDeleteAllAssemblyCards() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("DELETE", "/api/assembly-cards/bulk/delete-all");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+    },
+  });
+}
+
 export function useValidateDependencies() {
   return useMutation({
     mutationFn: async ({ cardNumber, dependencies }: { cardNumber: string; dependencies: string[] }) => {

@@ -328,6 +328,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk reset all assembly cards to "scheduled" status
+  app.post("/api/assembly-cards/bulk/reset-status", async (req, res) => {
+    try {
+      await storage.resetAllAssemblyCardsStatus();
+      res.json({ message: "All assembly cards reset to scheduled status" });
+    } catch (error) {
+      console.error("Reset status error:", error);
+      res.status(500).json({ message: "Failed to reset assembly card statuses" });
+    }
+  });
+
+  // Bulk delete all assembly cards
+  app.delete("/api/assembly-cards/bulk/delete-all", async (req, res) => {
+    try {
+      await storage.deleteAllAssemblyCards();
+      res.json({ message: "All assembly cards deleted" });
+    } catch (error) {
+      console.error("Delete all error:", error);
+      res.status(500).json({ message: "Failed to delete all assembly cards" });
+    }
+  });
+
   // Dependency validation
   app.post("/api/assembly-cards/:cardNumber/validate-dependencies", async (req, res) => {
     try {

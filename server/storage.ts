@@ -31,6 +31,10 @@ export interface IStorage {
   updateAssemblyCard(update: UpdateAssemblyCard): Promise<AssemblyCard | undefined>;
   deleteAssemblyCard(id: string): Promise<boolean>;
   
+  // Bulk Assembly Card Operations
+  resetAllAssemblyCardsStatus(): Promise<void>;
+  deleteAllAssemblyCards(): Promise<void>;
+  
   // Dependency validation
   validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }>;
   
@@ -433,6 +437,26 @@ export class MemStorage implements IStorage {
 
   async deleteAssemblyCard(id: string): Promise<boolean> {
     return this.assemblyCards.delete(id);
+  }
+
+  // Bulk Assembly Card Operations
+  async resetAllAssemblyCardsStatus(): Promise<void> {
+    for (const card of this.assemblyCards.values()) {
+      const updatedCard = { 
+        ...card, 
+        status: "scheduled" as const,
+        startTime: null,
+        endTime: null,
+        elapsedTime: 0,
+        pickingStartTime: null,
+        actualDuration: null
+      };
+      this.assemblyCards.set(card.id, updatedCard);
+    }
+  }
+
+  async deleteAllAssemblyCards(): Promise<void> {
+    this.assemblyCards.clear();
   }
 
   async validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }> {
