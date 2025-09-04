@@ -1078,7 +1078,7 @@ export default function Scheduler() {
                     <span className="text-[10px]">Overdue (Red Exclamation)</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">⚠</div>
+                    <div className="bg-yellow-500 text-black rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-bold">△</div>
                     <span className="text-[10px]">Dependency Conflict (Yellow Warning)</span>
                   </div>
                 </div>
