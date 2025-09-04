@@ -688,16 +688,24 @@ export default function Scheduler() {
         
         // Assign card to best assembler
         if (bestAssembler) {
-          let position = assemblerPositions.get(bestAssembler.id) || 0;
+          // Find next available position for this assembler
+          // Check what positions are already taken by cards assigned to this assembler
+          const existingCards = optimizedCards.filter(c => c.assignedTo === bestAssembler.id);
+          const usedPositions = existingCards.map(c => c.position || 0);
+          
+          let position = 0;
+          // Find the first available position
+          while (usedPositions.includes(position)) {
+            position++;
+          }
           
           // Smart position assignment: if this card has dependencies on the same assembler,
           // ensure it comes after all its dependencies
           if (card.dependencies?.length) {
-            const assemblerCards = optimizedCards.filter(c => c.assignedTo === bestAssembler.id);
             let maxDepPosition = -1;
             
             card.dependencies.forEach(depNum => {
-              const depCard = assemblerCards.find(c => c.cardNumber === depNum);
+              const depCard = existingCards.find(c => c.cardNumber === depNum);
               if (depCard && (depCard.position || 0) >= maxDepPosition) {
                 maxDepPosition = (depCard.position || 0);
               }
@@ -706,6 +714,10 @@ export default function Scheduler() {
             // Position after all dependencies
             if (maxDepPosition >= 0) {
               position = Math.max(position, maxDepPosition + 1);
+              // Ensure this position is also not taken
+              while (usedPositions.includes(position)) {
+                position++;
+              }
             }
           }
           

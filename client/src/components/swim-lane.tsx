@@ -317,19 +317,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         const otherStart = otherCard.position || 0;
         const otherEnd = otherStart + otherCard.duration;
         
-        // Debug logging for crane conflicts
-        if (card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") {
-          console.log(`Crane conflict check: ${card.cardNumber} (pos ${cardStart}-${cardEnd}) vs ${otherCard.cardNumber} (pos ${otherStart}-${otherEnd})`);
-        }
-        
         // Timeline positions overlap if: start1 < end2 && start2 < end1
-        const hasOverlap = cardStart < otherEnd && otherStart < cardEnd;
-        
-        if ((card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") && hasOverlap) {
-          console.log(`OVERLAP DETECTED: ${card.cardNumber} vs ${otherCard.cardNumber}`);
-        }
-        
-        return hasOverlap;
+        return cardStart < otherEnd && otherStart < cardEnd;
       });
     
     return hasDependencyConflict || hasCraneConflict;
@@ -386,19 +375,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         const otherStart = otherCard.position || 0;
         const otherEnd = otherStart + otherCard.duration;
         
-        // Debug logging for crane conflicts
-        if (card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") {
-          console.log(`Crane conflict check: ${card.cardNumber} (pos ${cardStart}-${cardEnd}) vs ${otherCard.cardNumber} (pos ${otherStart}-${otherEnd})`);
-        }
-        
         // Timeline positions overlap if: start1 < end2 && start2 < end1
-        const hasOverlap = cardStart < otherEnd && otherStart < cardEnd;
-        
-        if ((card.cardNumber === "P2 P3" || card.cardNumber === "S3" || otherCard.cardNumber === "P2 P3" || otherCard.cardNumber === "S3") && hasOverlap) {
-          console.log(`OVERLAP DETECTED: ${card.cardNumber} vs ${otherCard.cardNumber}`);
-        }
-        
-        return hasOverlap;
+        return cardStart < otherEnd && otherStart < cardEnd;
       });
       
       craneConflicts.forEach(conflictCard => {
