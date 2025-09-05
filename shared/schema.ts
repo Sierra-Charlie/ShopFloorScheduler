@@ -145,6 +145,7 @@ export const updateAssemblyCardSchema = z.object({
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().optional(),
   priority: z.enum(["A", "B", "C"]).optional(),
+  pickTime: z.number().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
