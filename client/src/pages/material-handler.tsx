@@ -7,6 +7,7 @@ import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
 import { useToast } from "@/hooks/use-toast";
 import { useSetting, useUpsertSetting, useCalculatePickDueDates, useUpdateStartTimes } from "@/hooks/use-settings";
+import { useQueryClient } from "@tanstack/react-query";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -598,9 +599,10 @@ function DropZone({ onDrop, index, children }: DropZoneProps) {
 
 export default function MaterialHandler() {
   const { currentUser, startDate, setStartDate, startTime, setStartTime } = useUser();
-  const { data: assemblyCards = [], isLoading } = useAssemblyCards();
+  const { data: assemblyCards = [], isLoading, refetch: refetchCards } = useAssemblyCards();
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  const queryClient = useQueryClient();
   
   // Settings hooks for Pick Lead Time and Daily Capacity
   const { data: pickLeadTimeSetting } = useSetting('pick_lead_time_days');
@@ -686,6 +688,9 @@ export default function MaterialHandler() {
   const handleCalculatePickDueDates = async () => {
     try {
       const result = await calculatePickDueDatesMutation.mutateAsync();
+      // Force immediate data refresh
+      await queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+      await refetchCards();
       toast({
         title: "Pick Due Dates Calculated",
         description: `Updated ${result.updatedCount} cards with pick due dates using ${result.pickLeadTimeDays} business day lead time.`,
