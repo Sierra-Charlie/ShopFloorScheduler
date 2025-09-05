@@ -33,27 +33,10 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         
-        // Wait for video to be ready
-        const handleLoadedMetadata = () => {
+        // Simple timeout to ensure video is ready
+        setTimeout(() => {
           setIsVideoReady(true);
-        };
-        
-        const handleCanPlay = () => {
-          if (videoRef.current) {
-            videoRef.current.play().catch(console.error);
-          }
-        };
-        
-        videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
-        videoRef.current.addEventListener('canplay', handleCanPlay);
-        
-        // Cleanup listeners
-        return () => {
-          if (videoRef.current) {
-            videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            videoRef.current.removeEventListener('canplay', handleCanPlay);
-          }
-        };
+        }, 1000);
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -133,6 +116,7 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
               playsInline
               muted
               className="w-full h-full object-cover"
+              style={{ display: isVideoReady ? 'block' : 'none' }}
               data-testid="video-camera-preview"
             />
             {(!stream || !isVideoReady) && (
