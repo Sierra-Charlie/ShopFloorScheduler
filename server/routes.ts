@@ -207,7 +207,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assignedTo: card.assignedTo || '',
         status: card.status,
         dependencies: card.dependencies.join(','),
-        precedents: card.precedents.join(','),
         gembaDocLink: card.gembaDocLink || '',
         materialSeq: card.materialSeq || '',
         operationSeq: card.operationSeq || '',
@@ -223,7 +222,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assignedTo: '',
           status: 'scheduled',
           dependencies: '',
-          precedents: 'E1,S1',
           gembaDocLink: 'https://example.com/instructions',
           materialSeq: 'Material sequence info',
           operationSeq: 'Operation sequence info',
@@ -239,7 +237,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assignedTo: '',
           status: 'scheduled',
           dependencies: '',
-          precedents: '',
           gembaDocLink: '',
           materialSeq: '',
           operationSeq: '',
@@ -298,11 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch("/api/assembly-cards/:id", async (req, res) => {
     try {
-      console.log("Update request received:", req.params.id, req.body);
-      console.log("pickTime in request:", req.body.pickTime, typeof req.body.pickTime);
       const updateData = updateAssemblyCardSchema.parse({ ...req.body, id: req.params.id });
-      console.log("Validated update data:", updateData);
-      console.log("pickTime in validated data:", updateData.pickTime);
       const card = await storage.updateAssemblyCard(updateData);
       if (!card) {
         return res.status(404).json({ message: "Assembly card not found" });
@@ -349,6 +342,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete all error:", error);
       res.status(500).json({ message: "Failed to delete all assembly cards" });
+    }
+  });
+
+  // Calculate and update phase cleared to build dates
+  app.post("/api/assembly-cards/bulk/update-phase-cleared-dates", async (req, res) => {
+    try {
+      const allCards = await storage.getAssemblyCards();
+      
+      // Group cards by phase and find earliest startTime for each phase
+      const phaseEarliestDates: { [phase: number]: Date | null } = {};
+      
+      for (let phase = 1; phase <= 4; phase++) {
+        const phaseCards = allCards.filter(card => card.phase === phase && card.startTime);
+        if (phaseCards.length > 0) {
+          const earliestDate = phaseCards.reduce((earliest, card) => {
+            if (!card.startTime) return earliest;
+            if (!earliest) return card.startTime;
+            return card.startTime < earliest ? card.startTime : earliest;
+          }, null as Date | null);
+          phaseEarliestDates[phase] = earliestDate;
+        } else {
+          phaseEarliestDates[phase] = null;
+        }
+      }
+      
+      // Update all cards with their phase's earliest date
+      const updatedCards = [];
+      for (const card of allCards) {
+        const phaseDate = phaseEarliestDates[card.phase];
+        if (phaseDate !== card.phaseClearedToBuildDate) {
+          const updatedCard = await storage.updateAssemblyCard({
+            id: card.id,
+            phaseClearedToBuildDate: phaseDate,
+          });
+          updatedCards.push(updatedCard);
+        }
+      }
+      
+      res.json({ 
+        message: "Phase cleared to build dates updated successfully",
+        updatedCount: updatedCards.length,
+        phaseEarliestDates
+      });
+    } catch (error) {
+      console.error("Update phase cleared dates error:", error);
+      res.status(500).json({ message: "Failed to update phase cleared to build dates" });
     }
   });
 

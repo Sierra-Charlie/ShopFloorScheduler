@@ -93,3 +93,17 @@ export function useValidateDependencies() {
     },
   });
 }
+
+export function useUpdatePhaseClearedDates() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", "/api/assembly-cards/bulk/update-phase-cleared-dates");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+    },
+  });
+}

@@ -49,6 +49,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   priority: text("priority").default("B"), // A, B, C priority for scheduling within delivery phases
   pickTime: integer("pick_time"), // time required to pick materials in minutes (15-180)
   pickDueDate: timestamp("pick_due_date"), // due date for when materials should be picked
+  phaseClearedToBuildDate: timestamp("phase_cleared_to_build_date"), // earliest scheduled date for any card in this phase
 });
 
 export const andonIssues = pgTable("andon_issues", {
@@ -148,6 +149,7 @@ export const updateAssemblyCardSchema = z.object({
   priority: z.enum(["A", "B", "C"]).optional(),
   pickTime: z.number().nullable().optional(),
   pickDueDate: z.date().nullable().optional(),
+  phaseClearedToBuildDate: z.date().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

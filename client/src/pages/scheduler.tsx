@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar, Table, Save, Package, AlertTriangle, Plus, Trash2, ChevronUp, ChevronDown, Zap, Minus } from "lucide-react";
-import { useAssemblyCards, useUpdateAssemblyCard, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards } from "@/hooks/use-assembly-cards";
+import { useAssemblyCards, useUpdateAssemblyCard, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards, useUpdatePhaseClearedDates } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUsers } from "@/hooks/use-users";
 import { useUser, canAccess } from "@/contexts/user-context";
@@ -54,6 +54,7 @@ export default function Scheduler() {
   const updateCardMutation = useUpdateAssemblyCard();
   const resetAllStatusMutation = useResetAllAssemblyCardStatus();
   const deleteAllCardsMutation = useDeleteAllAssemblyCards();
+  const updatePhaseClearedDatesMutation = useUpdatePhaseClearedDates();
   
   // Initialize active lanes with assemblers that have cards assigned to them
   useEffect(() => {
@@ -351,6 +352,23 @@ export default function Scheduler() {
       toast({
         title: "Delete Failed",
         description: "Failed to delete all assembly cards. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdatePhaseClearedDates = async () => {
+    try {
+      const result = await updatePhaseClearedDatesMutation.mutateAsync();
+      toast({
+        title: "Phase Dates Updated",
+        description: `Updated ${result.updatedCount} cards with phase cleared to build dates.`,
+      });
+    } catch (error) {
+      console.error("Update phase dates error:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update phase cleared to build dates. Please try again.",
         variant: "destructive",
       });
     }
@@ -1417,6 +1435,16 @@ export default function Scheduler() {
                     data-testid="button-reset-all-status"
                   >
                     Reset All to Scheduled
+                  </Button>
+                  <Button
+                    onClick={handleUpdatePhaseClearedDates}
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    disabled={updatePhaseClearedDatesMutation.isPending}
+                    data-testid="button-update-phase-dates"
+                  >
+                    {updatePhaseClearedDatesMutation.isPending ? "Updating..." : "Update Phase Dates"}
                   </Button>
                   <Button
                     onClick={handleDeleteAllCards}
