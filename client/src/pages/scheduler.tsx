@@ -579,11 +579,13 @@ export default function Scheduler() {
         // Update workload tracking for grounded cards
         if (card.assignedTo) {
           const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
-          assemblerWorkloads.set(card.assignedTo, currentWorkload + card.duration);
+          // Use display duration for accurate workload calculation
+          const cardDisplayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
+          assemblerWorkloads.set(card.assignedTo, currentWorkload + cardDisplayDuration);
           
-          // Update position tracking to account for grounded card positions AND their duration
+          // Update position tracking to account for grounded card positions AND their display duration
           // A grounded card at position 0 with duration 2 means next card should be at position 2
-          const groundedCardEndTime = (card.position || 0) + card.duration;
+          const groundedCardEndTime = (card.position || 0) + cardDisplayDuration;
           const currentPos = assemblerPositions.get(card.assignedTo) || 0;
           assemblerPositions.set(card.assignedTo, Math.max(currentPos, groundedCardEndTime));
         }
@@ -615,7 +617,9 @@ export default function Scheduler() {
           
           // 1. Calculate projected workload after adding this card
           const currentWorkload = assemblerWorkloads.get(assembler.id) || 0;
-          const projectedWorkload = currentWorkload + card.duration;
+          // Use display duration for accurate projected workload calculation
+          const cardDisplayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
+          const projectedWorkload = currentWorkload + cardDisplayDuration;
           
           // 2. Calculate workload imbalance - penalize assemblers that would become overloaded
           const otherWorkloads = Array.from(assemblerWorkloads.values()).filter((_, idx) => 
@@ -737,8 +741,9 @@ export default function Scheduler() {
           
           optimizedCards.push(optimizedCard);
           
-          // Update tracking
-          assemblerWorkloads.set(bestAssembler.id, (assemblerWorkloads.get(bestAssembler.id) || 0) + card.duration);
+          // Update tracking - use display duration for accurate workload calculation
+          const cardDisplayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
+          assemblerWorkloads.set(bestAssembler.id, (assemblerWorkloads.get(bestAssembler.id) || 0) + cardDisplayDuration);
           assemblerPositions.set(bestAssembler.id, Math.max(assemblerPositions.get(bestAssembler.id) || 0, position + 1));
           
           // Track crane usage for conflict detection
