@@ -971,22 +971,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         let currentSchedulingDate = new Date(latestPickDate);
         let remainingDailyCapacity = dailyCapacityMinutes;
         
-        // Schedule cards backward by priority
+        // Schedule cards backward by priority with proper capacity packing
         for (const card of phaseCards) {
           const cardPickTimeMinutes = card.pickTime || 60; // Default 60 minutes if not set
           
           // Check if card fits in current day's remaining capacity
           if (cardPickTimeMinutes <= remainingDailyCapacity) {
-            // Card fits in current day
+            // Card fits in current day - subtract from remaining capacity
             remainingDailyCapacity -= cardPickTimeMinutes;
           } else {
-            // Move to previous business day
+            // Card doesn't fit in current day, move to previous business day
             currentSchedulingDate = subtractBusinessDay(currentSchedulingDate);
-            remainingDailyCapacity = dailyCapacityMinutes - cardPickTimeMinutes;
             
-            // Handle case where card's pick time exceeds daily capacity
-            if (cardPickTimeMinutes > dailyCapacityMinutes) {
-              // Card needs multiple days - schedule on current day anyway
+            // Start new day with full capacity minus this card's time
+            if (cardPickTimeMinutes <= dailyCapacityMinutes) {
+              // Card fits in a single day
+              remainingDailyCapacity = dailyCapacityMinutes - cardPickTimeMinutes;
+            } else {
+              // Card exceeds daily capacity - schedule on current day anyway and set capacity to 0
               remainingDailyCapacity = 0;
             }
           }
