@@ -840,21 +840,6 @@ export default function MaterialHandler() {
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="build-start-date" className="text-xs font-medium text-muted-foreground">
-                  Assembly Build Start Date
-                </Label>
-                <div className="flex items-center space-x-2">
-                  <Input
-                    id="build-start-date"
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-40 text-sm"
-                    data-testid="input-build-start-date"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col space-y-1">
                 <Button
                   onClick={handleCalculatePickDueDates}
                   size="sm"
