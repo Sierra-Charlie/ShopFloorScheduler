@@ -1169,42 +1169,30 @@ export class DatabaseStorage implements IStorage {
 
   // Settings methods
   async getSettings(): Promise<Setting[]> {
-    return Array.from(this.settings.values());
+    return await db.select().from(settings);
   }
 
   async getSetting(key: string): Promise<Setting | undefined> {
-    return this.settings.get(key);
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting || undefined;
   }
 
   async createSetting(setting: InsertSetting): Promise<Setting> {
-    const id = this.nextSettingId++;
-    const newSetting: Setting = {
-      id,
-      key: setting.key,
-      value: setting.value,
-      description: setting.description || null,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.settings.set(setting.key, newSetting);
-    return newSetting;
+    const [created] = await db.insert(settings).values(setting).returning();
+    return created;
   }
 
   async updateSetting(update: UpdateSetting): Promise<Setting | undefined> {
-    const existing = this.settings.get(update.key);
-    if (!existing) return undefined;
-
-    const updated: Setting = {
-      ...existing,
-      ...update,
-      updatedAt: new Date()
-    };
-    this.settings.set(update.key, updated);
-    return updated;
+    const [updated] = await db.update(settings)
+      .set({ ...update, updatedAt: new Date() })
+      .where(eq(settings.key, update.key))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteSetting(key: string): Promise<boolean> {
-    return this.settings.delete(key);
+    const result = await db.delete(settings).where(eq(settings.key, key));
+    return (result.rowCount || 0) > 0;
   }
 }
 
@@ -1337,6 +1325,24 @@ async function initializeDatabaseData() {
         }
       ];
       await db.insert(assemblyCards).values(defaultCards);
+    }
+
+    // Initialize default settings if none exist
+    const existingSettings = await db.select().from(settings).limit(1);
+    if (existingSettings.length === 0) {
+      const defaultSettings = [
+        {
+          key: 'sms_alert_phone_number',
+          value: '+13177375614',
+          description: 'Phone number for Andon Alert SMS notifications'
+        },
+        {
+          key: 'pick_lead_time_days',
+          value: '1',
+          description: 'Number of business days to offset pick due dates before phase cleared to build dates'
+        }
+      ];
+      await db.insert(settings).values(defaultSettings);
     }
   } catch (error) {
     console.error("Error initializing database data:", error);
