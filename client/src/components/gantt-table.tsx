@@ -426,14 +426,14 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
                       <Select
-                        value={editValues.pickTime ? editValues.pickTime.toString() : card.pickTime ? card.pickTime.toString() : ""}
-                        onValueChange={(value) => setEditValues(prev => ({ ...prev, pickTime: value ? parseInt(value) : null }))}
+                        value={editValues.pickTime ? editValues.pickTime.toString() : card.pickTime ? card.pickTime.toString() : "0"}
+                        onValueChange={(value) => setEditValues(prev => ({ ...prev, pickTime: value === "0" ? null : parseInt(value) }))}
                       >
                         <SelectTrigger className="w-32" data-testid={`select-pick-time-${card.cardNumber}`}>
                           <SelectValue placeholder="Pick time" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No pick time</SelectItem>
+                          <SelectItem value="0">No pick time</SelectItem>
                           <SelectItem value="15">15 minutes</SelectItem>
                           <SelectItem value="30">30 minutes</SelectItem>
                           <SelectItem value="45">45 minutes</SelectItem>

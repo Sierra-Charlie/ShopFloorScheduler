@@ -301,8 +301,8 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                       <FormItem>
                         <FormLabel>Pick Time</FormLabel>
                         <Select
-                          value={field.value ? field.value.toString() : ""}
-                          onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                          value={field.value ? field.value.toString() : "0"}
+                          onValueChange={(value) => field.onChange(value === "0" ? null : parseInt(value))}
                         >
                           <FormControl>
                             <SelectTrigger data-testid="select-pick-time">
@@ -310,7 +310,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="">No pick time</SelectItem>
+                            <SelectItem value="0">No pick time</SelectItem>
                             <SelectItem value="15">15 minutes</SelectItem>
                             <SelectItem value="30">30 minutes</SelectItem>
                             <SelectItem value="45">45 minutes</SelectItem>
