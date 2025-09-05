@@ -13,12 +13,14 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
   const [isOpen, setIsOpen] = useState(true);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { toast } = useToast();
 
   const startCamera = useCallback(async () => {
     try {
+      setIsVideoReady(false);
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: "environment", // Use back camera if available
@@ -30,6 +32,28 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
       setStream(mediaStream);
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
+        
+        // Wait for video to be ready
+        const handleLoadedMetadata = () => {
+          setIsVideoReady(true);
+        };
+        
+        const handleCanPlay = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(console.error);
+          }
+        };
+        
+        videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+        videoRef.current.addEventListener('canplay', handleCanPlay);
+        
+        // Cleanup listeners
+        return () => {
+          if (videoRef.current) {
+            videoRef.current.removeEventListener('loadedmetadata', handleLoadedMetadata);
+            videoRef.current.removeEventListener('canplay', handleCanPlay);
+          }
+        };
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
@@ -46,6 +70,7 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
+    setIsVideoReady(false);
   }, [stream]);
 
   const capturePhoto = useCallback(async () => {
@@ -110,11 +135,11 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
               className="w-full h-full object-cover"
               data-testid="video-camera-preview"
             />
-            {!stream && (
-              <div className="absolute inset-0 flex items-center justify-center text-white">
+            {(!stream || !isVideoReady) && (
+              <div className="absolute inset-0 flex items-center justify-center text-white bg-black">
                 <div className="text-center">
                   <Camera className="mx-auto h-12 w-12 mb-2" />
-                  <p>Starting camera...</p>
+                  <p>{!stream ? "Starting camera..." : "Preparing video..."}</p>
                 </div>
               </div>
             )}
@@ -125,7 +150,7 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
           <div className="flex space-x-2">
             <Button
               onClick={capturePhoto}
-              disabled={!stream || isCapturing}
+              disabled={!stream || !isVideoReady || isCapturing}
               className="flex-1 bg-blue-600 hover:bg-blue-700"
               data-testid="button-capture-photo"
             >
