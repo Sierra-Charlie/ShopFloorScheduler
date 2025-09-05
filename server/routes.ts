@@ -941,8 +941,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Sort cards within each phase by priority
-      const priorityOrder = { 'A': 0, 'B': 1, 'C': 2 };
+      // Sort cards within each phase by priority (C first for earliest dates, then B, then A for latest dates)
+      const priorityOrder = { 'C': 0, 'B': 1, 'A': 2 };
       for (const phase in cardsByPhase) {
         cardsByPhase[phase].sort((a, b) => {
           const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
