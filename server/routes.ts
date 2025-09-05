@@ -299,8 +299,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assembly-cards/:id", async (req, res) => {
     try {
       console.log("Update request received:", req.params.id, req.body);
+      console.log("pickTime in request:", req.body.pickTime, typeof req.body.pickTime);
       const updateData = updateAssemblyCardSchema.parse({ ...req.body, id: req.params.id });
       console.log("Validated update data:", updateData);
+      console.log("pickTime in validated data:", updateData.pickTime);
       const card = await storage.updateAssemblyCard(updateData);
       if (!card) {
         return res.status(404).json({ message: "Assembly card not found" });
