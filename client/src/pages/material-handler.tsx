@@ -673,17 +673,6 @@ export default function MaterialHandler() {
             <h1 className="text-2xl font-bold text-foreground" data-testid="header-title">
               Material Handler View
             </h1>
-            <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span className="font-semibold mr-2">Delivery Sequence:</span>
-              <span className="phase-1 w-3 h-3 rounded"></span>
-              <span>1</span>
-              <span className="phase-2 w-3 h-3 rounded ml-4"></span>
-              <span>2</span>
-              <span className="phase-3 w-3 h-3 rounded ml-4"></span>
-              <span>3</span>
-              <span className="phase-4 w-3 h-3 rounded ml-4"></span>
-              <span>4</span>
-            </div>
           </div>
         </div>
       </header>
