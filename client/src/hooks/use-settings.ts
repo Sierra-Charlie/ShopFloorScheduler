@@ -56,6 +56,23 @@ export function useUpsertSetting() {
   });
 }
 
+export function useUpdateStartTimes() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ buildStartDate }: { buildStartDate: string }) => {
+      const response = await apiRequest("POST", "/api/assembly-cards/bulk/update-start-times", {
+        buildStartDate
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+      queryClient.refetchQueries({ queryKey: ["/api/assembly-cards"] });
+    },
+  });
+}
+
 export function useCalculatePickDueDates() {
   const queryClient = useQueryClient();
   

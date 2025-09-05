@@ -284,8 +284,9 @@ export const insertSettingSchema = createInsertSchema(settings).omit({
 });
 
 export const updateSettingSchema = z.object({
-  id: z.number(),
+  key: z.string(),
   value: z.string(),
+  description: z.string().optional(),
 });
 
 export type InsertSetting = z.infer<typeof insertSettingSchema>;

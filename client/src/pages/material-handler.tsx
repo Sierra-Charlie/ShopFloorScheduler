@@ -6,7 +6,7 @@ import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-ca
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
 import { useToast } from "@/hooks/use-toast";
-import { useSetting, useUpsertSetting, useCalculatePickDueDates } from "@/hooks/use-settings";
+import { useSetting, useUpsertSetting, useCalculatePickDueDates, useUpdateStartTimes } from "@/hooks/use-settings";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -607,9 +607,11 @@ export default function MaterialHandler() {
   const { data: dailyCapacitySetting } = useSetting('daily_pick_capacity_hours');
   const upsertSettingMutation = useUpsertSetting();
   const calculatePickDueDatesMutation = useCalculatePickDueDates();
+  const updateStartTimesMutation = useUpdateStartTimes();
   
   const [pickLeadTimeInput, setPickLeadTimeInput] = useState(pickLeadTimeSetting?.value || "1");
   const [dailyCapacityInput, setDailyCapacityInput] = useState(dailyCapacitySetting?.value || "8");
+  const [buildStartDateInput, setBuildStartDateInput] = useState("2025-09-24");
 
   // Update inputs when settings load
   useEffect(() => {
@@ -659,6 +661,24 @@ export default function MaterialHandler() {
       toast({
         title: "Save Failed",
         description: "Failed to save daily capacity setting.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUpdateStartTimes = async () => {
+    try {
+      const result = await updateStartTimesMutation.mutateAsync({
+        buildStartDate: buildStartDateInput + "T08:00:00.000Z"
+      });
+      toast({
+        title: "Start Times Updated",
+        description: `Updated ${result.updatedCount} cards with new build start date: ${buildStartDateInput}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update assembly card start times.",
         variant: "destructive",
       });
     }
@@ -831,6 +851,31 @@ export default function MaterialHandler() {
                     data-testid="button-save-pick-lead-time"
                   >
                     Save
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="build-start-date" className="text-xs font-medium text-muted-foreground">
+                  Assembly Build Start Date
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="build-start-date"
+                    type="date"
+                    value={buildStartDateInput}
+                    onChange={(e) => setBuildStartDateInput(e.target.value)}
+                    className="w-40 text-sm"
+                    data-testid="input-build-start-date"
+                  />
+                  <Button
+                    onClick={handleUpdateStartTimes}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={updateStartTimesMutation.isPending}
+                    data-testid="button-update-start-times"
+                  >
+                    {updateStartTimesMutation.isPending ? "Updating..." : "Update"}
                   </Button>
                 </div>
               </div>

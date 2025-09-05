@@ -345,6 +345,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update all assembly card start times based on a new build start date
+  app.post("/api/assembly-cards/bulk/update-start-times", async (req, res) => {
+    try {
+      const { buildStartDate } = z.object({
+        buildStartDate: z.string().transform((str) => new Date(str))
+      }).parse(req.body);
+      
+      const allCards = await storage.getAssemblyCards();
+      const updatedCards = [];
+      
+      // Update all cards with the new build start date
+      for (const card of allCards) {
+        const updatedCard = await storage.updateAssemblyCard({
+          id: card.id,
+          startTime: buildStartDate,
+        });
+        
+        if (updatedCard) {
+          updatedCards.push(updatedCard);
+        }
+      }
+      
+      res.json({
+        message: "All assembly card start times updated successfully",
+        updatedCount: updatedCards.length,
+        buildStartDate: buildStartDate.toISOString()
+      });
+    } catch (error) {
+      console.error("Update start times error:", error);
+      res.status(500).json({ message: "Failed to update assembly card start times" });
+    }
+  });
+
   // Calculate and update phase cleared to build dates
   app.post("/api/assembly-cards/bulk/update-phase-cleared-dates", async (req, res) => {
     try {
