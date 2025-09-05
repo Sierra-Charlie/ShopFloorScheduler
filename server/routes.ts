@@ -958,9 +958,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const phaseCards = cardsByPhase[phase];
         if (phaseCards.length === 0) continue;
         
-        // Start from the phase cleared date and work backward
+        // Start from the phase cleared date, subtract lead time, then work backward
         const phaseClearedDate = new Date(phaseCards[0].phaseClearedToBuildDate);
-        let currentSchedulingDate = subtractBusinessDay(phaseClearedDate);
+        
+        // First subtract the pick lead time (5 days) to get the latest pick due date
+        let latestPickDate = new Date(phaseClearedDate);
+        for (let i = 0; i < pickLeadTimeDays; i++) {
+          latestPickDate = subtractBusinessDay(latestPickDate);
+        }
+        
+        // Start scheduling backward from this latest pick date
+        let currentSchedulingDate = new Date(latestPickDate);
         let remainingDailyCapacity = dailyCapacityMinutes;
         
         // Schedule cards backward by priority
