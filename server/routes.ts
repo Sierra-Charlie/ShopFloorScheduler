@@ -902,12 +902,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate Pick Due Dates endpoint
+  // Calculate Pick Due Dates endpoint with advanced back-scheduling
   app.post("/api/assembly-cards/bulk/calculate-pick-due-dates", async (req, res) => {
     try {
-      // Get Pick Lead Time setting
+      // Get settings
       const pickLeadTimeSetting = await storage.getSetting('pick_lead_time_days');
+      const dailyCapacitySetting = await storage.getSetting('daily_pick_capacity_hours');
+      
       const pickLeadTimeDays = pickLeadTimeSetting ? parseInt(pickLeadTimeSetting.value) : 1;
+      const dailyCapacityMinutes = dailyCapacitySetting ? parseInt(dailyCapacitySetting.value) * 60 : 8 * 60; // Default 8 hours
       
       if (pickLeadTimeDays <= 0) {
         return res.status(400).json({ message: "Pick Lead Time must be a positive number" });
@@ -916,31 +919,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get all assembly cards
       const allCards = await storage.getAssemblyCards();
       
-      // Function to calculate business days backward
-      const subtractBusinessDays = (date: Date, days: number): Date => {
+      // Function to subtract one business day
+      const subtractBusinessDay = (date: Date): Date => {
         const result = new Date(date);
-        let remainingDays = days;
-        
-        while (remainingDays > 0) {
+        result.setDate(result.getDate() - 1);
+        // Skip weekends
+        while (result.getDay() === 0 || result.getDay() === 6) {
           result.setDate(result.getDate() - 1);
-          // Skip weekends (Saturday = 6, Sunday = 0)
-          if (result.getDay() !== 0 && result.getDay() !== 6) {
-            remainingDays--;
-          }
         }
-        
         return result;
       };
       
-      // Update cards with calculated Pick Due Dates
-      const updatedCards = [];
+      // Group cards by phase and sort by priority (A first, then B, then C)
+      const cardsByPhase: { [phase: number]: any[] } = {};
       for (const card of allCards) {
-        if (card.phaseClearedToBuildDate) {
-          const pickDueDate = subtractBusinessDays(card.phaseClearedToBuildDate, pickLeadTimeDays);
+        if (card.phaseClearedToBuildDate && card.pickTime) {
+          if (!cardsByPhase[card.phase]) {
+            cardsByPhase[card.phase] = [];
+          }
+          cardsByPhase[card.phase].push(card);
+        }
+      }
+      
+      // Sort cards within each phase by priority
+      const priorityOrder = { 'A': 0, 'B': 1, 'C': 2 };
+      for (const phase in cardsByPhase) {
+        cardsByPhase[phase].sort((a, b) => {
+          const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 1;
+          const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 1;
+          return aPriority - bPriority;
+        });
+      }
+      
+      // Advanced back-scheduling algorithm
+      const updatedCards = [];
+      
+      for (const phase in cardsByPhase) {
+        const phaseCards = cardsByPhase[phase];
+        if (phaseCards.length === 0) continue;
+        
+        // Start from the phase cleared date and work backward
+        const phaseClearedDate = new Date(phaseCards[0].phaseClearedToBuildDate);
+        let currentSchedulingDate = subtractBusinessDay(phaseClearedDate);
+        let remainingDailyCapacity = dailyCapacityMinutes;
+        
+        // Schedule cards backward by priority
+        for (const card of phaseCards) {
+          const cardPickTimeMinutes = card.pickTime || 60; // Default 60 minutes if not set
           
+          // Check if card fits in current day's remaining capacity
+          if (cardPickTimeMinutes <= remainingDailyCapacity) {
+            // Card fits in current day
+            remainingDailyCapacity -= cardPickTimeMinutes;
+          } else {
+            // Move to previous business day
+            currentSchedulingDate = subtractBusinessDay(currentSchedulingDate);
+            remainingDailyCapacity = dailyCapacityMinutes - cardPickTimeMinutes;
+            
+            // Handle case where card's pick time exceeds daily capacity
+            if (cardPickTimeMinutes > dailyCapacityMinutes) {
+              // Card needs multiple days - schedule on current day anyway
+              remainingDailyCapacity = 0;
+            }
+          }
+          
+          // Update the card with its calculated pick due date
           const updatedCard = await storage.updateAssemblyCard({
             id: card.id,
-            pickDueDate: pickDueDate,
+            pickDueDate: new Date(currentSchedulingDate),
           });
           
           if (updatedCard) {
@@ -950,9 +996,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       res.json({
-        message: "Pick Due Dates calculated successfully",
+        message: "Pick Due Dates calculated with capacity scheduling",
         updatedCount: updatedCards.length,
         pickLeadTimeDays: pickLeadTimeDays,
+        dailyCapacityHours: Math.round(dailyCapacityMinutes / 60 * 100) / 100,
       });
     } catch (error) {
       console.error("Calculate pick due dates error:", error);

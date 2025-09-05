@@ -598,19 +598,27 @@ export default function MaterialHandler() {
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   
-  // Settings hooks for Pick Lead Time
+  // Settings hooks for Pick Lead Time and Daily Capacity
   const { data: pickLeadTimeSetting } = useSetting('pick_lead_time_days');
+  const { data: dailyCapacitySetting } = useSetting('daily_pick_capacity_hours');
   const upsertSettingMutation = useUpsertSetting();
   const calculatePickDueDatesMutation = useCalculatePickDueDates();
   
   const [pickLeadTimeInput, setPickLeadTimeInput] = useState(pickLeadTimeSetting?.value || "1");
+  const [dailyCapacityInput, setDailyCapacityInput] = useState(dailyCapacitySetting?.value || "8");
 
-  // Update input when setting loads
+  // Update inputs when settings load
   useEffect(() => {
     if (pickLeadTimeSetting?.value) {
       setPickLeadTimeInput(pickLeadTimeSetting.value);
     }
   }, [pickLeadTimeSetting]);
+
+  useEffect(() => {
+    if (dailyCapacitySetting?.value) {
+      setDailyCapacityInput(dailyCapacitySetting.value);
+    }
+  }, [dailyCapacitySetting]);
 
   const handleSavePickLeadTime = async () => {
     try {
@@ -627,6 +635,26 @@ export default function MaterialHandler() {
       toast({
         title: "Save Failed",
         description: "Failed to save pick lead time setting.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSaveDailyCapacity = async () => {
+    try {
+      await upsertSettingMutation.mutateAsync({
+        key: 'daily_pick_capacity_hours',
+        value: dailyCapacityInput,
+        description: 'Daily pick capacity in hours for material picking schedule'
+      });
+      toast({
+        title: "Daily Capacity Saved",
+        description: `Daily pick capacity set to ${dailyCapacityInput} hours.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save daily capacity setting.",
         variant: "destructive",
       });
     }
@@ -754,13 +782,27 @@ export default function MaterialHandler() {
                 <Label htmlFor="daily-pick-capacity" className="text-xs font-medium text-muted-foreground">
                   Daily Pick Capacity (hrs)
                 </Label>
-                <Input
-                  id="daily-pick-capacity"
-                  type="number"
-                  placeholder="8"
-                  className="w-24 text-sm"
-                  data-testid="input-daily-pick-capacity"
-                />
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="daily-pick-capacity"
+                    type="number"
+                    value={dailyCapacityInput}
+                    onChange={(e) => setDailyCapacityInput(e.target.value)}
+                    placeholder="8"
+                    className="w-24 text-sm"
+                    data-testid="input-daily-pick-capacity"
+                  />
+                  <Button
+                    onClick={handleSaveDailyCapacity}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={upsertSettingMutation.isPending}
+                    data-testid="button-save-daily-capacity"
+                  >
+                    Save
+                  </Button>
+                </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="pick-lead-time" className="text-xs font-medium text-muted-foreground">
