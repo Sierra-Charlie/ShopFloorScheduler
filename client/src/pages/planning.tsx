@@ -211,8 +211,18 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
             </div>
           )}
         </div>
-        <div className="text-xs bg-black text-white px-2 py-1 rounded">
-          Phase {card.phase}
+        <div className="flex items-center space-x-2">
+          <div className="text-sm" data-testid={`text-pick-due-date-${card.cardNumber}`}>
+            {card.pickDueDate ? new Date(card.pickDueDate).toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'numeric', 
+              day: 'numeric', 
+              year: 'numeric' 
+            }) : 'Not calculated'}
+          </div>
+          <div className="text-xs bg-black text-white px-2 py-1 rounded">
+            {card.phase}-{card.priority || "B"}
+          </div>
         </div>
       </div>
       <div className="text-sm mb-2" title={getSequenceTypeLabel(card.type)}>
