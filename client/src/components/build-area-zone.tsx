@@ -55,7 +55,8 @@ export default function BuildAreaZone({
       {/* Cards Container */}
       <div className={cn(
         "grid gap-2",
-        areaId === "building" ? "grid-cols-1" : "grid-cols-2"
+        areaId === "building" ? "grid-cols-1" : 
+        areaId.startsWith("sub-assy-") ? "grid-cols-4" : "grid-cols-2"
       )}>
         {cards.length === 0 ? (
           <div className="text-center text-xs text-gray-500 dark:text-gray-400 py-4">
