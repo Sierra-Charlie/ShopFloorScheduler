@@ -301,8 +301,13 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         // Dependency should come BEFORE (lower position number) the dependent card
         return (depCard.position || 0) > (card.position || 0);
       } else {
-        // Cross-lane dependency: always a conflict since cards can't coordinate timing across lanes
-        return true;
+        // Cross-lane dependency: check timing to see if dependency finishes before dependent starts
+        const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
+        const depEndTime = (depCard.position || 0) + depDisplayDuration;
+        const cardStartTime = card.position || 0;
+        
+        // Conflict if dependency finishes AFTER dependent card starts
+        return depEndTime > cardStartTime;
       }
     });
 
@@ -353,13 +358,18 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           if ((depCard.position || 0) > (card.position || 0)) {
             conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
           }
-        } else if (card.startTime && depCard.endTime) {
-          // Different assemblers - check timing
-          if (new Date(depCard.endTime) > new Date(card.startTime)) {
-            conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts`);
+        } else {
+          // Cross-lane dependency: check timing to see if dependency finishes before dependent starts
+          const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
+          const depEndTime = (depCard.position || 0) + depDisplayDuration;
+          const cardStartTime = card.position || 0;
+          
+          // Conflict if dependency finishes AFTER dependent card starts
+          if (depEndTime > cardStartTime) {
+            conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTime}h > ${cardStartTime}h)`);
+          } else if (depCard.status === "blocked") {
+            conflicts.push(`Card ${dep} is blocked`);
           }
-        } else if (depCard.status === "blocked") {
-          conflicts.push(`Card ${dep} is blocked`);
         }
       });
     }
