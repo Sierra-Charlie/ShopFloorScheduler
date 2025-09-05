@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Table, Save, Package, Filter, X } from "lucide-react";
 import { Link } from "wouter";
 import { useAssemblyCards, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards, useUpdatePhaseClearedDates } from "@/hooks/use-assembly-cards";
+import { useUpdateStartTimes } from "@/hooks/use-settings";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
@@ -55,6 +56,7 @@ export default function GanttView() {
   const resetAllStatusMutation = useResetAllAssemblyCardStatus();
   const deleteAllCardsMutation = useDeleteAllAssemblyCards();
   const updatePhaseClearedDatesMutation = useUpdatePhaseClearedDates();
+  const updateStartTimesMutation = useUpdateStartTimes();
   const { toast } = useToast();
 
   // Filter the assembly cards based on current filters
@@ -185,6 +187,24 @@ export default function GanttView() {
     }
   };
 
+  const handleUpdateStartTimes = async () => {
+    try {
+      const result = await updateStartTimesMutation.mutateAsync({
+        buildStartDate: startDate + "T" + startTime + ":00.000Z"
+      });
+      toast({
+        title: "Start Times Updated",
+        description: `Updated ${result.updatedCount} cards with new build start date: ${startDate} at ${startTime}.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update assembly card start times.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleUpdatePhaseClearedDates = async () => {
     try {
       const result = await updatePhaseClearedDatesMutation.mutateAsync();
@@ -259,6 +279,16 @@ export default function GanttView() {
               data-testid="input-start-time"
             />
           </div>
+          <Button
+            onClick={handleUpdateStartTimes}
+            size="sm"
+            variant="outline"
+            className="text-xs"
+            disabled={updateStartTimesMutation.isPending}
+            data-testid="button-update-start-times"
+          >
+            {updateStartTimesMutation.isPending ? "Updating..." : "Update"}
+          </Button>
           <Button onClick={() => setIsModalOpen(true)} data-testid="button-add-card">
             <Package className="h-4 w-4 mr-2" />
             Add Card

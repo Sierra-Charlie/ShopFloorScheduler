@@ -6,7 +6,7 @@ import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-ca
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
 import { useToast } from "@/hooks/use-toast";
-import { useSetting, useUpsertSetting, useCalculatePickDueDates, useUpdateStartTimes } from "@/hooks/use-settings";
+import { useSetting, useUpsertSetting, useCalculatePickDueDates } from "@/hooks/use-settings";
 import { useQueryClient } from "@tanstack/react-query";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
@@ -609,7 +609,6 @@ export default function MaterialHandler() {
   const { data: dailyCapacitySetting } = useSetting('daily_pick_capacity_hours');
   const upsertSettingMutation = useUpsertSetting();
   const calculatePickDueDatesMutation = useCalculatePickDueDates();
-  const updateStartTimesMutation = useUpdateStartTimes();
   
   const [pickLeadTimeInput, setPickLeadTimeInput] = useState(pickLeadTimeSetting?.value || "1");
   const [dailyCapacityInput, setDailyCapacityInput] = useState(dailyCapacitySetting?.value || "8");
@@ -662,24 +661,6 @@ export default function MaterialHandler() {
       toast({
         title: "Save Failed",
         description: "Failed to save daily capacity setting.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleUpdateStartTimes = async () => {
-    try {
-      const result = await updateStartTimesMutation.mutateAsync({
-        buildStartDate: startDate + "T" + startTime + ":00.000Z"
-      });
-      toast({
-        title: "Start Times Updated",
-        description: `Updated ${result.updatedCount} cards with new build start date: ${startDate} at ${startTime}.`,
-      });
-    } catch (error) {
-      toast({
-        title: "Update Failed",
-        description: "Failed to update assembly card start times.",
         variant: "destructive",
       });
     }
@@ -871,16 +852,6 @@ export default function MaterialHandler() {
                     className="w-40 text-sm"
                     data-testid="input-build-start-date"
                   />
-                  <Button
-                    onClick={handleUpdateStartTimes}
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    disabled={updateStartTimesMutation.isPending}
-                    data-testid="button-update-start-times"
-                  >
-                    {updateStartTimesMutation.isPending ? "Updating..." : "Update"}
-                  </Button>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
