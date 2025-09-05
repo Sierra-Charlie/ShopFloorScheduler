@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar, Table, Save, Package, Filter, X } from "lucide-react";
 import { Link } from "wouter";
-import { useAssemblyCards, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards } from "@/hooks/use-assembly-cards";
+import { useAssemblyCards, useResetAllAssemblyCardStatus, useDeleteAllAssemblyCards, useUpdatePhaseClearedDates } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUser } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
@@ -54,6 +54,7 @@ export default function GanttView() {
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
   const resetAllStatusMutation = useResetAllAssemblyCardStatus();
   const deleteAllCardsMutation = useDeleteAllAssemblyCards();
+  const updatePhaseClearedDatesMutation = useUpdatePhaseClearedDates();
   const { toast } = useToast();
 
   // Filter the assembly cards based on current filters
@@ -184,6 +185,23 @@ export default function GanttView() {
     }
   };
 
+  const handleUpdatePhaseClearedDates = async () => {
+    try {
+      const result = await updatePhaseClearedDatesMutation.mutateAsync();
+      toast({
+        title: "Phase Dates Updated",
+        description: `Updated ${result.updatedCount} cards with phase cleared to build dates.`,
+      });
+    } catch (error) {
+      console.error("Update phase dates error:", error);
+      toast({
+        title: "Update Failed",
+        description: "Failed to update phase cleared to build dates. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (cardsLoading || assemblersLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -255,6 +273,17 @@ export default function GanttView() {
             data-testid="button-reset-all-status"
           >
             Reset All to Scheduled
+          </Button>
+          
+          <Button
+            onClick={handleUpdatePhaseClearedDates}
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            disabled={updatePhaseClearedDatesMutation.isPending}
+            data-testid="button-update-phase-dates"
+          >
+            {updatePhaseClearedDatesMutation.isPending ? "Updating..." : "Update Phase Dates"}
           </Button>
           
           <Button
