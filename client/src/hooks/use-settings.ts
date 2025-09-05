@@ -65,7 +65,9 @@ export function useCalculatePickDueDates() {
       return response.json();
     },
     onSuccess: () => {
+      // Force cache invalidation and immediate refetch
       queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+      queryClient.refetchQueries({ queryKey: ["/api/assembly-cards"] });
     },
   });
 }
