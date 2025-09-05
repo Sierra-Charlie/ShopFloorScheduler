@@ -6,6 +6,7 @@ import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-ca
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
 import { useToast } from "@/hooks/use-toast";
+import { useSetting, useUpsertSetting, useCalculatePickDueDates } from "@/hooks/use-settings";
 import { useDrop, useDrag } from "react-dnd";
 import { AssemblyCard } from "@shared/schema";
 import { cn } from "@/lib/utils";
@@ -591,6 +592,56 @@ export default function MaterialHandler() {
   const { data: assemblyCards = [], isLoading } = useAssemblyCards();
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
+  
+  // Settings hooks for Pick Lead Time
+  const { data: pickLeadTimeSetting } = useSetting('pick_lead_time_days');
+  const upsertSettingMutation = useUpsertSetting();
+  const calculatePickDueDatesMutation = useCalculatePickDueDates();
+  
+  const [pickLeadTimeInput, setPickLeadTimeInput] = useState(pickLeadTimeSetting?.value || "1");
+
+  // Update input when setting loads
+  useEffect(() => {
+    if (pickLeadTimeSetting?.value) {
+      setPickLeadTimeInput(pickLeadTimeSetting.value);
+    }
+  }, [pickLeadTimeSetting]);
+
+  const handleSavePickLeadTime = async () => {
+    try {
+      await upsertSettingMutation.mutateAsync({
+        key: 'pick_lead_time_days',
+        value: pickLeadTimeInput,
+        description: 'Number of business days to offset pick due dates before phase cleared to build dates'
+      });
+      toast({
+        title: "Pick Lead Time Saved",
+        description: `Pick lead time set to ${pickLeadTimeInput} business days.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Save Failed",
+        description: "Failed to save pick lead time setting.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCalculatePickDueDates = async () => {
+    try {
+      const result = await calculatePickDueDatesMutation.mutateAsync();
+      toast({
+        title: "Pick Due Dates Calculated",
+        description: `Updated ${result.updatedCount} cards with pick due dates using ${result.pickLeadTimeDays} business day lead time.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Calculation Failed",
+        description: "Failed to calculate pick due dates. Make sure to run 'Update Phase Dates' first.",
+        variant: "destructive",
+      });
+    }
+  };
 
   // Sort cards by phase first, then by position for material picking order
   const sortedCards = [...assemblyCards].sort((a, b) => {
@@ -710,13 +761,37 @@ export default function MaterialHandler() {
                 <Label htmlFor="pick-lead-time" className="text-xs font-medium text-muted-foreground">
                   Pick Lead Time (days)
                 </Label>
-                <Input
-                  id="pick-lead-time"
-                  type="number"
-                  placeholder="1"
-                  className="w-24 text-sm"
-                  data-testid="input-pick-lead-time"
-                />
+                <div className="flex items-center space-x-2">
+                  <Input
+                    id="pick-lead-time"
+                    type="number"
+                    value={pickLeadTimeInput}
+                    onChange={(e) => setPickLeadTimeInput(e.target.value)}
+                    placeholder="1"
+                    className="w-24 text-sm"
+                    data-testid="input-pick-lead-time"
+                  />
+                  <Button
+                    onClick={handleSavePickLeadTime}
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={upsertSettingMutation.isPending}
+                    data-testid="button-save-pick-lead-time"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Button
+                  onClick={handleCalculatePickDueDates}
+                  size="sm"
+                  disabled={calculatePickDueDatesMutation.isPending}
+                  data-testid="button-calculate-pick-due-dates"
+                >
+                  {calculatePickDueDatesMutation.isPending ? "Calculating..." : "Calculate Pick Due Dates"}
+                </Button>
               </div>
             </div>
           </div>

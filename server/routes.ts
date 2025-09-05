@@ -840,6 +840,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings routes
+  app.get("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.get("/api/settings/:key", async (req, res) => {
+    try {
+      const setting = await storage.getSetting(req.params.key);
+      res.json(setting || null);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch setting" });
+    }
+  });
+
+  app.post("/api/settings", async (req, res) => {
+    try {
+      const setting = await storage.createSetting(req.body);
+      res.status(201).json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create setting" });
+    }
+  });
+
+  app.put("/api/settings/:key", async (req, res) => {
+    try {
+      const setting = await storage.updateSetting({ ...req.body, key: req.params.key });
+      if (!setting) {
+        return res.status(404).json({ message: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  app.post("/api/settings/upsert", async (req, res) => {
+    try {
+      const { key, value, description } = req.body;
+      
+      // Try to get existing setting
+      const existing = await storage.getSetting(key);
+      
+      if (existing) {
+        // Update existing
+        const updated = await storage.updateSetting({ key, value, description });
+        res.json(updated);
+      } else {
+        // Create new
+        const created = await storage.createSetting({ key, value, description });
+        res.status(201).json(created);
+      }
+    } catch (error) {
+      console.error("Error upserting setting:", error);
+      res.status(500).json({ message: "Failed to upsert setting" });
+    }
+  });
+
+  // Calculate Pick Due Dates endpoint
+  app.post("/api/assembly-cards/bulk/calculate-pick-due-dates", async (req, res) => {
+    try {
+      // Get Pick Lead Time setting
+      const pickLeadTimeSetting = await storage.getSetting('pick_lead_time_days');
+      const pickLeadTimeDays = pickLeadTimeSetting ? parseInt(pickLeadTimeSetting.value) : 1;
+      
+      if (pickLeadTimeDays <= 0) {
+        return res.status(400).json({ message: "Pick Lead Time must be a positive number" });
+      }
+      
+      // Get all assembly cards
+      const allCards = await storage.getAssemblyCards();
+      
+      // Function to calculate business days backward
+      const subtractBusinessDays = (date: Date, days: number): Date => {
+        const result = new Date(date);
+        let remainingDays = days;
+        
+        while (remainingDays > 0) {
+          result.setDate(result.getDate() - 1);
+          // Skip weekends (Saturday = 6, Sunday = 0)
+          if (result.getDay() !== 0 && result.getDay() !== 6) {
+            remainingDays--;
+          }
+        }
+        
+        return result;
+      };
+      
+      // Update cards with calculated Pick Due Dates
+      const updatedCards = [];
+      for (const card of allCards) {
+        if (card.phaseClearedToBuildDate) {
+          const pickDueDate = subtractBusinessDays(card.phaseClearedToBuildDate, pickLeadTimeDays);
+          
+          const updatedCard = await storage.updateAssemblyCard({
+            id: card.id,
+            pickDueDate: pickDueDate,
+          });
+          
+          if (updatedCard) {
+            updatedCards.push(updatedCard);
+          }
+        }
+      }
+      
+      res.json({
+        message: "Pick Due Dates calculated successfully",
+        updatedCount: updatedCards.length,
+        pickLeadTimeDays: pickLeadTimeDays,
+      });
+    } catch (error) {
+      console.error("Calculate pick due dates error:", error);
+      res.status(500).json({ message: "Failed to calculate pick due dates" });
+    }
+  });
+
   const httpServer = createServer(app);
   
   // WebSocket server for real-time messaging

@@ -281,6 +281,32 @@ export class MemStorage implements IStorage {
         subAssyArea: card.subAssyArea ?? null
       });
     });
+
+    // Initialize default settings
+    const defaultSettings = [
+      {
+        key: 'sms_alert_phone_number',
+        value: '+13177375614',
+        description: 'Phone number for Andon Alert SMS notifications'
+      },
+      {
+        key: 'pick_lead_time_days',
+        value: '1',
+        description: 'Number of business days to offset pick due dates before phase cleared to build dates'
+      }
+    ];
+
+    defaultSettings.forEach(settingData => {
+      const setting: Setting = {
+        id: this.nextSettingId++,
+        key: settingData.key,
+        value: settingData.value,
+        description: settingData.description,
+        createdAt: now,
+        updatedAt: now
+      };
+      this.settings.set(settingData.key, setting);
+    });
   }
 
   // Assemblers
@@ -755,42 +781,44 @@ export class MemStorage implements IStorage {
     }
   }
 
-  // Settings stub methods for SMS integration
+  // Settings methods
   async getSettings(): Promise<Setting[]> {
-    return [{
-      id: 1,
-      key: 'sms_alert_phone_number',
-      value: '+13177375614',
-      description: 'Phone number for Andon Alert SMS notifications',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }];
+    return Array.from(this.settings.values());
   }
 
   async getSetting(key: string): Promise<Setting | undefined> {
-    if (key === 'sms_alert_phone_number') {
-      return {
-        id: 1,
-        key: 'sms_alert_phone_number',
-        value: '+13177375614',
-        description: 'Phone number for Andon Alert SMS notifications',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-    return undefined;
+    return this.settings.get(key);
   }
 
-  async createSetting(): Promise<Setting> {
-    throw new Error('Not implemented');
+  async createSetting(setting: InsertSetting): Promise<Setting> {
+    const id = this.nextSettingId++;
+    const newSetting: Setting = {
+      id,
+      key: setting.key,
+      value: setting.value,
+      description: setting.description || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.settings.set(setting.key, newSetting);
+    return newSetting;
   }
 
-  async updateSetting(): Promise<Setting | undefined> {
-    throw new Error('Not implemented');
+  async updateSetting(update: UpdateSetting): Promise<Setting | undefined> {
+    const existing = this.settings.get(update.key);
+    if (!existing) return undefined;
+
+    const updated: Setting = {
+      ...existing,
+      ...update,
+      updatedAt: new Date()
+    };
+    this.settings.set(update.key, updated);
+    return updated;
   }
 
-  async deleteSetting(): Promise<boolean> {
-    return false;
+  async deleteSetting(key: string): Promise<boolean> {
+    return this.settings.delete(key);
   }
 }
 
@@ -1139,42 +1167,44 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(threadParticipants.threadId, threadId), eq(threadParticipants.userId, userId)));
   }
 
-  // Settings stub methods for SMS integration
+  // Settings methods
   async getSettings(): Promise<Setting[]> {
-    return [{
-      id: 1,
-      key: 'sms_alert_phone_number',
-      value: '+13177375614',
-      description: 'Phone number for Andon Alert SMS notifications',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }];
+    return Array.from(this.settings.values());
   }
 
   async getSetting(key: string): Promise<Setting | undefined> {
-    if (key === 'sms_alert_phone_number') {
-      return {
-        id: 1,
-        key: 'sms_alert_phone_number',
-        value: '+13177375614',
-        description: 'Phone number for Andon Alert SMS notifications',
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
-    return undefined;
+    return this.settings.get(key);
   }
 
-  async createSetting(): Promise<Setting> {
-    throw new Error('Not implemented');
+  async createSetting(setting: InsertSetting): Promise<Setting> {
+    const id = this.nextSettingId++;
+    const newSetting: Setting = {
+      id,
+      key: setting.key,
+      value: setting.value,
+      description: setting.description || null,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.settings.set(setting.key, newSetting);
+    return newSetting;
   }
 
-  async updateSetting(): Promise<Setting | undefined> {
-    throw new Error('Not implemented');
+  async updateSetting(update: UpdateSetting): Promise<Setting | undefined> {
+    const existing = this.settings.get(update.key);
+    if (!existing) return undefined;
+
+    const updated: Setting = {
+      ...existing,
+      ...update,
+      updatedAt: new Date()
+    };
+    this.settings.set(update.key, updated);
+    return updated;
   }
 
-  async deleteSetting(): Promise<boolean> {
-    return false;
+  async deleteSetting(key: string): Promise<boolean> {
+    return this.settings.delete(key);
   }
 }
 
