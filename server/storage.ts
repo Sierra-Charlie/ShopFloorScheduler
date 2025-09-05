@@ -962,6 +962,21 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  async resetAllAssemblyCardsStatus(): Promise<void> {
+    await db.update(assemblyCards).set({
+      status: "scheduled",
+      startTime: null,
+      endTime: null,
+      elapsedTime: 0,
+      pickingStartTime: null,
+      actualDuration: null
+    });
+  }
+
+  async deleteAllAssemblyCards(): Promise<void> {
+    await db.delete(assemblyCards);
+  }
+
   async validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }> {
     const issues: string[] = [];
     
