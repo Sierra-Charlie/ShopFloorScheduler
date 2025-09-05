@@ -48,6 +48,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   requiresCrane: boolean("requires_crane").default(false), // true if assembly requires crane assistance
   priority: text("priority").default("B"), // A, B, C priority for scheduling within delivery phases
   pickTime: integer("pick_time"), // time required to pick materials in minutes (15-180)
+  pickDueDate: timestamp("pick_due_date"), // due date for when materials should be picked
 });
 
 export const andonIssues = pgTable("andon_issues", {
@@ -146,6 +147,7 @@ export const updateAssemblyCardSchema = z.object({
   requiresCrane: z.boolean().optional(),
   priority: z.enum(["A", "B", "C"]).optional(),
   pickTime: z.number().nullable().optional(),
+  pickDueDate: z.date().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
