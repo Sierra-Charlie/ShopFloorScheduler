@@ -999,27 +999,21 @@ export default function Scheduler() {
       <div className="bg-card border-b border-border px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <Button 
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium" 
-              onClick={optimizeBuildSequence}
-              data-testid="button-optimize"
-            >
-              <Zap className="mr-2 h-4 w-4" />
-              Optimize Build Sequence
-            </Button>
-            <Button 
-              className="bg-success hover:bg-success/90 text-white font-medium" 
-              onClick={saveSwimLaneConfiguration}
-              data-testid="button-save"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
           </div>
         </div>
         
         {/* Secondary Controls Row */}
         <div className="flex items-center justify-end space-x-3 mt-3 pt-3 border-t border-border">
+          {/* Optimize Build Sequence Button */}
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-medium" 
+            onClick={optimizeBuildSequence}
+            data-testid="button-optimize"
+          >
+            <Zap className="mr-2 h-4 w-4" />
+            Optimize Build Sequence
+          </Button>
+          
           {/* Dead Time Source */}
           <div className="border-r border-border pr-3">
             <DeadTimeSource />
@@ -1090,6 +1084,16 @@ export default function Scheduler() {
                 Clear Filter
               </Button>
             )}
+            
+            {/* Save Changes Button */}
+            <Button 
+              className="bg-success hover:bg-success/90 text-white font-medium" 
+              onClick={saveSwimLaneConfiguration}
+              data-testid="button-save"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </Button>
           </div>
         </div>
       </div>
