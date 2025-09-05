@@ -597,7 +597,7 @@ function DropZone({ onDrop, index, children }: DropZoneProps) {
 }
 
 export default function MaterialHandler() {
-  const { currentUser } = useUser();
+  const { currentUser, startDate, setStartDate, startTime, setStartTime } = useUser();
   const { data: assemblyCards = [], isLoading } = useAssemblyCards();
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
@@ -611,7 +611,6 @@ export default function MaterialHandler() {
   
   const [pickLeadTimeInput, setPickLeadTimeInput] = useState(pickLeadTimeSetting?.value || "1");
   const [dailyCapacityInput, setDailyCapacityInput] = useState(dailyCapacitySetting?.value || "8");
-  const [buildStartDateInput, setBuildStartDateInput] = useState("2025-09-24");
 
   // Update inputs when settings load
   useEffect(() => {
@@ -669,11 +668,11 @@ export default function MaterialHandler() {
   const handleUpdateStartTimes = async () => {
     try {
       const result = await updateStartTimesMutation.mutateAsync({
-        buildStartDate: buildStartDateInput + "T08:00:00.000Z"
+        buildStartDate: startDate + "T" + startTime + ":00.000Z"
       });
       toast({
         title: "Start Times Updated",
-        description: `Updated ${result.updatedCount} cards with new build start date: ${buildStartDateInput}.`,
+        description: `Updated ${result.updatedCount} cards with new build start date: ${startDate} at ${startTime}.`,
       });
     } catch (error) {
       toast({
@@ -862,8 +861,8 @@ export default function MaterialHandler() {
                   <Input
                     id="build-start-date"
                     type="date"
-                    value={buildStartDateInput}
-                    onChange={(e) => setBuildStartDateInput(e.target.value)}
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                     className="w-40 text-sm"
                     data-testid="input-build-start-date"
                   />
