@@ -325,12 +325,9 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
           )}
         </div>
         <div className="flex items-center space-x-2">
-          <Input
-            type="date"
-            placeholder="Tue 9/9/2025"
-            className="w-32 h-6 text-xs"
-            data-testid={`input-pick-due-date-${card.cardNumber}`}
-          />
+          <div className="text-sm" data-testid={`text-pick-due-date-${card.cardNumber}`}>
+            Tue 9/9/2025
+          </div>
           <div className="text-xs bg-black text-white px-2 py-1 rounded">
             {card.phase}-{card.priority || "B"}
           </div>
