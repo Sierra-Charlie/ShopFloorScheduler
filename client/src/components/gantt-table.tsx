@@ -66,6 +66,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
       if (editValues.materialSeq !== undefined) updateData.materialSeq = editValues.materialSeq;
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
+      if (editValues.pickTime !== undefined) updateData.pickTime = editValues.pickTime;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
       if (editValues.requiresCrane !== undefined) updateData.requiresCrane = editValues.requiresCrane;
       if (editValues.priority !== undefined) updateData.priority = editValues.priority;
@@ -168,6 +169,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Operation Seq
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Pick Time
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Assigned To
@@ -415,6 +419,38 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     ) : (
                       <span className="text-sm" data-testid={`text-operation-seq-${card.cardNumber}`}>
                         {card.operationSeq || "Not specified"}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Select
+                        value={editValues.pickTime ? editValues.pickTime.toString() : card.pickTime ? card.pickTime.toString() : ""}
+                        onValueChange={(value) => setEditValues(prev => ({ ...prev, pickTime: value ? parseInt(value) : null }))}
+                      >
+                        <SelectTrigger className="w-32" data-testid={`select-pick-time-${card.cardNumber}`}>
+                          <SelectValue placeholder="Pick time" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">No pick time</SelectItem>
+                          <SelectItem value="15">15 minutes</SelectItem>
+                          <SelectItem value="30">30 minutes</SelectItem>
+                          <SelectItem value="45">45 minutes</SelectItem>
+                          <SelectItem value="60">60 minutes</SelectItem>
+                          <SelectItem value="75">75 minutes</SelectItem>
+                          <SelectItem value="90">90 minutes</SelectItem>
+                          <SelectItem value="105">105 minutes</SelectItem>
+                          <SelectItem value="120">120 minutes</SelectItem>
+                          <SelectItem value="135">135 minutes</SelectItem>
+                          <SelectItem value="150">150 minutes</SelectItem>
+                          <SelectItem value="165">165 minutes</SelectItem>
+                          <SelectItem value="180">180 minutes</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <span className="text-sm" data-testid={`text-pick-time-${card.cardNumber}`}>
+                        {card.pickTime ? `${card.pickTime} min` : "Not specified"}
                       </span>
                     )}
                   </td>

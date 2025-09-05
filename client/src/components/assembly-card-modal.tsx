@@ -40,6 +40,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       grounded: false,
       requiresCrane: false,
       priority: "B" as "A" | "B" | "C",
+      pickTime: null as number | null,
     },
   });
 
@@ -58,6 +59,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         grounded: card.grounded || false,
         requiresCrane: card.requiresCrane || false,
         priority: (card.priority as "A" | "B" | "C") || "B",
+        pickTime: card.pickTime || null,
       });
     } else {
       // Reset to default values for new cards
@@ -74,6 +76,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         grounded: false,
         requiresCrane: false,
         priority: "B" as "A" | "B" | "C",
+        pickTime: null as number | null,
       });
     }
   }, [card, form]);
@@ -216,7 +219,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                   )}
                 />
                 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="duration"
@@ -290,7 +293,43 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="pickTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pick Time</FormLabel>
+                        <Select
+                          value={field.value ? field.value.toString() : ""}
+                          onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        >
+                          <FormControl>
+                            <SelectTrigger data-testid="select-pick-time">
+                              <SelectValue placeholder="Select pick time" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="">No pick time</SelectItem>
+                            <SelectItem value="15">15 minutes</SelectItem>
+                            <SelectItem value="30">30 minutes</SelectItem>
+                            <SelectItem value="45">45 minutes</SelectItem>
+                            <SelectItem value="60">60 minutes</SelectItem>
+                            <SelectItem value="75">75 minutes</SelectItem>
+                            <SelectItem value="90">90 minutes</SelectItem>
+                            <SelectItem value="105">105 minutes</SelectItem>
+                            <SelectItem value="120">120 minutes</SelectItem>
+                            <SelectItem value="135">135 minutes</SelectItem>
+                            <SelectItem value="150">150 minutes</SelectItem>
+                            <SelectItem value="165">165 minutes</SelectItem>
+                            <SelectItem value="180">180 minutes</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
                   <FormField
                     control={form.control}
                     name="materialSeq"
