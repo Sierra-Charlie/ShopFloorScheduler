@@ -1099,7 +1099,7 @@ export default function Scheduler() {
       </div>
       {/* Schedule Summary View */}
       {currentView === "schedule" && (
-        <div className="flex flex-col" style={{ height: 'calc(100vh + 450px)' }}>
+        <div className="flex flex-col" style={{ height: 'calc(100vh + 150px)' }}>
           {/* Shared scroll container for header and content */}
           <div className="flex-1 overflow-auto" style={{ height: 'calc(100vh + 1250px)' }}>
             <div className="min-w-max">
