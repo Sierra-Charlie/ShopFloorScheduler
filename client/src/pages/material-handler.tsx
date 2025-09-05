@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
@@ -680,10 +681,40 @@ export default function MaterialHandler() {
       {/* Material Handler Content */}
       <div className="p-6">
         <div className="mb-6">
-          <h2 className="text-lg font-semibold mb-2">Assembly Cards - Pick Order by Delivery Phase</h2>
-          <p className="text-sm text-muted-foreground">
-            Drag and drop to reorder cards within their delivery phase. Click "Ready for Build" when materials are picked and delivered.
-          </p>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-lg font-semibold mb-2">Assembly Cards - Pick Order by Delivery Phase</h2>
+              <p className="text-sm text-muted-foreground">
+                Drag and drop to reorder cards within their delivery phase. Click "Ready for Build" when materials are picked and delivered.
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="daily-pick-capacity" className="text-xs font-medium text-muted-foreground">
+                  Daily Pick Capacity (hrs)
+                </Label>
+                <Input
+                  id="daily-pick-capacity"
+                  type="number"
+                  placeholder="8"
+                  className="w-24 text-sm"
+                  data-testid="input-daily-pick-capacity"
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="pick-lead-time" className="text-xs font-medium text-muted-foreground">
+                  Pick Lead Time (days)
+                </Label>
+                <Input
+                  id="pick-lead-time"
+                  type="number"
+                  placeholder="1"
+                  className="w-24 text-sm"
+                  data-testid="input-pick-lead-time"
+                />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Cards organized by phase */}
