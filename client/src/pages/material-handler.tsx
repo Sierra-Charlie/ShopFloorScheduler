@@ -85,6 +85,9 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   const isPicking = card.status === "picking";
   const isDeliveredToPaint = card.status === "delivered_to_paint";
   const isClearedForPicking = card.status === "cleared_for_picking";
+  
+  // Check if card is overdue (today's date is past the pick due date)
+  const isOverdue = card.pickDueDate && new Date() > new Date(card.pickDueDate);
   // Cards should only get phase colors when actively picking, delivered to paint, or ready for build
   const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : "bg-gray-400";
 
@@ -307,7 +310,8 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       className={cn(
         "material-card p-4 rounded-lg border border-black shadow-sm cursor-grab active:cursor-grabbing",
         phaseClass,
-        isDragging && "opacity-50"
+        isDragging && "opacity-50",
+        isOverdue && "border-red-500 border-2"
       )}
       data-testid={`material-card-${card.cardNumber}`}
     >
