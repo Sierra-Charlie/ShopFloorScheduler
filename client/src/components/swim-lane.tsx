@@ -370,6 +370,16 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           } else if (depCard.status === "blocked") {
             conflicts.push(`Card ${dep} is blocked`);
           }
+          
+          // Debug logging
+          console.log(`Dependency check for ${card.cardNumber} -> ${dep}:`, {
+            depCard: depCard.cardNumber,
+            depPosition: depCard.position,
+            depDisplayDuration,
+            depEndTime,
+            cardStartTime: card.position,
+            conflict: depEndTime > cardStartTime
+          });
         }
       });
     }
