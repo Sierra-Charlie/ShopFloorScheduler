@@ -856,7 +856,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUser(id: string, userData: Partial<InsertUser>): Promise<User | undefined> {
-    const updateData = { ...userData };
+    const updateData: any = { ...userData };
     if (userData.password) {
       updateData.password = await bcrypt.hash(userData.password, 10);
     }
@@ -868,7 +868,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(id: string): Promise<boolean> {
     const result = await db.delete(users).where(eq(users.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
@@ -1282,12 +1282,26 @@ async function initializeDatabaseData() {
           duration: 4,
           phase: 1,
           assignedTo: mechanicalAssembler1?.id || null,
+          assignedMaterialHandler: null,
           status: "in_progress",
           dependencies: [],
-  
+          gembaDocLink: null,
+          materialSeq: null,
+          assemblySeq: null,
+          operationSeq: null,
           startTime: new Date(),
           endTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
           position: 0,
+          grounded: false,
+          subAssyArea: null,
+          requiresCrane: false,
+          priority: "B",
+          pickTime: null,
+          pickDueDate: null,
+          phaseClearedToBuildDate: null,
+          elapsedTime: 0,
+          pickingStartTime: null,
+          actualDuration: null
         },
         {
           cardNumber: "S4",
@@ -1296,12 +1310,26 @@ async function initializeDatabaseData() {
           duration: 3,
           phase: 2,
           assignedTo: mechanicalAssembler1?.id || null,
+          assignedMaterialHandler: null,
           status: "scheduled",
           dependencies: [],
-  
+          gembaDocLink: null,
+          materialSeq: null,
+          assemblySeq: null,
+          operationSeq: null,
           startTime: new Date(Date.now() + 4 * 60 * 60 * 1000),
           endTime: new Date(Date.now() + 7 * 60 * 60 * 1000),
           position: 1,
+          grounded: false,
+          subAssyArea: null,
+          requiresCrane: false,
+          priority: "B",
+          pickTime: null,
+          pickDueDate: null,
+          phaseClearedToBuildDate: null,
+          elapsedTime: 0,
+          pickingStartTime: null,
+          actualDuration: null
         },
         {
           cardNumber: "E7",
