@@ -420,6 +420,17 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       
       {isPicking && (
         <div className="space-y-2">
+          {card.pickListLink && (
+            <Button
+              onClick={() => window.open(card.pickListLink, '_blank')}
+              size="sm"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              data-testid={`button-pick-list-${card.cardNumber}`}
+            >
+              <Package className="mr-2 h-4 w-4" />
+              Pick List
+            </Button>
+          )}
           <Button
             onClick={handleDeliveredToPaint}
             size="sm"
