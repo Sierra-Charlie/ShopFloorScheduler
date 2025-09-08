@@ -36,6 +36,16 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+const generatePickListUrl = (jobNumber: string | null, assemblySeq: string | null, operationSeq: string | null): string | null => {
+  // Return null if any required field is missing
+  if (!jobNumber || !assemblySeq || !operationSeq) {
+    return null;
+  }
+  
+  const baseUrl = "https://centralusdtapp47.epicorsaas.com/SaaS5073/Apps/Erp/Home/#/view/UDJobPik?channelid=efccd09a-297a-4e13-a529-94c7486c2d20&layerVersion=0&baseAppVersion=0&company=VIK&site=MfgSys&";
+  return `${baseUrl}KeyFields.JobNum=${encodeURIComponent(jobNumber)}&KeyFields.AsySeq=${encodeURIComponent(assemblySeq)}&KeyFields.OpSeq=${encodeURIComponent(operationSeq)}`;
+};
+
 
 export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCardView }: GanttTableProps) {
   const [editingCard, setEditingCard] = useState<string | null>(null);
@@ -455,19 +465,28 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       />
                     ) : (
                       <span className="text-sm" data-testid={`text-pick-list-link-${card.cardNumber}`}>
-                        {card.pickListLink ? (
-                          <a 
-                            href={card.pickListLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Pick List Link
-                          </a>
-                        ) : (
-                          "Not specified"
-                        )}
+                        {(() => {
+                          // Use manual link if available, otherwise auto-generate
+                          const manualLink = card.pickListLink;
+                          const autoLink = generatePickListUrl(card.materialSeq, card.assemblySeq, card.operationSeq);
+                          const linkToUse = manualLink || autoLink;
+                          
+                          if (linkToUse) {
+                            return (
+                              <a 
+                                href={linkToUse} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 underline"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                Pick List Link
+                              </a>
+                            );
+                          } else {
+                            return "Not specified";
+                          }
+                        })()}
                       </span>
                     )}
                   </td>
