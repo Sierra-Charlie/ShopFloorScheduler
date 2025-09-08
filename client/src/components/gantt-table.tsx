@@ -65,6 +65,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.status !== undefined) updateData.status = editValues.status;
       if (editValues.dependencies !== undefined) updateData.dependencies = editValues.dependencies;
       if (editValues.materialSeq !== undefined) updateData.materialSeq = editValues.materialSeq;
+      if (editValues.assemblySeq !== undefined) updateData.assemblySeq = editValues.assemblySeq;
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.pickTime !== undefined) updateData.pickTime = editValues.pickTime;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
