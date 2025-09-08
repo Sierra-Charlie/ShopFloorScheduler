@@ -277,8 +277,17 @@ export class MemStorage implements IStorage {
         pickingStartTime: null as Date | null,
         actualDuration: null,
         gembaDocLink: null,
+        materialSeq: null,
+        assemblySeq: null,
+        operationSeq: null,
         grounded: false,
-        subAssyArea: card.subAssyArea ?? null
+        subAssyArea: card.subAssyArea ?? null,
+        requiresCrane: card.requiresCrane || false,
+        assignedMaterialHandler: null,
+        priority: "B",
+        pickTime: null,
+        pickDueDate: null,
+        phaseClearedToBuildDate: null
       });
     });
 
