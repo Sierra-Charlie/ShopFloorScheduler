@@ -137,6 +137,7 @@ export const updateAssemblyCardSchema = z.object({
   dependencies: z.array(z.string()).optional(),
   gembaDocLink: z.string().url().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
+  assemblySeq: z.string().nullable().optional(),
   operationSeq: z.string().nullable().optional(),
   startTime: z.date().nullable().optional(),
   endTime: z.date().nullable().optional(),

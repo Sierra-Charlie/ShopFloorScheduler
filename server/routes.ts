@@ -209,6 +209,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dependencies: card.dependencies.join(','),
         gembaDocLink: card.gembaDocLink || '',
         materialSeq: card.materialSeq || '',
+        assemblySeq: card.assemblySeq || '',
         operationSeq: card.operationSeq || '',
         subAssyArea: card.subAssyArea || '',
         requiresCrane: card.requiresCrane
@@ -224,6 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dependencies: '',
           gembaDocLink: 'https://example.com/instructions',
           materialSeq: 'Material sequence info',
+          assemblySeq: 'Assembly sequence info',
           operationSeq: 'Operation sequence info',
           subAssyArea: '',
           requiresCrane: false
@@ -239,6 +241,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dependencies: '',
           gembaDocLink: '',
           materialSeq: '',
+          assemblySeq: '',
           operationSeq: '',
           subAssyArea: '',
           requiresCrane: false
