@@ -35,6 +35,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   status: text("status").notNull().default("scheduled"), // "scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
+  pickListLink: text("pick_list_link"), // URL link to pick list in external system
   materialSeq: text("material_seq"), // Material sequence information - free form text
   assemblySeq: text("assembly_seq"), // Assembly sequence information - free form text
   operationSeq: text("operation_seq"), // Operation sequence information - free form text

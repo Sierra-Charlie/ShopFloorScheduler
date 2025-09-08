@@ -36,15 +36,6 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-const generateEpicorUrl = (jobNumber: string | null, assemblySeq: string | null, operationSeq: string | null): string | null => {
-  // Return null if any required field is missing
-  if (!jobNumber || !assemblySeq || !operationSeq) {
-    return null;
-  }
-  
-  const baseUrl = "https://centralusdtapp47.epicorsaas.com/SaaS5073/Apps/Erp/Home/#/view/UDJobPik?channelid=efccd09a-297a-4e13-a529-94c7486c2d20&layerVersion=0&baseAppVersion=0&company=VIK&site=MfgSys&";
-  return `${baseUrl}KeyFields.JobNum=${encodeURIComponent(jobNumber)}&KeyFields.AsySeq=${encodeURIComponent(assemblySeq)}&KeyFields.OpSeq=${encodeURIComponent(operationSeq)}`;
-};
 
 export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCardView }: GanttTableProps) {
   const [editingCard, setEditingCard] = useState<string | null>(null);
@@ -79,6 +70,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       if (editValues.operationSeq !== undefined) updateData.operationSeq = editValues.operationSeq;
       if (editValues.pickTime !== undefined) updateData.pickTime = editValues.pickTime;
       if (editValues.gembaDocLink !== undefined) updateData.gembaDocLink = editValues.gembaDocLink;
+      if (editValues.pickListLink !== undefined) updateData.pickListLink = editValues.pickListLink;
       if (editValues.requiresCrane !== undefined) updateData.requiresCrane = editValues.requiresCrane;
       if (editValues.priority !== undefined) updateData.priority = editValues.priority;
       // Always include subAssyArea if it exists in editValues
@@ -452,35 +444,32 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap">
-                    {(() => {
-                      // Use edited values if available, otherwise use card values
-                      const jobNumber = isEditing ? (editValues.materialSeq || card.materialSeq) : card.materialSeq;
-                      const assemblySeq = isEditing ? (editValues.assemblySeq || card.assemblySeq) : card.assemblySeq;
-                      const operationSeq = isEditing ? (editValues.operationSeq || card.operationSeq) : card.operationSeq;
-                      
-                      const epicorUrl = generateEpicorUrl(jobNumber, assemblySeq, operationSeq);
-                      
-                      if (epicorUrl) {
-                        return (
-                          <a
-                            href={epicorUrl}
-                            target="_blank"
+                    {isEditing ? (
+                      <Input
+                        type="url"
+                        value={editValues.pickListLink || card.pickListLink || ""}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, pickListLink: e.target.value || null }))}
+                        placeholder="https://..."
+                        className="w-40"
+                        data-testid={`input-pick-list-link-${card.cardNumber}`}
+                      />
+                    ) : (
+                      <span className="text-sm" data-testid={`text-pick-list-link-${card.cardNumber}`}>
+                        {card.pickListLink ? (
+                          <a 
+                            href={card.pickListLink} 
+                            target="_blank" 
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline text-sm"
-                            data-testid={`link-epicor-${card.cardNumber}`}
+                            className="text-blue-600 hover:text-blue-800 underline"
                             onClick={(e) => e.stopPropagation()}
                           >
                             Pick List Link
                           </a>
-                        );
-                      } else {
-                        return (
-                          <span className="text-sm text-muted-foreground" data-testid={`text-epicor-missing-${card.cardNumber}`}>
-                            Missing data
-                          </span>
-                        );
-                      }
-                    })()}
+                        ) : (
+                          "Not specified"
+                        )}
+                      </span>
+                    )}
                   </td>
                   
                   <td className="px-4 py-4 whitespace-nowrap">
