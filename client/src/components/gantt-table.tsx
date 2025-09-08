@@ -470,7 +470,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                             data-testid={`link-epicor-${card.cardNumber}`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            Open Epicor
+                            Pick List Link
                           </a>
                         );
                       } else {
