@@ -137,7 +137,6 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
 
   return (
     <div className="flex flex-col h-full">
-
       {/* Table */}
       <div className="flex-1 overflow-auto">
         <table className="w-full">
@@ -164,9 +163,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Priority
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                Material Seq
-              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Job Number</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Operation Seq
               </th>
