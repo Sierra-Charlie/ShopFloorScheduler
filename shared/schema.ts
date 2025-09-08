@@ -137,6 +137,7 @@ export const updateAssemblyCardSchema = z.object({
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).optional(),
   dependencies: z.array(z.string()).optional(),
   gembaDocLink: z.string().url().nullable().optional(),
+  pickListLink: z.string().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
   assemblySeq: z.string().nullable().optional(),
   operationSeq: z.string().nullable().optional(),

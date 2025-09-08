@@ -422,7 +422,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         <div className="space-y-2">
           {card.pickListLink && (
             <Button
-              onClick={() => window.open(card.pickListLink, '_blank')}
+              onClick={() => card.pickListLink && window.open(card.pickListLink, '_blank')}
               size="sm"
               className="w-full bg-blue-600 hover:bg-blue-700 text-white"
               data-testid={`button-pick-list-${card.cardNumber}`}
