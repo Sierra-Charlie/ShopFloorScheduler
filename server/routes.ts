@@ -9,6 +9,16 @@ import multer from "multer";
 import * as XLSX from "xlsx";
 import * as papa from "papaparse";
 
+// Auto-generate pick list URL from Job Number, Assembly Seq, and Operation Seq
+function generatePickListUrl(jobNumber: string | null, assemblySeq: string | null, operationSeq: string | null): string | null {
+  if (!jobNumber || !assemblySeq || !operationSeq) {
+    return null;
+  }
+  
+  const baseUrl = "https://centralusdtapp47.epicorsaas.com/SaaS5073/Apps/Erp/Home/#/view/UDJobPik?channelid=efccd09a-297a-4e13-a529-94c7486c2d20&layerVersion=0&baseAppVersion=0&company=VIK&site=MfgSys&";
+  return `${baseUrl}KeyFields.JobNum=${encodeURIComponent(jobNumber)}&KeyFields.AsySeq=${encodeURIComponent(assemblySeq)}&KeyFields.OpSeq=${encodeURIComponent(operationSeq)}`;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure multer for file uploads
   const upload = multer({ 
@@ -299,6 +309,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/assembly-cards/:id", async (req, res) => {
     try {
       const updateData = updateAssemblyCardSchema.parse({ ...req.body, id: req.params.id });
+      
+      // Auto-generate pick list URL if required fields are present and no manual URL is set
+      if (!updateData.pickListLink && updateData.materialSeq && updateData.assemblySeq && updateData.operationSeq) {
+        updateData.pickListLink = generatePickListUrl(updateData.materialSeq, updateData.assemblySeq, updateData.operationSeq);
+      }
+      
       const card = await storage.updateAssemblyCard(updateData);
       if (!card) {
         return res.status(404).json({ message: "Assembly card not found" });
