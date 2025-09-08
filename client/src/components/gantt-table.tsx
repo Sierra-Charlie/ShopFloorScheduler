@@ -165,6 +165,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Job Number</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                Assembly Seq
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Operation Seq
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -400,6 +403,22 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                     ) : (
                       <span className="text-sm" data-testid={`text-material-seq-${card.cardNumber}`}>
                         {card.materialSeq || "Not specified"}
+                      </span>
+                    )}
+                  </td>
+                  
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    {isEditing ? (
+                      <Input
+                        value={editValues.assemblySeq || card.assemblySeq || ""}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, assemblySeq: e.target.value }))}
+                        placeholder="Assembly seq"
+                        className="w-32"
+                        data-testid={`input-assembly-seq-${card.cardNumber}`}
+                      />
+                    ) : (
+                      <span className="text-sm" data-testid={`text-assembly-seq-${card.cardNumber}`}>
+                        {card.assemblySeq || "Not specified"}
                       </span>
                     )}
                   </td>
