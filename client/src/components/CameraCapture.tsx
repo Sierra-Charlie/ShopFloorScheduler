@@ -16,6 +16,7 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
   const [isVideoReady, setIsVideoReady] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { toast } = useToast();
 
   const startCamera = useCallback(async () => {
@@ -30,6 +31,7 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
       });
       
       setStream(mediaStream);
+      streamRef.current = mediaStream;
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         
@@ -49,12 +51,13 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
   }, [toast]);
 
   const stopCamera = useCallback(() => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
       setStream(null);
     }
     setIsVideoReady(false);
-  }, [stream]);
+  }, []);
 
   const capturePhoto = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
@@ -88,15 +91,19 @@ export function CameraCapture({ onPhotoCapture, onCancel }: CameraCaptureProps) 
     stopCamera();
     setIsOpen(false);
     onCancel();
-  }, [stopCamera, onCancel]);
+  }, [onCancel]);
 
   // Start camera when component mounts
   useEffect(() => {
     startCamera();
     
     // Cleanup on unmount
-    return () => stopCamera();
-  }, [startCamera, stopCamera]);
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []); // Empty dependency array - only run on mount/unmount
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
