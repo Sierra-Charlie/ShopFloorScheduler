@@ -6,8 +6,9 @@ import { Separator } from "@/components/ui/separator";
 import { TrendingUp, TrendingDown, Clock, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { useAssemblyCards } from "@/hooks/use-assembly-cards";
 import { useAssemblers } from "@/hooks/use-assemblers";
+import { useAndonIssues } from "@/hooks/use-andon-issues";
 import { useUser, canAccess } from "@/contexts/user-context";
-import type { AssemblyCard, Assembler } from "@shared/schema";
+import type { AssemblyCard, Assembler, AndonIssue } from "@shared/schema";
 
 interface DashboardMetrics {
   percentageCompleted: {
@@ -27,52 +28,22 @@ interface DashboardMetrics {
   };
 }
 
-interface AndonIssue {
-  id: string;
-  cardId: string;
-  cardNumber: string;
-  issue: string;
-  status: 'open' | 'in_progress' | 'resolved';
-  timestamp: Date;
-}
 
 export default function Dashboard() {
   const { currentUser } = useUser();
   const { data: assemblyCards = [], isLoading: cardsLoading } = useAssemblyCards();
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
+  const { data: allAndonIssues = [], isLoading: andonLoading } = useAndonIssues();
   const [metrics, setMetrics] = useState<DashboardMetrics>({
     percentageCompleted: { mechanical: 0, electrical: 0, overall: 0 },
     efficiency: { mechanical: 0, electrical: 0, overall: 0 },
     scheduleRealization: { mechanical: 0, electrical: 0, overall: 0 }
   });
 
-  // Mock recent Andon issues - in a real app, this would come from the API
-  const [recentAndonIssues] = useState<AndonIssue[]>([
-    {
-      id: '1',
-      cardId: 'M3',
-      cardNumber: 'M3',
-      issue: 'Missing bolt size M8x25 for bracket assembly',
-      status: 'open',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-    },
-    {
-      id: '2',
-      cardId: 'E5',
-      cardNumber: 'E5',
-      issue: 'Wiring diagram discrepancy - connector pin layout',
-      status: 'in_progress',
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) // 4 hours ago
-    },
-    {
-      id: '3',
-      cardId: 'M1',
-      cardNumber: 'M1',
-      issue: 'Tool calibration required for torque wrench',
-      status: 'resolved',
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000) // 6 hours ago
-    }
-  ]);
+  // Get the 3 most recent Andon issues
+  const recentAndonIssues = allAndonIssues
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3);
 
   // Calculate metrics when data changes
   useEffect(() => {
@@ -370,15 +341,15 @@ export default function Dashboard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2">
                     <Badge variant="outline" className="text-xs">
-                      {issue.cardNumber}
+                      {issue.assemblyCardNumber}
                     </Badge>
                     <Badge className={`text-xs ${getStatusColor(issue.status)}`}>
                       {issue.status.replace('_', ' ')}
                     </Badge>
                   </div>
-                  <p className="text-sm text-gray-900 mt-1">{issue.issue}</p>
+                  <p className="text-sm text-gray-900 mt-1">{issue.description}</p>
                   <p className="text-xs text-gray-500 mt-1">
-                    {issue.timestamp.toLocaleString('en-US', {
+                    {new Date(issue.createdAt).toLocaleString('en-US', {
                       timeZone: 'America/Chicago',
                       month: 'short',
                       day: 'numeric',
