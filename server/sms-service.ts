@@ -49,12 +49,11 @@ class SMSService {
 
   private formatAndonAlertMessage(issue: AndonIssue, assemblyCard?: AssemblyCard): string {
     const timestamp = new Date(issue.createdAt).toLocaleString();
-    const priority = issue.priority?.toUpperCase() || 'MEDIUM';
-    const cardInfo = assemblyCard ? ` (Card: ${assemblyCard.cardNumber} - ${assemblyCard.name})` : ` (Card: ${issue.assemblyCardNumber})`;
+    const cardNumber = assemblyCard?.cardNumber || issue.assemblyCardNumber;
 
-    return `🚨 ANDON ALERT - ${priority}
+    return `🚨 ANDON ALERT
 
-Issue: ${issue.issueType || 'General'}${cardInfo}
+Card: ${cardNumber}
 Reporter: ${issue.reporterName || issue.submittedBy}
 Description: ${issue.description}
 Time: ${timestamp}
