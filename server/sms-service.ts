@@ -48,17 +48,13 @@ class SMSService {
   }
 
   private formatAndonAlertMessage(issue: AndonIssue, assemblyCard?: AssemblyCard): string {
-    const timestamp = new Date(issue.createdAt).toLocaleString();
     const cardNumber = assemblyCard?.cardNumber || issue.assemblyCardNumber;
 
     return `🚨 ANDON ALERT
 
 Card: ${cardNumber}
 Reporter: ${issue.reporterName || issue.submittedBy}
-Description: ${issue.description}
-Time: ${timestamp}
-
-Please respond immediately.`;
+Description: ${issue.description}`;
   }
 
   // Test method to verify SMS functionality
