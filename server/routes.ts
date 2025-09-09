@@ -617,6 +617,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Get assembly card for more context
         const assemblyCard = await storage.getAssemblyCardByNumber(issue.assemblyCardNumber);
 
+        // Debug: Log what we're sending
+        console.log('🔍 SMS DEBUG - About to send:', {
+          issueNumber: issue.issueNumber,
+          assemblyCardNumber: issue.assemblyCardNumber,
+          description: issue.description,
+          alertPhoneNumber,
+          assemblyCardName: assemblyCard?.name,
+          hasAssemblyCard: !!assemblyCard
+        });
+
         // Send SMS notification
         await smsService.sendAndonAlert({
           issue,
