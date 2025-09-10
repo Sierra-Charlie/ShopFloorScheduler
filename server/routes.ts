@@ -6,7 +6,7 @@ import { insertUserSchema, loginSchema, insertAssemblerSchema, insertAssemblyCar
 import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import multer from "multer";
-import * as XLSX from "xlsx";
+import XLSX from "xlsx";
 import * as papa from "papaparse";
 
 // Auto-generate pick list URL from Job Number, Assembly Seq, and Operation Seq
@@ -25,13 +25,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     dest: 'uploads/',
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
     fileFilter: (req, file, cb) => {
-      // Accept Excel and CSV files
-      const allowedTypes = [
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
-        'application/vnd.ms-excel', // .xls
-        'text/csv', // .csv
-      ];
-      if (allowedTypes.includes(file.mimetype) || file.originalname.endsWith('.csv')) {
+      // Accept Excel and CSV files based on file extension (more reliable than MIME type)
+      const filename = file.originalname.toLowerCase();
+      if (filename.endsWith('.xlsx') || filename.endsWith('.xls') || filename.endsWith('.csv')) {
         cb(null, true);
       } else {
         cb(new Error('Only Excel (.xlsx, .xls) and CSV files are allowed'));
