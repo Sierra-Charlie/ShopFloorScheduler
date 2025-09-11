@@ -46,7 +46,8 @@ export default function BuildBayMap() {
           );
         case "building":
           return (card.type === "M" && card.status === "ready_for_build") ||
-                 ((card.type === "M" || card.type === "E") && card.status === "assembling");
+                 ((card.type === "M" || card.type === "E") && card.status === "assembling") ||
+                 (card.type === "D" && card.status === "ready_for_build");
         default:
           return false;
       }
