@@ -15,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
-import DependencyLegend from "@/components/dependency-legend";
 import { FileUpload } from "@/components/file-upload";
 import { AssemblyCard } from "@shared/schema";
 
@@ -479,7 +478,6 @@ export default function GanttView() {
           </Popover>
         </div>
 
-        <DependencyLegend />
 
         <div className="bg-card rounded-lg border">
           <GanttTable
