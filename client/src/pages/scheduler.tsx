@@ -1109,7 +1109,7 @@ export default function Scheduler() {
                   <div className="w-6 text-center text-xs font-medium text-muted-foreground">☐</div>
                   <div className="w-10 text-xs font-medium text-muted-foreground writing-mode-vertical-rl text-center border-l border-border px-1">Machine Group</div>
                   <div className="w-48 font-semibold text-sm pl-4">Assembler</div>
-                  {Array.from({ length: 4 }, (_, i) => (
+                  {Array.from({ length: 10 }, (_, i) => (
                     <div
                       key={i}
                       className="text-center text-xs font-medium text-muted-foreground border-l border-border"
@@ -1375,7 +1375,7 @@ export default function Scheduler() {
                 <div><strong>Drag & Drop:</strong> Move cards</div>
                 <div><strong>Click:</strong> View details</div>
                 <div><strong>Double-Click:</strong> Edit card</div>
-                <div><strong>Time Grid:</strong> 4-day schedule (6am-2pm)</div>
+                <div><strong>Time Grid:</strong> 10-day schedule (6am-2pm)</div>
               </div>
             </div>
           </div>
