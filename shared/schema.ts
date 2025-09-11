@@ -37,7 +37,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
   pickListLink: text("pick_list_link"), // URL link to pick list in external system
   materialSeq: text("material_seq"), // Material sequence information - free form text
-  assemblySeq: text("assembly_seq"), // Assembly sequence information - free form text
+  assemblySeq: integer("assembly_seq"), // Assembly sequence information - numeric
   operationSeq: text("operation_seq"), // Operation sequence information - free form text
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
@@ -139,7 +139,7 @@ export const updateAssemblyCardSchema = z.object({
   gembaDocLink: z.string().url().nullable().optional(),
   pickListLink: z.string().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
-  assemblySeq: z.string().nullable().optional(),
+  assemblySeq: z.number().nullable().optional(),
   operationSeq: z.string().nullable().optional(),
   startTime: z.date().nullable().optional(),
   endTime: z.date().nullable().optional(),
@@ -309,6 +309,7 @@ export const fileUploadSchema = z.object({
   dependencies: z.array(z.string()).default([]),
   gembaDocLink: z.string().url().nullable().optional(),
   materialSeq: z.string().nullable().optional(),
+  assemblySeq: z.number().nullable().optional(),
   operationSeq: z.string().nullable().optional(),
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().default(false),

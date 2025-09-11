@@ -426,8 +426,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
                       <Input
+                        type="number"
                         value={editValues.assemblySeq || card.assemblySeq || ""}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, assemblySeq: e.target.value }))}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, assemblySeq: e.target.value ? parseInt(e.target.value) : null }))}
                         placeholder="Assembly seq"
                         className="w-32"
                         data-testid={`input-assembly-seq-${card.cardNumber}`}
@@ -470,7 +471,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                         {(() => {
                           // Use manual link if available, otherwise auto-generate
                           const manualLink = card.pickListLink;
-                          const autoLink = generatePickListUrl(card.materialSeq, card.assemblySeq, card.operationSeq);
+                          const autoLink = generatePickListUrl(card.materialSeq, card.assemblySeq?.toString() || null, card.operationSeq);
                           const linkToUse = manualLink || autoLink;
                           
                           if (linkToUse) {

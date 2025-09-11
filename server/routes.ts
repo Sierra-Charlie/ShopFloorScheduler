@@ -215,7 +215,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         dependencies: card.dependencies.join(','),
         gembaDocLink: card.gembaDocLink || '',
         materialSeq: card.materialSeq || '',
-        assemblySeq: card.assemblySeq || '',
+        assemblySeq: card.assemblySeq || null,
         operationSeq: card.operationSeq || '',
         subAssyArea: card.subAssyArea || '',
         requiresCrane: card.requiresCrane
@@ -231,7 +231,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dependencies: '',
           gembaDocLink: 'https://example.com/instructions',
           materialSeq: 'Material sequence info',
-          assemblySeq: 'Assembly sequence info',
+          assemblySeq: 100,
           operationSeq: 'Operation sequence info',
           subAssyArea: '',
           requiresCrane: false
@@ -247,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           dependencies: '',
           gembaDocLink: '',
           materialSeq: '',
-          assemblySeq: '',
+          assemblySeq: null,
           operationSeq: '',
           subAssyArea: '',
           requiresCrane: false
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Auto-generate pick list URL if required fields are present and no manual URL is set
       if (!updateData.pickListLink && updateData.materialSeq && updateData.assemblySeq && updateData.operationSeq) {
-        updateData.pickListLink = generatePickListUrl(updateData.materialSeq, updateData.assemblySeq, updateData.operationSeq);
+        updateData.pickListLink = generatePickListUrl(updateData.materialSeq, updateData.assemblySeq?.toString() || null, updateData.operationSeq);
       }
       
       const card = await storage.updateAssemblyCard(updateData);
@@ -511,6 +511,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 : (row.precedents || row.Precedents || row.PRECEDENTS || '').split(',').map((s: string) => s.trim()).filter(Boolean),
               gembaDocLink: row.gembaDocLink || row.GembaDocLink || row.gemba_doc_link || row['Gemba Doc Link'] || null,
               materialSeq: row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'] || null,
+              assemblySeq: (() => {
+                const raw = row.assemblySeq || row.AssemblySeq || row.assembly_seq || row['Assembly Seq'];
+                if (raw === undefined || raw === null || raw === '') return null;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) ? parsed : null;
+              })(),
               operationSeq: row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'] || null,
               subAssyArea: row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area'] ? parseInt(row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area']) : null,
               requiresCrane: Boolean(row.requiresCrane || row.RequiresCrane || row.requires_crane || row['Requires Crane']),
