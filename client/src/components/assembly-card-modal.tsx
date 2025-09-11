@@ -343,7 +343,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                         <FormLabel>Material Seq</FormLabel>
                         <FormControl>
                           <Input
+                            type="number"
                             {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder="Material sequence info"
                             data-testid="input-material-seq"
                           />
@@ -361,7 +364,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                         <FormLabel>Operation Seq</FormLabel>
                         <FormControl>
                           <Input
+                            type="number"
                             {...field}
+                            value={field.value ?? ""}
+                            onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
                             placeholder="Operation sequence info"
                             data-testid="input-operation-seq"
                           />
