@@ -36,6 +36,8 @@ export default function Scheduler() {
   const [machineGroups, setMachineGroups] = useState<Record<string, { type: string; number: string; assemblerIds: string[]; collapsed: boolean }>>({});
   const [machineFilter, setMachineFilter] = useState<string>(""); // Filter by machine type-number
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false); // Machine filter modal
+  const [isOptimizing, setIsOptimizing] = useState(false); // Track optimization status
+  const [optimizationController, setOptimizationController] = useState<AbortController | null>(null); // Control optimization cancellation
   const { toast } = useToast();
   const { startDate, setStartDate, startTime, setStartTime } = useUser();
   
@@ -451,16 +453,35 @@ export default function Scheduler() {
     setSelectedDetailCard(null);
   };
 
+  // Function to stop optimization
+  const stopOptimization = () => {
+    if (optimizationController) {
+      optimizationController.abort();
+      setOptimizationController(null);
+      setIsOptimizing(false);
+      toast({
+        title: "Optimization Stopped",
+        description: "Build sequence optimization has been cancelled by user.",
+        variant: "default",
+      });
+    }
+  };
+
   // Advanced optimization algorithm for build sequence with constraint solving
   const optimizeBuildSequence = async () => {
     try {
+      // Create abort controller for cancellation
+      const controller = new AbortController();
+      setOptimizationController(controller);
+      setIsOptimizing(true);
+      
       // Filter out DEAD_TIME cards for optimization - they'll be strategically added back later
       const regularCards = assemblyCards.filter(card => card.type !== "DEAD_TIME");
       const deadTimeCards = assemblyCards.filter(card => card.type === "DEAD_TIME");
       
       toast({
         title: "Optimizing build sequence...",
-        description: "Finding optimal solution with constraint satisfaction",
+        description: "Finding optimal solution with constraint satisfaction. Click 'Stop Optimization' to cancel.",
       });
 
       // Iterative optimization - try multiple times until we get a valid solution
@@ -471,6 +492,12 @@ export default function Scheduler() {
       const maxAttempts = 20; // Increased attempts for better exploration
       
       for (attempts = 0; attempts < maxAttempts; attempts++) {
+        // Check if optimization was cancelled
+        if (controller.signal.aborted) {
+          setIsOptimizing(false);
+          setOptimizationController(null);
+          return;
+        }
       
       // Step 1: Validate dependency graph and detect circular dependencies
       const dependencyGraph = new Map();
@@ -923,6 +950,13 @@ export default function Scheduler() {
         }
       }
       
+      // Check if optimization was cancelled before next attempt
+      if (controller.signal.aborted) {
+        setIsOptimizing(false);
+        setOptimizationController(null);
+        return;
+      }
+      
       // Strategy for next attempt: try different approaches to resolve conflicts
       if (attempts < maxAttempts - 1) {
         if (attempts < 5) {
@@ -964,6 +998,10 @@ export default function Scheduler() {
         description: "An error occurred during optimization. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      // Always clean up state when optimization completes or fails
+      setIsOptimizing(false);
+      setOptimizationController(null);
     }
   };
   
@@ -1006,12 +1044,13 @@ export default function Scheduler() {
         <div className="flex items-center justify-end space-x-3 mt-3 pt-3 border-t border-border">
           {/* Optimize Build Sequence Button */}
           <Button 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium" 
-            onClick={optimizeBuildSequence}
+            className={isOptimizing ? "bg-red-600 hover:bg-red-700 text-white font-medium" : "bg-blue-600 hover:bg-blue-700 text-white font-medium"}
+            onClick={isOptimizing ? stopOptimization : optimizeBuildSequence}
             data-testid="button-optimize"
+            disabled={false}
           >
             <Zap className="mr-2 h-4 w-4" />
-            Optimize Build Sequence
+            {isOptimizing ? "Stop Optimization" : "Optimize Build Sequence"}
           </Button>
           
           {/* Dead Time Source */}
