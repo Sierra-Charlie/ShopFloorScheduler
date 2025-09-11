@@ -10,20 +10,22 @@ interface DraggableAssemblyCardProps {
 
 const getPhaseColor = (phase: number) => {
   switch (phase) {
-    case 1: return "bg-red-500";
-    case 2: return "bg-yellow-500";
-    case 3: return "bg-green-500";
-    case 4: return "bg-blue-500";
+    case 1: return "phase-1";
+    case 2: return "phase-2";
+    case 3: return "phase-3";
+    case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "bg-gray-500";
   }
 };
 
 const getPhaseBackgroundColor = (phase: number) => {
   switch (phase) {
-    case 1: return "bg-[#ff8000] text-white"; // Orange background for phase 1
-    case 2: return "bg-yellow-100 border-yellow-300 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-700 dark:text-yellow-200";
-    case 3: return "bg-green-100 border-green-300 text-green-800 dark:bg-green-900/20 dark:border-green-700 dark:text-green-200";
-    case 4: return "bg-blue-100 border-blue-300 text-blue-800 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-200";
+    case 1: return "phase-1";
+    case 2: return "phase-2";
+    case 3: return "phase-3";
+    case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "bg-gray-100 border-gray-300 text-gray-800 dark:bg-gray-900/20 dark:border-gray-700 dark:text-gray-200";
   }
 };
@@ -136,7 +138,7 @@ export default function DraggableAssemblyCard({
       {/* Header with phase and card number */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center space-x-2">
-          <div className={cn("w-3 h-3 rounded-full", getPhaseColor(card.phase))}></div>
+          <div className={cn("w-3 h-3 rounded-full", getPhaseColor(card.phase || 1))}></div>
           <span className="text-sm font-bold">{card.cardNumber}</span>
           {(card.status === "picking" || card.status === "delivered_to_paint" || card.status === "cleared_for_picking") && (
             <div className={cn(

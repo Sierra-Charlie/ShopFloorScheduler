@@ -63,8 +63,8 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
   }), [card.id, index]);
 
   const isClearedForPicking = card.status === "cleared_for_picking";
-  // Planning cards should always be grey, regardless of status
-  const phaseClass = "bg-gray-400";
+  // Planning cards show phase colors to help with organization
+  const phaseClass = getPhaseClass(card.phase || 1);
 
   const handleClearedForPicking = async () => {
     try {
@@ -400,7 +400,7 @@ export default function Planning() {
   // Sort cards by phase first, then by position for planning order
   const sortedCards = [...assemblyCards].sort((a, b) => {
     if (a.phase !== b.phase) {
-      return a.phase - b.phase;
+      return (a.phase || 1) - (b.phase || 1);
     }
     return (a.position || 0) - (b.position || 0);
   });

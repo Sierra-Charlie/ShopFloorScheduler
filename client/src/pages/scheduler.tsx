@@ -1273,11 +1273,11 @@ export default function Scheduler() {
                     <span className="text-[10px]">Delivery Phase 2</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-purple-400 border border-purple-500 rounded"></div>
+                    <div className="w-3 h-3 rounded border" style={{ backgroundColor: "hsl(30, 50%, 40%)", borderColor: "hsl(30, 50%, 30%)" }}></div>
                     <span className="text-[10px]">Delivery Phase 3</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-sky-400 border border-sky-500 rounded"></div>
+                    <div className="w-3 h-3 rounded border" style={{ backgroundColor: "hsl(180, 100%, 50%)", borderColor: "hsl(180, 100%, 40%)" }}></div>
                     <span className="text-[10px]">Delivery Phase 4</span>
                   </div>
                   <div className="flex items-center space-x-2">

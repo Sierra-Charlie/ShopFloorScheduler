@@ -44,8 +44,8 @@
   /* Phase Colors */
   --phase-1: hsl(30, 100%, 50%);
   --phase-2: hsl(51, 100%, 50%);
-  --phase-3: hsl(120, 61%, 50%);
-  --phase-4: hsl(195, 73%, 73%);
+  --phase-3: hsl(30, 50%, 40%);
+  --phase-4: hsl(180, 100%, 50%);
   --phase-5: hsl(280, 100%, 70%);
   --warning: hsl(0, 84%, 60%);
   --success: hsl(134, 61%, 41%);
