@@ -232,7 +232,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 >
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className={cn("w-3 h-3 rounded mr-2", getPhaseColor(card.phase))}></div>
+                      <div className={cn("w-3 h-3 rounded mr-2", getPhaseColor(card.phase || 1))}></div>
                       {isEditing ? (
                         <Input
                           value={editValues.cardNumber || card.cardNumber}
@@ -365,7 +365,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
                       <Select
-                        value={editValues.phase?.toString() || card.phase.toString()}
+                        value={editValues.phase?.toString() || card.phase?.toString() || "1"}
                         onValueChange={(value) => setEditValues(prev => ({ ...prev, phase: parseInt(value) }))}
                       >
                         <SelectTrigger className="w-full" data-testid={`select-phase-${card.cardNumber}`}>
@@ -380,7 +380,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       </Select>
                     ) : (
                       <span className="text-sm" data-testid={`text-phase-${card.cardNumber}`}>
-                        Phase {card.phase}
+                        {card.phase ? `Phase ${card.phase}` : "No Phase"}
                       </span>
                     )}
                   </td>
@@ -410,8 +410,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
                       <Input
+                        type="number"
                         value={editValues.materialSeq || card.materialSeq || ""}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, materialSeq: e.target.value }))}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, materialSeq: e.target.value ? parseInt(e.target.value) : null }))}
                         placeholder="Material seq"
                         className="w-32"
                         data-testid={`input-material-seq-${card.cardNumber}`}
@@ -443,8 +444,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   <td className="px-4 py-4 whitespace-nowrap">
                     {isEditing ? (
                       <Input
+                        type="number"
                         value={editValues.operationSeq || card.operationSeq || ""}
-                        onChange={(e) => setEditValues(prev => ({ ...prev, operationSeq: e.target.value }))}
+                        onChange={(e) => setEditValues(prev => ({ ...prev, operationSeq: e.target.value ? parseInt(e.target.value) : null }))}
                         placeholder="Operation seq"
                         className="w-32"
                         data-testid={`input-operation-seq-${card.cardNumber}`}
@@ -471,7 +473,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                         {(() => {
                           // Use manual link if available, otherwise auto-generate
                           const manualLink = card.pickListLink;
-                          const autoLink = generatePickListUrl(card.materialSeq, card.assemblySeq?.toString() || null, card.operationSeq);
+                          const autoLink = generatePickListUrl(card.materialSeq?.toString() || null, card.assemblySeq?.toString() || null, card.operationSeq?.toString() || null);
                           const linkToUse = manualLink || autoLink;
                           
                           if (linkToUse) {

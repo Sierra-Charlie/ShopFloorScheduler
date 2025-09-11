@@ -214,9 +214,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: card.status,
         dependencies: card.dependencies.join(','),
         gembaDocLink: card.gembaDocLink || '',
-        materialSeq: card.materialSeq || '',
+        materialSeq: card.materialSeq || null,
         assemblySeq: card.assemblySeq || null,
-        operationSeq: card.operationSeq || '',
+        operationSeq: card.operationSeq || null,
         subAssyArea: card.subAssyArea || '',
         requiresCrane: card.requiresCrane
       })) : [
@@ -230,9 +230,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'scheduled',
           dependencies: '',
           gembaDocLink: 'https://example.com/instructions',
-          materialSeq: 'Material sequence info',
-          assemblySeq: 100,
-          operationSeq: 'Operation sequence info',
+          materialSeq: 100,
+          assemblySeq: 200,
+          operationSeq: 300,
           subAssyArea: '',
           requiresCrane: false
         },
@@ -246,9 +246,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: 'scheduled',
           dependencies: '',
           gembaDocLink: '',
-          materialSeq: '',
+          materialSeq: null,
           assemblySeq: null,
-          operationSeq: '',
+          operationSeq: null,
           subAssyArea: '',
           requiresCrane: false
         }
@@ -308,7 +308,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Auto-generate pick list URL if required fields are present and no manual URL is set
       if (!updateData.pickListLink && updateData.materialSeq && updateData.assemblySeq && updateData.operationSeq) {
-        updateData.pickListLink = generatePickListUrl(updateData.materialSeq, updateData.assemblySeq?.toString() || null, updateData.operationSeq);
+        updateData.pickListLink = generatePickListUrl(updateData.materialSeq?.toString() || null, updateData.assemblySeq?.toString() || null, updateData.operationSeq?.toString() || null);
       }
       
       const card = await storage.updateAssemblyCard(updateData);
@@ -418,6 +418,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update all cards with their phase's earliest date
       const updatedCards = [];
       for (const card of allCards) {
+        if (!card.phase) continue; // Skip cards without a phase
         const phaseDate = phaseEarliestDates[card.phase];
         if (phaseDate !== card.phaseClearedToBuildDate) {
           const updatedCard = await storage.updateAssemblyCard({
@@ -499,8 +500,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
               cardNumber: row.cardNumber || row.CardNumber || row.card_number || row['Card Number'],
               name: row.name || row.Name || row.NAME,
               type: row.type || row.Type || row.TYPE,
-              duration: parseInt(row.duration || row.Duration || row.DURATION),
-              phase: parseInt(row.phase || row.Phase || row.PHASE),
+              duration: (() => {
+                const raw = row.duration || row.Duration || row.DURATION;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) ? parsed : 1;
+              })(),
+              phase: (() => {
+                const raw = row.phase || row.Phase || row.PHASE;
+                if (raw === undefined || raw === null || raw === '') return null;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) ? parsed : null;
+              })(),
               assignedTo: row.assignedTo || row.AssignedTo || row.assigned_to || row['Assigned To'] || null,
               status: row.status || row.Status || row.STATUS || 'scheduled',
               dependencies: Array.isArray(row.dependencies) 
@@ -510,14 +520,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 ? row.precedents 
                 : (row.precedents || row.Precedents || row.PRECEDENTS || '').split(',').map((s: string) => s.trim()).filter(Boolean),
               gembaDocLink: row.gembaDocLink || row.GembaDocLink || row.gemba_doc_link || row['Gemba Doc Link'] || null,
-              materialSeq: row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'] || null,
+              materialSeq: (() => {
+                const raw = row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'];
+                if (raw === undefined || raw === null || raw === '') return null;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) ? parsed : null;
+              })(),
               assemblySeq: (() => {
                 const raw = row.assemblySeq || row.AssemblySeq || row.assembly_seq || row['Assembly Seq'];
                 if (raw === undefined || raw === null || raw === '') return null;
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) ? parsed : null;
               })(),
-              operationSeq: row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'] || null,
+              operationSeq: (() => {
+                const raw = row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'];
+                if (raw === undefined || raw === null || raw === '') return null;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) ? parsed : null;
+              })(),
               subAssyArea: row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area'] ? parseInt(row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area']) : null,
               requiresCrane: Boolean(row.requiresCrane || row.RequiresCrane || row.requires_crane || row['Requires Crane']),
             };
@@ -1003,7 +1023,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Group cards by phase and sort by priority (A first, then B, then C)
       const cardsByPhase: { [phase: number]: any[] } = {};
       for (const card of allCards) {
-        if (card.phaseClearedToBuildDate && card.pickTime) {
+        if (card.phaseClearedToBuildDate && card.pickTime && card.phase) {
           if (!cardsByPhase[card.phase]) {
             cardsByPhase[card.phase] = [];
           }

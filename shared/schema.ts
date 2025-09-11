@@ -28,17 +28,17 @@ export const assemblyCards = pgTable("assembly_cards", {
   cardNumber: text("card_number").notNull().unique(),
   name: text("name").notNull(),
   type: text("type").notNull(), // "M", "E", "S", "P", "KB", "DEAD_TIME", "D"
-  duration: integer("duration").notNull(), // in hours
-  phase: integer("phase").notNull(), // 1, 2, 3, 4
+  duration: real("duration").notNull(), // in hours (allows 0.5 increments)
+  phase: integer("phase"), // 1, 2, 3, 4 (nullable)
   assignedTo: varchar("assigned_to").references(() => assemblers.id),
   assignedMaterialHandler: varchar("assigned_material_handler").references(() => users.id), // Material handler assigned to pick this card
   status: text("status").notNull().default("scheduled"), // "scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
   pickListLink: text("pick_list_link"), // URL link to pick list in external system
-  materialSeq: text("material_seq"), // Material sequence information - free form text
+  materialSeq: integer("material_seq"), // Material sequence information - numeric
   assemblySeq: integer("assembly_seq"), // Assembly sequence information - numeric
-  operationSeq: text("operation_seq"), // Operation sequence information - free form text
+  operationSeq: integer("operation_seq"), // Operation sequence information - numeric
   startTime: timestamp("start_time"),
   endTime: timestamp("end_time"),
   elapsedTime: integer("elapsed_time").default(0), // accumulated elapsed seconds when paused
@@ -130,17 +130,17 @@ export const updateAssemblyCardSchema = z.object({
   cardNumber: z.string().optional(),
   name: z.string().optional(),
   type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME", "D"]).optional(),
-  duration: z.number().min(1).optional(),
-  phase: z.number().min(1).max(4).optional(),
+  duration: z.number().min(0.5).optional(),
+  phase: z.number().min(1).max(4).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   assignedMaterialHandler: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).optional(),
   dependencies: z.array(z.string()).optional(),
   gembaDocLink: z.string().url().nullable().optional(),
   pickListLink: z.string().nullable().optional(),
-  materialSeq: z.string().nullable().optional(),
+  materialSeq: z.number().nullable().optional(),
   assemblySeq: z.number().nullable().optional(),
-  operationSeq: z.string().nullable().optional(),
+  operationSeq: z.number().nullable().optional(),
   startTime: z.date().nullable().optional(),
   endTime: z.date().nullable().optional(),
   elapsedTime: z.number().optional(),
@@ -302,15 +302,15 @@ export const fileUploadSchema = z.object({
   cardNumber: z.string(),
   name: z.string(),
   type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME", "D"]),
-  duration: z.number().min(1),
-  phase: z.number().min(1).max(4),
+  duration: z.number().min(0.5),
+  phase: z.number().min(1).max(4).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).default("scheduled"),
   dependencies: z.array(z.string()).default([]),
   gembaDocLink: z.string().url().nullable().optional(),
-  materialSeq: z.string().nullable().optional(),
+  materialSeq: z.number().nullable().optional(),
   assemblySeq: z.number().nullable().optional(),
-  operationSeq: z.string().nullable().optional(),
+  operationSeq: z.number().nullable().optional(),
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().default(false),
   priority: z.enum(["A", "B", "C"]).default("B"),
