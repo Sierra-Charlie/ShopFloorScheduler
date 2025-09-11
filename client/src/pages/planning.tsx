@@ -24,6 +24,7 @@ const getPhaseClass = (phase: number) => {
     case 2: return "phase-2";
     case 3: return "phase-3";
     case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "phase-1";
   }
 };
@@ -469,7 +470,7 @@ export default function Planning() {
   }
 
   // Group cards by phase for visual organization
-  const cardsByPhase = [1, 2, 3, 4].map(phase => ({
+  const cardsByPhase = [1, 2, 3, 4, 5].map(phase => ({
     phase,
     cards: sortedCards.filter(card => card.phase === phase)
   }));
@@ -502,7 +503,7 @@ export default function Planning() {
             <div key={phase} className="space-y-4">
               <div className="flex items-center space-x-2">
                 <div className={cn("w-4 h-4 rounded", getPhaseClass(phase))}></div>
-                <h3 className="text-md font-semibold">Phase {phase} Assembly Sequence</h3>
+                <h3 className="text-md font-semibold">Phase {phase} Delivery Phase</h3>
                 <span className="text-sm text-muted-foreground">({cards.length} cards)</span>
               </div>
               

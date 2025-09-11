@@ -35,6 +35,7 @@ const getPhaseClass = (phase: number) => {
     case 2: return "phase-2";
     case 3: return "phase-3";
     case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "phase-1";
   }
 };
@@ -90,7 +91,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
   // Check if card is overdue (today's date is past the pick due date)
   const isOverdue = card.pickDueDate && new Date() > new Date(card.pickDueDate);
   // Cards should only get phase colors when actively picking, delivered to paint, or ready for build
-  const phaseClass = isReady ? getPhaseClass(card.phase) : isPicking ? getPhaseClass(card.phase) : isDeliveredToPaint ? getPhaseClass(card.phase) : "bg-gray-400";
+  const phaseClass = isReady ? getPhaseClass(card.phase || 1) : isPicking ? getPhaseClass(card.phase || 1) : isDeliveredToPaint ? getPhaseClass(card.phase || 1) : "bg-gray-400";
 
   // Timer for picking status
   useEffect(() => {
@@ -699,7 +700,7 @@ export default function MaterialHandler() {
   // Sort cards by phase first, then by position for material picking order
   const sortedCards = [...assemblyCards].sort((a, b) => {
     if (a.phase !== b.phase) {
-      return a.phase - b.phase;
+      return (a.phase || 1) - (b.phase || 1);
     }
     return (a.position || 0) - (b.position || 0);
   });
