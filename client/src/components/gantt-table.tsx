@@ -274,10 +274,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
+                          <SelectItem value="D">D</SelectItem>
+                          <SelectItem value="E">E</SelectItem>
+                          <SelectItem value="KB">KB</SelectItem>
+                          <SelectItem value="M">M</SelectItem>
                           <SelectItem value="P">P</SelectItem>
                           <SelectItem value="S">S</SelectItem>
-                          <SelectItem value="M">M</SelectItem>
-                          <SelectItem value="E">E</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (

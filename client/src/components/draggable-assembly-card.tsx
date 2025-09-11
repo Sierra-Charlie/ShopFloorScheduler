@@ -30,11 +30,12 @@ const getPhaseBackgroundColor = (phase: number) => {
 
 const getTypeLabel = (type: string) => {
   switch (type) {
-    case "M": return "Mechanical";
+    case "D": return "Direct to Machine";
     case "E": return "Electrical";
-    case "S": return "Sub-Assembly";
-    case "P": return "Pre-Assembly";
     case "KB": return "Kanban";
+    case "M": return "Mechanical";
+    case "P": return "Pre-Assembly";
+    case "S": return "Sub-Assembly";
     default: return type;
   }
 };

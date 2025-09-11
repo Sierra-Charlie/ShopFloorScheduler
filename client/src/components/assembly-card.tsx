@@ -25,11 +25,12 @@ const getPhaseClass = (phase: number) => {
 
 const getSequenceTypeLabel = (type: string) => {
   switch (type) {
-    case "M": return "Mechanical Install";
+    case "D": return "Direct to Machine";
     case "E": return "Electrical Install";
-    case "S": return "Sub-Assembly";
-    case "P": return "Pre-Assembly";
     case "KB": return "Kanban";
+    case "M": return "Mechanical Install";
+    case "P": return "Pre-Assembly";
+    case "S": return "Sub-Assembly";
     case "DEAD_TIME": return "Dead Time";
     default: return type;
   }

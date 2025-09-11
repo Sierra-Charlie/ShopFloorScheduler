@@ -30,7 +30,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
     defaultValues: {
       cardNumber: "",
       name: "",
-      type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
+      type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME" | "D",
       duration: 1,
       phase: 1,
       assignedTo: "",
@@ -49,7 +49,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       form.reset({
         cardNumber: card.cardNumber,
         name: card.name,
-        type: card.type as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
+        type: card.type as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME" | "D",
         duration: card.duration,
         phase: card.phase,
         assignedTo: card.assignedTo || "",
@@ -66,7 +66,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
       form.reset({
         cardNumber: "",
         name: "",
-        type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME",
+        type: "M" as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME" | "D",
         duration: 1,
         phase: 1,
         assignedTo: "",
@@ -208,10 +208,12 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="M">M - Mechanical</SelectItem>
+                          <SelectItem value="D">D - Direct to Machine</SelectItem>
                           <SelectItem value="E">E - Electrical</SelectItem>
-                          <SelectItem value="S">S - Sub Assembly</SelectItem>
+                          <SelectItem value="KB">KB - Kanban</SelectItem>
+                          <SelectItem value="M">M - Mechanical</SelectItem>
                           <SelectItem value="P">P - Pre-Assembly</SelectItem>
+                          <SelectItem value="S">S - Sub Assembly</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
