@@ -561,7 +561,7 @@ export default function Scheduler() {
       sortedCards.sort((a, b) => {
         // Primary sort: Phase
         if (a.phase !== b.phase) {
-          return a.phase - b.phase;
+          return (a.phase || 1) - (b.phase || 1);
         }
         // Secondary sort: Priority within the same phase
         const priorityA = priorityOrder[a.priority || 'B'] || 2;
@@ -1266,19 +1266,23 @@ export default function Scheduler() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-orange-400 border border-orange-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 1</span>
+                    <span className="text-[10px]">Delivery Phase 1</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-yellow-400 border border-yellow-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 2</span>
+                    <span className="text-[10px]">Delivery Phase 2</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-purple-400 border border-purple-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 3</span>
+                    <span className="text-[10px]">Delivery Phase 3</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-sky-400 border border-sky-500 rounded"></div>
-                    <span className="text-[10px]">Delivery Sequence 4</span>
+                    <span className="text-[10px]">Delivery Phase 4</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-3 h-3 rounded border" style={{ backgroundColor: "hsl(280, 100%, 70%)", borderColor: "hsl(280, 100%, 60%)" }}></div>
+                    <span className="text-[10px]">Delivery Phase 5</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-3 h-3 bg-blue-500 border border-blue-600 rounded"></div>

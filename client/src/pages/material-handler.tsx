@@ -870,7 +870,7 @@ export default function MaterialHandler() {
             <div key={phase} className="space-y-4">
               <div className="flex items-center space-x-2">
                 <div className={cn("w-4 h-4 rounded", getPhaseClass(phase))}></div>
-                <h3 className="text-md font-semibold">Phase {phase} Delivery Sequence</h3>
+                <h3 className="text-md font-semibold">Phase {phase} Delivery Phase</h3>
                 <span className="text-sm text-muted-foreground">({cards.length} cards)</span>
               </div>
               
