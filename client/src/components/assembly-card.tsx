@@ -104,7 +104,7 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
     "bg-gray-400";
   // Calculate width reactively - use actualDuration for completed cards, otherwise use expected duration
   const displayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
-  const width = Math.max((displayDuration || 1) * 60, 60); // 60px per hour, minimum 60px
+  const width = Math.max((displayDuration || 1) * 60, 30); // 60px per hour, minimum 30px
 
   const cardElement = (
     <div

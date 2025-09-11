@@ -295,8 +295,10 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       <div className="flex items-center space-x-1">
                         <Input
                           type="number"
+                          step="0.5"
+                          min="0.5"
                           value={editValues.duration || card.duration}
-                          onChange={(e) => setEditValues(prev => ({ ...prev, duration: parseInt(e.target.value) || 0 }))}
+                          onChange={(e) => setEditValues(prev => ({ ...prev, duration: parseFloat(e.target.value) || 0 }))}
                           className="w-20"
                           data-testid={`input-duration-${card.cardNumber}`}
                         />
