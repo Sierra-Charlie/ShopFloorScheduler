@@ -1356,6 +1356,10 @@ export default function Scheduler() {
                       <span className="font-bold text-[8px]">KB</span>
                       <span className="text-[9px]">Kanban</span>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-bold text-[8px]">D</span>
+                      <span className="text-[9px]">Direct to Machine</span>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <div className="w-0.5 h-4 bg-red-500 shadow-sm"></div>
