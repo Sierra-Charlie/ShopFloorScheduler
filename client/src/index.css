@@ -46,6 +46,7 @@
   --phase-2: hsl(51, 100%, 50%);
   --phase-3: hsl(120, 61%, 50%);
   --phase-4: hsl(195, 73%, 73%);
+  --phase-5: hsl(280, 100%, 70%);
   --warning: hsl(0, 84%, 60%);
   --success: hsl(134, 61%, 41%);
 }
@@ -139,6 +140,10 @@
   .phase-4 { 
     background-color: var(--phase-4); 
     color: hsl(0, 0%, 20%);
+  }
+  .phase-5 { 
+    background-color: var(--phase-5); 
+    color: white;
   }
   
   .warning-indicator {

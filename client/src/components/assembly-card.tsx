@@ -19,6 +19,7 @@ const getPhaseClass = (phase: number) => {
     case 2: return "phase-2";
     case 3: return "phase-3";
     case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "phase-1";
   }
 };
@@ -95,11 +96,11 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
 
   const phaseClass = 
     isOverdue ? "bg-red-500" : // Override all other colors when overdue
-    card.status === "ready_for_build" ? getPhaseClass(card.phase) :
+    card.status === "ready_for_build" ? getPhaseClass(card.phase || 1) :
     card.status === "assembling" ? "bg-blue-500" :
     card.status === "completed" ? "bg-green-500" :
-    card.status === "picking" ? getPhaseClass(card.phase) :
-    card.status === "delivered_to_paint" ? getPhaseClass(card.phase) :
+    card.status === "picking" ? getPhaseClass(card.phase || 1) :
+    card.status === "delivered_to_paint" ? getPhaseClass(card.phase || 1) :
     "bg-gray-400";
   // Calculate width reactively - use actualDuration for completed cards, otherwise use expected duration
   const displayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
@@ -126,12 +127,6 @@ export default function AssemblyCardComponent({ card, onEdit, onView, hasWarning
       {(card.dependencies?.length || 0) > 0 && (
         <div className="absolute -top-2 -left-2 text-xs px-1 py-0.5 rounded text-center min-w-[40px] bg-[#000000] text-[#ffffff]">
           <div className="text-[10px]">{card.dependencies?.join(', ')}</div>
-        </div>
-      )}
-      {/* Precedents - Top Right */}
-      {(card.precedents?.length || 0) > 0 && (
-        <div className="absolute -top-2 -right-2 text-white text-xs px-1 py-0.5 rounded text-center min-w-[40px] bg-[#000000]">
-          <div className="text-[10px]">{card.precedents?.join(', ')}</div>
         </div>
       )}
       <div className="flex items-center justify-between">

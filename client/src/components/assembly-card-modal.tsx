@@ -51,11 +51,11 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
         name: card.name,
         type: card.type as "M" | "E" | "S" | "P" | "KB" | "DEAD_TIME" | "D",
         duration: card.duration,
-        phase: card.phase,
+        phase: card.phase || undefined,
         assignedTo: card.assignedTo || "",
         dependencies: card.dependencies || [],
-        materialSeq: card.materialSeq || "",
-        operationSeq: card.operationSeq || "",
+        materialSeq: card.materialSeq?.toString() || "",
+        operationSeq: card.operationSeq?.toString() || "",
         grounded: card.grounded || false,
         requiresCrane: card.requiresCrane || false,
         priority: (card.priority as "A" | "B" | "C") || "B",
@@ -261,6 +261,7 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                             <SelectItem value="2">Phase 2</SelectItem>
                             <SelectItem value="3">Phase 3</SelectItem>
                             <SelectItem value="4">Phase 4</SelectItem>
+                            <SelectItem value="5">Phase 5</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

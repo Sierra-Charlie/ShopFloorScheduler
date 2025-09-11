@@ -29,7 +29,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   name: text("name").notNull(),
   type: text("type").notNull(), // "M", "E", "S", "P", "KB", "DEAD_TIME", "D"
   duration: real("duration").notNull(), // in hours (allows 0.5 increments)
-  phase: integer("phase"), // 1, 2, 3, 4 (nullable)
+  phase: integer("phase"), // 1, 2, 3, 4, 5 (nullable)
   assignedTo: varchar("assigned_to").references(() => assemblers.id),
   assignedMaterialHandler: varchar("assigned_material_handler").references(() => users.id), // Material handler assigned to pick this card
   status: text("status").notNull().default("scheduled"), // "scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"
@@ -131,7 +131,7 @@ export const updateAssemblyCardSchema = z.object({
   name: z.string().optional(),
   type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME", "D"]).optional(),
   duration: z.number().min(0.5).optional(),
-  phase: z.number().min(1).max(4).nullable().optional(),
+  phase: z.number().min(1).max(5).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   assignedMaterialHandler: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).optional(),
@@ -303,7 +303,7 @@ export const fileUploadSchema = z.object({
   name: z.string(),
   type: z.enum(["M", "E", "S", "P", "KB", "DEAD_TIME", "D"]),
   duration: z.number().min(0.5),
-  phase: z.number().min(1).max(4).nullable().optional(),
+  phase: z.number().min(1).max(5).nullable().optional(),
   assignedTo: z.string().nullable().optional(),
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).default("scheduled"),
   dependencies: z.array(z.string()).default([]),

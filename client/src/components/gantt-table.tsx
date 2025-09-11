@@ -22,6 +22,7 @@ const getPhaseColor = (phase: number) => {
     case 2: return "phase-2";
     case 3: return "phase-3";
     case 4: return "phase-4";
+    case 5: return "phase-5";
     default: return "phase-1";
   }
 };
@@ -376,6 +377,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                           <SelectItem value="2">Phase 2</SelectItem>
                           <SelectItem value="3">Phase 3</SelectItem>
                           <SelectItem value="4">Phase 4</SelectItem>
+                          <SelectItem value="5">Phase 5</SelectItem>
                         </SelectContent>
                       </Select>
                     ) : (
