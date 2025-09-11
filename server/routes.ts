@@ -488,6 +488,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(400).json({ message: "No data found in file" });
         }
 
+        // Get all assemblers for name-to-ID mapping
+        const assemblers = await storage.getAssemblers();
+        const assemblerNameToId = new Map();
+        for (const assembler of assemblers) {
+          assemblerNameToId.set(assembler.name, assembler.id);
+        }
+
         // Validate and transform data
         const validatedCards = [];
         const errors = [];
@@ -511,7 +518,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) ? parsed : null;
               })(),
-              assignedTo: row.assignedTo || row.AssignedTo || row.assigned_to || row['Assigned To'] || null,
+              assignedTo: (() => {
+                const rawAssignedTo = row.assignedTo || row.AssignedTo || row.assigned_to || row['Assigned To'];
+                if (!rawAssignedTo || rawAssignedTo === '') return null;
+                // Try to find assembler ID by name, fallback to raw value if not found
+                return assemblerNameToId.get(rawAssignedTo) || rawAssignedTo;
+              })(),
               status: row.status || row.Status || row.STATUS || 'scheduled',
               dependencies: Array.isArray(row.dependencies) 
                 ? row.dependencies 
