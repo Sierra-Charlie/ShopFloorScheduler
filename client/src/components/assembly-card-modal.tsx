@@ -231,8 +231,10 @@ export default function AssemblyCardModal({ card, assemblers, isOpen, onClose }:
                         <FormControl>
                           <Input
                             type="number"
+                            step="0.5"
+                            min="0.5"
                             {...field}
-                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             data-testid="input-duration"
                           />
                         </FormControl>
