@@ -555,6 +555,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
               })(),
               subAssyArea: row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area'] ? parseInt(row.subAssyArea || row.SubAssyArea || row.sub_assy_area || row['Sub Assy Area']) : null,
               requiresCrane: Boolean(row.requiresCrane || row.RequiresCrane || row.requires_crane || row['Requires Crane']),
+              pickTime: (() => {
+                const raw = row.pickTime || row.PickTime || row.pick_time || row['Pick Time'];
+                if (raw === undefined || raw === null || raw === '') return null;
+                const parsed = Number(raw);
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+              })(),
             };
 
             const validatedCard = fileUploadSchema.parse(normalizedRow);
