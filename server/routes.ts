@@ -1134,6 +1134,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
   const connectedClients = new Set<WebSocket>();
 
+  // Add WebSocket server-level error handling
+  wss.on('error', (error) => {
+    console.error('WebSocket server error:', error);
+  });
+
   wss.on('connection', (ws: WebSocket) => {
     console.log('New WebSocket connection established');
     connectedClients.add(ws);
@@ -1151,6 +1156,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } catch (error) {
         console.error('Error parsing WebSocket message:', error);
+        // Send error message back to client if connection is still open
+        if (ws.readyState === WebSocket.OPEN) {
+          try {
+            ws.send(JSON.stringify({ type: 'error', message: 'Invalid message format' }));
+          } catch (sendError) {
+            console.error('Error sending error message to client:', sendError);
+          }
+        }
       }
     });
 
@@ -1162,19 +1175,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Handle errors
     ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
+      console.error('WebSocket connection error:', error);
       connectedClients.delete(ws);
     });
   });
 
-  // Function to broadcast messages to all connected clients
+  // Function to broadcast messages to all connected clients with error handling
   function broadcastToAll(message: any) {
-    const messageString = JSON.stringify(message);
-    connectedClients.forEach((ws) => {
-      if (ws.readyState === WebSocket.OPEN) {
-        ws.send(messageString);
-      }
-    });
+    try {
+      const messageString = JSON.stringify(message);
+      connectedClients.forEach((ws) => {
+        try {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(messageString);
+          } else {
+            // Remove dead connections
+            connectedClients.delete(ws);
+          }
+        } catch (sendError) {
+          console.error('Error sending message to WebSocket client:', sendError);
+          connectedClients.delete(ws);
+        }
+      });
+    } catch (error) {
+      console.error('Error broadcasting message:', error);
+    }
   }
 
   return httpServer;
