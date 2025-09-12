@@ -542,19 +542,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 : (row.precedents || row.Precedents || row.PRECEDENTS || '').split(',').map((s: string) => s.trim()).filter(Boolean),
               gembaDocLink: row.gembaDocLink || row.GembaDocLink || row.gemba_doc_link || row['Gemba Doc Link'] || null,
               materialSeq: (() => {
-                const raw = row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'];
+                const raw = row.materialSeq ?? row.MaterialSeq ?? row.material_seq ?? row['Material Seq'];
                 if (raw === undefined || raw === null || raw === '') return null;
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) ? parsed : null;
               })(),
               assemblySeq: (() => {
-                const raw = row.assemblySeq || row.AssemblySeq || row.assembly_seq || row['Assembly Seq'];
+                const raw = row.assemblySeq ?? row.AssemblySeq ?? row.assembly_seq ?? row['Assembly Seq'];
                 if (raw === undefined || raw === null || raw === '') return null;
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) ? parsed : null;
               })(),
               operationSeq: (() => {
-                const raw = row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'];
+                const raw = row.operationSeq ?? row.OperationSeq ?? row.operation_seq ?? row['Operation Seq'];
                 if (raw === undefined || raw === null || raw === '') return null;
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) ? parsed : null;
