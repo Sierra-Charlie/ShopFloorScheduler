@@ -567,6 +567,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 const parsed = Number(raw);
                 return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
               })(),
+              pickListLink: (() => {
+                // Check for direct pickListLink value from the uploaded file
+                const directLink = row.pickListLink || row.PickListLink || row.pick_list_link || row['Pick List Link'];
+                if (directLink && directLink.trim() !== '') {
+                  return directLink.trim();
+                }
+                
+                // If no direct link provided, try to auto-generate from sequences
+                const materialSeq = row.materialSeq || row.MaterialSeq || row.material_seq || row['Material Seq'];
+                const assemblySeq = row.assemblySeq || row.AssemblySeq || row.assembly_seq || row['Assembly Seq'];
+                const operationSeq = row.operationSeq || row.OperationSeq || row.operation_seq || row['Operation Seq'];
+                
+                if (materialSeq && assemblySeq && operationSeq) {
+                  return generatePickListUrl(materialSeq.toString(), assemblySeq.toString(), operationSeq.toString());
+                }
+                
+                return null;
+              })(),
             };
 
             const validatedCard = fileUploadSchema.parse(normalizedRow);
