@@ -7,7 +7,7 @@ import { z } from "zod";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 import multer from "multer";
 import XLSX from "xlsx";
-import * as papa from "papaparse";
+import Papa from "papaparse";
 
 // Auto-generate pick list URL from Job Number, Assembly Seq, and Operation Seq
 function generatePickListUrl(jobNumber: string | null, assemblySeq: string | null, operationSeq: string | null): string | null {
@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       if (format === 'csv') {
-        const csv = papa.unparse(templateData);
+        const csv = Papa.unparse(templateData);
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', 'attachment; filename=assembly_cards_template.csv');
         res.send(csv);
@@ -473,7 +473,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Parse CSV file
           const fs = await import('fs');
           const fileContent = fs.readFileSync(filePath, 'utf8');
-          const parsed = papa.parse(fileContent, { header: true, skipEmptyLines: true });
+          const parsed = Papa.parse(fileContent, { header: true, skipEmptyLines: true });
           data = parsed.data;
         } else if (filename.endsWith('.xlsx') || filename.endsWith('.xls')) {
           // Parse Excel file
