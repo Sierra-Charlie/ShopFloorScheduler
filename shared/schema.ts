@@ -308,6 +308,7 @@ export const fileUploadSchema = z.object({
   status: z.enum(["scheduled", "cleared_for_picking", "in_progress", "assembling", "completed", "blocked", "ready_for_build", "paused", "picking", "delivered_to_paint"]).default("scheduled"),
   dependencies: z.array(z.string()).default([]),
   gembaDocLink: z.string().url().nullable().optional(),
+  pickListLink: z.string().url().nullable().optional(),
   materialSeq: z.number().nullable().optional(),
   assemblySeq: z.number().nullable().optional(),
   operationSeq: z.number().nullable().optional(),
