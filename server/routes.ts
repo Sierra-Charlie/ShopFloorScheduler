@@ -557,18 +557,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
               requiresCrane: Boolean(row.requiresCrane || row.RequiresCrane || row.requires_crane || row['Requires Crane']),
               pickTime: (() => {
                 const raw = row.pickTime || row.PickTime || row.pick_time || row['Pick Time'];
-                console.log(`DEBUG: Card ${row.cardNumber || row.CardNumber} - pickTime raw value:`, JSON.stringify({
-                  pickTime: row.pickTime,
-                  PickTime: row.PickTime, 
-                  pick_time: row.pick_time,
-                  'Pick Time': row['Pick Time'],
-                  raw: raw
-                }));
                 if (raw === undefined || raw === null || raw === '') return null;
                 const parsed = Number(raw);
-                const result = Number.isFinite(parsed) && parsed > 0 ? parsed : null;
-                console.log(`DEBUG: Card ${row.cardNumber || row.CardNumber} - pickTime result:`, result);
-                return result;
+                return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
               })(),
             };
 
