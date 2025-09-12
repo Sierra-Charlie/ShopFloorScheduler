@@ -423,7 +423,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       />
                     ) : (
                       <span className="text-sm" data-testid={`text-material-seq-${card.cardNumber}`}>
-                        {card.materialSeq || "Not specified"}
+                        {card.materialSeq !== null && card.materialSeq !== undefined ? card.materialSeq : "Not specified"}
                       </span>
                     )}
                   </td>
@@ -440,7 +440,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       />
                     ) : (
                       <span className="text-sm" data-testid={`text-assembly-seq-${card.cardNumber}`}>
-                        {card.assemblySeq || "Not specified"}
+                        {card.assemblySeq !== null && card.assemblySeq !== undefined ? card.assemblySeq : "Not specified"}
                       </span>
                     )}
                   </td>
@@ -457,7 +457,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                       />
                     ) : (
                       <span className="text-sm" data-testid={`text-operation-seq-${card.cardNumber}`}>
-                        {card.operationSeq || "Not specified"}
+                        {card.operationSeq !== null && card.operationSeq !== undefined ? card.operationSeq : "Not specified"}
                       </span>
                     )}
                   </td>
