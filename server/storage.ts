@@ -38,6 +38,9 @@ export interface IStorage {
   // Dependency validation
   validateDependencies(cardNumber: string, dependencies: string[]): Promise<{ valid: boolean; issues: string[] }>;
   
+  // M card automation
+  checkAndUpdateMCardStatuses(completedCardNumber: string): Promise<void>;
+  
   // Andon Issues
   getAndonIssues(): Promise<AndonIssue[]>;
   getAndonIssue(id: number): Promise<AndonIssue | undefined>;
@@ -268,7 +271,7 @@ export class MemStorage implements IStorage {
         id, 
         status: card.status || "scheduled",
         dependencies: card.dependencies || [],
-  
+        phase: card.phase ?? null,
         position: card.position || 0,
         assignedTo: card.assignedTo || null,
         startTime: card.startTime || null,
@@ -375,7 +378,7 @@ export class MemStorage implements IStorage {
       id, 
       status: card.status || "scheduled",
       dependencies: card.dependencies || [],
-
+      phase: card.phase ?? null,
       position: card.position || 0,
       assignedTo: card.assignedTo || null,
       startTime: card.startTime || null,
@@ -396,6 +399,11 @@ export class MemStorage implements IStorage {
     if (!existing) return undefined;
     
     const updated: AssemblyCard = { ...existing, ...update };
+    
+    // Handle explicit phase updates (including null for reset)
+    if ('phase' in update) {
+      updated.phase = update.phase ?? null;
+    }
     
     // Handle explicit startTime updates (including null for reset)
     if ('startTime' in update) {
@@ -470,6 +478,7 @@ export class MemStorage implements IStorage {
     
     // Check for M cards that depend on this completed card and update them to "ready_for_build" if all dependencies are completed
     if (update.status === "completed") {
+      console.log(`[express] trigger m-check ${updated.cardNumber}`);
       await this.checkAndUpdateMCardStatuses(updated.cardNumber);
     }
     
@@ -478,21 +487,40 @@ export class MemStorage implements IStorage {
 
   // Check M cards that depend on the completed card and update them to "ready_for_build" if all their dependencies are completed
   async checkAndUpdateMCardStatuses(completedCardNumber: string): Promise<void> {
+    console.log(`DEBUG: Checking M cards that depend on completed card: ${completedCardNumber}`);
+    
     // Find all M cards that depend on this completed card
     const allCards = Array.from(this.assemblyCards.values());
+    const allMCards = allCards.filter(card => card.type === "M");
+    
+    console.log(`DEBUG: Found ${allMCards.length} M cards total:`, allMCards.map(c => `${c.cardNumber}(deps: ${c.dependencies?.join(',') || 'none'}, status: ${c.status})`));
+    
     const dependentMCards = allCards.filter(card => 
       card.type === "M" && 
       card.dependencies?.includes(completedCardNumber) &&
       card.status !== "ready_for_build" && // Don't update if already ready
       card.status !== "completed" // Don't update if already completed
     );
+    
+    console.log(`DEBUG: Found ${dependentMCards.length} dependent M cards that need checking:`, dependentMCards.map(c => c.cardNumber));
 
     for (const mCard of dependentMCards) {
+      console.log(`DEBUG: Checking M card ${mCard.cardNumber} with dependencies: ${mCard.dependencies?.join(', ')}`);
+      
       // Check if ALL dependencies of this M card are completed
+      const dependencyStatuses = mCard.dependencies?.map(depCardNumber => {
+        const depCard = allCards.find(c => c.cardNumber === depCardNumber);
+        const status = depCard ? depCard.status : 'NOT_FOUND';
+        console.log(`DEBUG: - Dependency ${depCardNumber}: ${status}`);
+        return { cardNumber: depCardNumber, status, completed: depCard && depCard.status === "completed" };
+      }) || [];
+      
       const allDependenciesCompleted = mCard.dependencies?.every(depCardNumber => {
         const depCard = allCards.find(c => c.cardNumber === depCardNumber);
         return depCard && depCard.status === "completed";
       });
+      
+      console.log(`DEBUG: M card ${mCard.cardNumber} - all dependencies completed: ${allDependenciesCompleted}`);
 
       // If all dependencies are completed, update the M card to "ready_for_build"
       if (allDependenciesCompleted) {
@@ -1024,6 +1052,13 @@ export class DatabaseStorage implements IStorage {
     }
     
     const [updated] = await db.update(assemblyCards).set(updateData).where(eq(assemblyCards.id, update.id)).returning();
+    
+    // Check for M cards that depend on this completed card and update them to "ready_for_build" if all dependencies are completed
+    if (update.status === "completed") {
+      console.log(`[express] trigger m-check ${updated.cardNumber}`);
+      await this.checkAndUpdateMCardStatuses(updated.cardNumber);
+    }
+    
     return updated || undefined;
   }
 
@@ -1062,6 +1097,52 @@ export class DatabaseStorage implements IStorage {
     }
     
     return { valid: issues.length === 0, issues };
+  }
+
+  // Check M cards that depend on the completed card and update them to "ready_for_build" if all their dependencies are completed
+  async checkAndUpdateMCardStatuses(completedCardNumber: string): Promise<void> {
+    console.log(`DEBUG: Checking M cards that depend on completed card: ${completedCardNumber}`);
+    
+    // Find all M cards that depend on this completed card
+    const allCards = await db.select().from(assemblyCards);
+    const allMCards = allCards.filter(card => card.type === "M");
+    
+    console.log(`DEBUG: Found ${allMCards.length} M cards total:`, allMCards.map(c => `${c.cardNumber}(deps: ${c.dependencies?.join(',') || 'none'}, status: ${c.status})`));
+    
+    const dependentMCards = allCards.filter(card => 
+      card.type === "M" && 
+      card.dependencies?.includes(completedCardNumber) &&
+      card.status !== "ready_for_build" && // Don't update if already ready
+      card.status !== "completed" // Don't update if already completed
+    );
+    
+    console.log(`DEBUG: Found ${dependentMCards.length} dependent M cards that need checking:`, dependentMCards.map(c => c.cardNumber));
+
+    for (const mCard of dependentMCards) {
+      console.log(`DEBUG: Checking M card ${mCard.cardNumber} with dependencies: ${mCard.dependencies?.join(', ')}`);
+      
+      // Check if ALL dependencies of this M card are completed
+      const dependencyStatuses = mCard.dependencies?.map(depCardNumber => {
+        const depCard = allCards.find(c => c.cardNumber === depCardNumber);
+        const status = depCard ? depCard.status : 'NOT_FOUND';
+        console.log(`DEBUG: - Dependency ${depCardNumber}: ${status}`);
+        return { cardNumber: depCardNumber, status, completed: depCard && depCard.status === "completed" };
+      }) || [];
+      
+      const allDependenciesCompleted = mCard.dependencies?.every(depCardNumber => {
+        const depCard = allCards.find(c => c.cardNumber === depCardNumber);
+        return depCard && depCard.status === "completed";
+      });
+      
+      console.log(`DEBUG: M card ${mCard.cardNumber} - all dependencies completed: ${allDependenciesCompleted}`);
+
+      // If all dependencies are completed, update the M card to "ready_for_build"
+      if (allDependenciesCompleted) {
+        // Use updateAssemblyCard to ensure consistent side-effect handling
+        await this.updateAssemblyCard({ id: mCard.id, status: "ready_for_build" });
+        console.log(`M card ${mCard.cardNumber} automatically updated to "ready_for_build" - all dependencies completed`);
+      }
+    }
   }
 
   // Andon Issues
