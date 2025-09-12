@@ -218,7 +218,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         assemblySeq: card.assemblySeq || null,
         operationSeq: card.operationSeq || null,
         subAssyArea: card.subAssyArea || '',
-        requiresCrane: card.requiresCrane
+        requiresCrane: card.requiresCrane,
+        pickTime: card.pickTime || null
       })) : [
         {
           cardNumber: 'M1',
@@ -234,7 +235,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assemblySeq: 200,
           operationSeq: 300,
           subAssyArea: '',
-          requiresCrane: false
+          requiresCrane: false,
+          pickTime: 60
         },
         {
           cardNumber: 'E1',
@@ -250,7 +252,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           assemblySeq: null,
           operationSeq: null,
           subAssyArea: '',
-          requiresCrane: false
+          requiresCrane: false,
+          pickTime: 30
         }
       ];
 
