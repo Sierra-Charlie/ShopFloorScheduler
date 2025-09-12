@@ -467,7 +467,40 @@ export class MemStorage implements IStorage {
     }
     
     this.assemblyCards.set(update.id, updated);
+    
+    // Check for M cards that depend on this completed card and update them to "ready_for_build" if all dependencies are completed
+    if (update.status === "completed") {
+      await this.checkAndUpdateMCardStatuses(updated.cardNumber);
+    }
+    
     return updated;
+  }
+
+  // Check M cards that depend on the completed card and update them to "ready_for_build" if all their dependencies are completed
+  async checkAndUpdateMCardStatuses(completedCardNumber: string): Promise<void> {
+    // Find all M cards that depend on this completed card
+    const allCards = Array.from(this.assemblyCards.values());
+    const dependentMCards = allCards.filter(card => 
+      card.type === "M" && 
+      card.dependencies?.includes(completedCardNumber) &&
+      card.status !== "ready_for_build" && // Don't update if already ready
+      card.status !== "completed" // Don't update if already completed
+    );
+
+    for (const mCard of dependentMCards) {
+      // Check if ALL dependencies of this M card are completed
+      const allDependenciesCompleted = mCard.dependencies?.every(depCardNumber => {
+        const depCard = allCards.find(c => c.cardNumber === depCardNumber);
+        return depCard && depCard.status === "completed";
+      });
+
+      // If all dependencies are completed, update the M card to "ready_for_build"
+      if (allDependenciesCompleted) {
+        // Use updateAssemblyCard to ensure consistent side-effect handling
+        await this.updateAssemblyCard({ id: mCard.id, status: "ready_for_build" });
+        console.log(`M card ${mCard.cardNumber} automatically updated to "ready_for_build" - all dependencies completed`);
+      }
+    }
   }
 
   async deleteAssemblyCard(id: string): Promise<boolean> {
