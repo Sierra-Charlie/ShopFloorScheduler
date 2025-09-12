@@ -314,6 +314,7 @@ export const fileUploadSchema = z.object({
   subAssyArea: z.number().min(1).max(6).nullable().optional(),
   requiresCrane: z.boolean().default(false),
   priority: z.enum(["A", "B", "C"]).default("B"),
+  pickTime: z.number().min(1).nullable().optional(),
 });
 
 export type FileUploadData = z.infer<typeof fileUploadSchema>;
