@@ -72,7 +72,7 @@ export default function GanttView() {
       }
       
       // Phase filter
-      if (filters.phase.length > 0 && !filters.phase.includes(card.phase.toString())) {
+      if (filters.phase.length > 0 && !filters.phase.includes((card.phase || 1).toString())) {
         return false;
       }
       
@@ -96,7 +96,7 @@ export default function GanttView() {
   const filterOptions = useMemo(() => {
     const statusSet = new Set(assemblyCards.map(card => card.status));
     const typeSet = new Set(assemblyCards.map(card => card.type));
-    const phaseSet = new Set(assemblyCards.map(card => card.phase.toString()));
+    const phaseSet = new Set(assemblyCards.map(card => (card.phase || 1).toString()));
     const assignedToSet = new Set(assemblyCards.map(card => card.assignedTo));
     
     const statuses = Array.from(statusSet).filter(Boolean);
