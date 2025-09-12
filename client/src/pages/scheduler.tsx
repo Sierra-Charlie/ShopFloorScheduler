@@ -13,7 +13,6 @@ import SwimLane from "@/components/swim-lane";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
 import AssemblyDetailView from "@/components/assembly-detail-view";
-import DependencyLegend from "@/components/dependency-legend";
 import DeadTimeSource from "@/components/dead-time-source";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1642,8 +1641,6 @@ export default function Scheduler() {
           </div>
         </DialogContent>
       </Dialog>
-      {/* Dependency Legend */}
-      <DependencyLegend />
     </div>
   );
 }
