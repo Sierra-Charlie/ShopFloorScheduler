@@ -475,8 +475,22 @@ export default function Scheduler() {
       setIsOptimizing(true);
       
       // Filter out DEAD_TIME cards for optimization - they'll be strategically added back later
-      const regularCards = assemblyCards.filter(card => card.type !== "DEAD_TIME");
       const deadTimeCards = assemblyCards.filter(card => card.type === "DEAD_TIME");
+      
+      // Keep all non-DEAD_TIME cards for dependency graph and context building
+      const regularCards = assemblyCards.filter(card => card.type !== "DEAD_TIME");
+      
+      // Define cards that should preserve their positions during optimization
+      const preservePositionStatuses = ["cleared_for_picking"];
+      
+      // Get grounded cards - these should not be touched during optimization
+      const groundedCards = assemblyCards.filter(card => card.grounded);
+      
+      // Get cards that should preserve their positions due to status
+      const positionPreservedCards = assemblyCards.filter(card => 
+        !card.grounded && 
+        preservePositionStatuses.includes(card.status || "")
+      );
       
       toast({
         title: "Optimizing build sequence...",
@@ -611,7 +625,6 @@ export default function Scheduler() {
       });
       
       // First, handle grounded cards - preserve their exact position and assignment
-      const groundedCards = regularCards.filter(card => card.grounded);
       groundedCards.forEach(card => {
         optimizedCards.push({
           ...card,
@@ -620,8 +633,8 @@ export default function Scheduler() {
           position: card.position || 0
         });
         
-        // Update workload tracking for grounded cards
-        if (card.assignedTo) {
+        // Update workload tracking for grounded cards (only for active lanes)
+        if (card.assignedTo && activeLanes.includes(card.assignedTo)) {
           const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
           // Use display duration for accurate workload calculation
           const cardDisplayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
@@ -635,13 +648,36 @@ export default function Scheduler() {
         }
       });
       
-      // Process non-grounded cards in dependency and phase-priority order
-      const nonGroundedSorted = sortedByPhasePriority.filter(cardId => {
-        const card = regularCards.find(c => c.id === cardId);
-        return card && !card.grounded;
+      // Handle position-preserved cards (e.g., cleared_for_picking) - preserve their exact position and assignment
+      positionPreservedCards.forEach(card => {
+        optimizedCards.push({
+          ...card,
+          // Preserve exact original assignment and position - never move these cards during optimization
+          assignedTo: card.assignedTo,
+          position: card.position || 0
+        });
+        
+        // Update workload tracking for position-preserved cards (only for active lanes)
+        if (card.assignedTo && activeLanes.includes(card.assignedTo)) {
+          const currentWorkload = assemblerWorkloads.get(card.assignedTo) || 0;
+          // Use display duration for accurate workload calculation
+          const cardDisplayDuration = card.status === "completed" && card.actualDuration ? card.actualDuration : card.duration;
+          assemblerWorkloads.set(card.assignedTo, currentWorkload + cardDisplayDuration);
+          
+          // Update position tracking to account for preserved card positions AND their display duration
+          const preservedCardEndTime = (card.position || 0) + cardDisplayDuration;
+          const currentPos = assemblerPositions.get(card.assignedTo) || 0;
+          assemblerPositions.set(card.assignedTo, Math.max(currentPos, preservedCardEndTime));
+        }
       });
       
-      for (const cardId of nonGroundedSorted) {
+      // Process optimizable cards (exclude grounded and position-preserved cards) in dependency and phase-priority order
+      const optimizableCardIds = sortedByPhasePriority.filter(cardId => {
+        const card = regularCards.find(c => c.id === cardId);
+        return card && !card.grounded && !preservePositionStatuses.includes(card.status || "");
+      });
+      
+      for (const cardId of optimizableCardIds) {
         const card = regularCards.find(c => c.id === cardId);
         if (!card) continue;
         
