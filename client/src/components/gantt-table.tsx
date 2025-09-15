@@ -54,7 +54,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
   
   // Filter states
   const [filters, setFilters] = useState({
-    cardNumber: '',
+    cardNumber: [] as string[], // Multi-select
     name: '',
     type: '',
     duration: '',
@@ -62,14 +62,14 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
     phase: '',
     priority: '',
     materialSeq: '',
-    assemblySeq: '',
-    operationSeq: '',
+    assemblySeq: [] as string[], // Multi-select
+    operationSeq: [] as string[], // Multi-select
     pickTime: '',
-    assignedTo: '',
-    machineType: '',
-    machineNumber: '',
+    assignedTo: [] as string[], // Multi-select
+    machineType: [] as string[], // Multi-select
+    machineNumber: [] as string[], // Multi-select
     status: '',
-    subAssyArea: '',
+    subAssyArea: [] as string[], // Multi-select
     crane: '',
   });
   
@@ -156,6 +156,84 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
     return safeValue.includes(safeFilter);
   };
 
+  // Helper function for multi-select filtering
+  const safeMultiSelectIncludes = (value: any, filterArray: string[]): boolean => {
+    if (!filterArray || filterArray.length === 0) return true;
+    const safeValue = String(value ?? '').toLowerCase();
+    return filterArray.some(filterItem => safeValue.includes(filterItem.toLowerCase()));
+  };
+
+  // Helper functions to get unique values for dropdowns
+  const getUniqueCardNumbers = () => {
+    const cardNumbers = assemblyCards.map(card => card.cardNumber).filter(Boolean);
+    return Array.from(new Set(cardNumbers)).sort();
+  };
+
+  const getUniqueAssemblySeqs = () => {
+    const seqs = assemblyCards.map(card => String(card.assemblySeq ?? '')).filter(seq => seq !== '');
+    return Array.from(new Set(seqs)).sort();
+  };
+
+  const getUniqueOperationSeqs = () => {
+    const seqs = assemblyCards.map(card => String(card.operationSeq ?? '')).filter(seq => seq !== '');
+    return Array.from(new Set(seqs)).sort();
+  };
+
+  const getUniqueAssignedTo = () => {
+    const assigned = assemblers.map(assembler => assembler.name).filter(Boolean);
+    return Array.from(new Set(assigned)).sort();
+  };
+
+  const getUniqueMachineTypes = () => {
+    const types = assemblers.map(assembler => assembler.machineType).filter((type): type is string => Boolean(type));
+    return Array.from(new Set(types)).sort();
+  };
+
+  const getUniqueMachineNumbers = () => {
+    const numbers = assemblers.map(assembler => assembler.machineNumber).filter((num): num is string => Boolean(num));
+    return Array.from(new Set(numbers)).sort();
+  };
+
+  const getUniqueSubAssyAreas = () => {
+    const areas = assemblyCards.map(card => String(card.subAssyArea ?? '')).filter(area => area !== '');
+    return Array.from(new Set(areas)).sort();
+  };
+
+  // Multi-select component helper
+  const MultiSelectFilter = ({ options, value, onChange, placeholder, testId }: {
+    options: string[];
+    value: string[];
+    onChange: (newValue: string[]) => void;
+    placeholder: string;
+    testId: string;
+  }) => {
+    const displayValue = value.length > 0 ? `${value.length} selected` : placeholder;
+    
+    return (
+      <Select value="" onValueChange={(selectedValue) => {
+        if (selectedValue === 'clear-all') {
+          onChange([]);
+        } else if (value.includes(selectedValue)) {
+          onChange(value.filter(v => v !== selectedValue));
+        } else {
+          onChange([...value, selectedValue]);
+        }
+      }}>
+        <SelectTrigger className="h-8 text-xs" data-testid={testId}>
+          <SelectValue placeholder={displayValue} />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="clear-all">🔄 Clear All</SelectItem>
+          {options.map(option => (
+            <SelectItem key={option} value={option}>
+              {value.includes(option) ? '✓ ' : ''}{option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  };
+
   // Helper function for safe dependency filtering
   const safeDependencyIncludes = (dependencies: string[] | undefined, filter: string): boolean => {
     if (filter === '') return true;
@@ -169,7 +247,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
     const assignedAssembler = assemblers.find(a => a.id === card.assignedTo);
     
     return (
-      safeStringIncludes(card.cardNumber, filters.cardNumber) &&
+      safeMultiSelectIncludes(card.cardNumber, filters.cardNumber) &&
       safeStringIncludes(card.name, filters.name) &&
       (filters.type === '' || card.type === filters.type) &&
       safeStringIncludes(card.duration, filters.duration) &&
@@ -177,14 +255,14 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
       (filters.phase === '' || String(card.phase ?? '') === filters.phase) &&
       (filters.priority === '' || card.priority === filters.priority) &&
       safeStringIncludes(card.materialSeq, filters.materialSeq) &&
-      safeStringIncludes(card.assemblySeq, filters.assemblySeq) &&
-      safeStringIncludes(card.operationSeq, filters.operationSeq) &&
+      safeMultiSelectIncludes(card.assemblySeq, filters.assemblySeq) &&
+      safeMultiSelectIncludes(card.operationSeq, filters.operationSeq) &&
       safeStringIncludes(card.pickTime, filters.pickTime) &&
-      safeStringIncludes(assignedAssembler?.name, filters.assignedTo) &&
-      safeStringIncludes(assignedAssembler?.machineType, filters.machineType) &&
-      safeStringIncludes(assignedAssembler?.machineNumber, filters.machineNumber) &&
+      safeMultiSelectIncludes(assignedAssembler?.name, filters.assignedTo) &&
+      safeMultiSelectIncludes(assignedAssembler?.machineType, filters.machineType) &&
+      safeMultiSelectIncludes(assignedAssembler?.machineNumber, filters.machineNumber) &&
       (filters.status === '' || card.status === filters.status) &&
-      safeStringIncludes(card.subAssyArea, filters.subAssyArea) &&
+      safeMultiSelectIncludes(card.subAssyArea, filters.subAssyArea) &&
       (filters.crane === '' || (filters.crane === 'yes' ? card.requiresCrane : !card.requiresCrane))
     );
   });
@@ -278,12 +356,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
             {/* Filter Row */}
             <tr className="bg-muted">
               <th className="px-2 py-2 sticky left-0 bg-muted z-20 border-r border-border">
-                <Input
-                  placeholder="Filter..."
+                <MultiSelectFilter
+                  options={getUniqueCardNumbers()}
                   value={filters.cardNumber}
-                  onChange={(e) => setFilters(prev => ({ ...prev, cardNumber: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-card-number"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, cardNumber: newValue }))}
+                  placeholder="All Cards"
+                  testId="filter-card-number"
                 />
               </th>
               <th className="px-2 py-2">
@@ -367,21 +445,21 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Assy #..."
+                <MultiSelectFilter
+                  options={getUniqueAssemblySeqs()}
                   value={filters.assemblySeq}
-                  onChange={(e) => setFilters(prev => ({ ...prev, assemblySeq: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-assembly-seq"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, assemblySeq: newValue }))}
+                  placeholder="All Assy"
+                  testId="filter-assembly-seq"
                 />
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Op #..."
+                <MultiSelectFilter
+                  options={getUniqueOperationSeqs()}
                   value={filters.operationSeq}
-                  onChange={(e) => setFilters(prev => ({ ...prev, operationSeq: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-operation-seq"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, operationSeq: newValue }))}
+                  placeholder="All Ops"
+                  testId="filter-operation-seq"
                 />
               </th>
               <th className="px-2 py-2">
@@ -397,30 +475,30 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Assigned..."
+                <MultiSelectFilter
+                  options={getUniqueAssignedTo()}
                   value={filters.assignedTo}
-                  onChange={(e) => setFilters(prev => ({ ...prev, assignedTo: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-assigned-to"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, assignedTo: newValue }))}
+                  placeholder="All Assigned"
+                  testId="filter-assigned-to"
                 />
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Machine..."
+                <MultiSelectFilter
+                  options={getUniqueMachineTypes()}
                   value={filters.machineType}
-                  onChange={(e) => setFilters(prev => ({ ...prev, machineType: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-machine-type"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, machineType: newValue }))}
+                  placeholder="All Machines"
+                  testId="filter-machine-type"
                 />
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Number..."
+                <MultiSelectFilter
+                  options={getUniqueMachineNumbers()}
                   value={filters.machineNumber}
-                  onChange={(e) => setFilters(prev => ({ ...prev, machineNumber: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-machine-number"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, machineNumber: newValue }))}
+                  placeholder="All Numbers"
+                  testId="filter-machine-number"
                 />
               </th>
               <th className="px-2 py-2">
@@ -438,12 +516,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 </Select>
               </th>
               <th className="px-2 py-2">
-                <Input
-                  placeholder="Area..."
+                <MultiSelectFilter
+                  options={getUniqueSubAssyAreas()}
                   value={filters.subAssyArea}
-                  onChange={(e) => setFilters(prev => ({ ...prev, subAssyArea: e.target.value }))}
-                  className="h-8 text-xs"
-                  data-testid="filter-sub-assy-area"
+                  onChange={(newValue) => setFilters(prev => ({ ...prev, subAssyArea: newValue }))}
+                  placeholder="All Areas"
+                  testId="filter-sub-assy-area"
                 />
               </th>
               <th className="px-2 py-2">
@@ -466,9 +544,9 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   variant="outline"
                   size="sm"
                   onClick={() => setFilters({
-                    cardNumber: '', name: '', type: '', duration: '', dependencies: '', phase: '',
-                    priority: '', materialSeq: '', assemblySeq: '', operationSeq: '', pickTime: '',
-                    assignedTo: '', machineType: '', machineNumber: '', status: '', subAssyArea: '', crane: ''
+                    cardNumber: [], name: '', type: '', duration: '', dependencies: '', phase: '',
+                    priority: '', materialSeq: '', assemblySeq: [], operationSeq: [], pickTime: '',
+                    assignedTo: [], machineType: [], machineNumber: [], status: '', subAssyArea: [], crane: ''
                   })}
                   className="h-8 px-2 text-xs"
                   data-testid="clear-filters"
