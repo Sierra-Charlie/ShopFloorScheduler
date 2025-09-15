@@ -928,8 +928,55 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: string): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
-    return (result.rowCount || 0) > 0;
+    // Start a transaction to ensure atomicity
+    const result = await db.transaction(async (tx) => {
+      try {
+        // Check if user exists first
+        const [existingUser] = await tx.select().from(users).where(eq(users.id, id));
+        if (!existingUser) {
+          return false; // User doesn't exist
+        }
+
+        // Handle foreign key constraints by nullifying/removing references
+        // This preserves data integrity while allowing user deletion
+        
+        // 1. Unassign user from assemblers
+        await tx.update(assemblers)
+          .set({ assignedUser: null })
+          .where(eq(assemblers.assignedUser, id));
+
+        // 2. Unassign user from andon issues  
+        await tx.update(andonIssues)
+          .set({ assignedTo: null })
+          .where(eq(andonIssues.assignedTo, id));
+
+        // 3. Remove user from thread participants
+        await tx.delete(threadParticipants)
+          .where(eq(threadParticipants.userId, id));
+
+        // 4. Remove user's votes
+        await tx.delete(threadVotes)
+          .where(eq(threadVotes.userId, id));
+
+        // 5. Handle messages and threads - we cannot set authorId/createdBy to null if they're NOT NULL
+        // Instead, we'll create a "deleted user" placeholder or check constraints
+        // For now, delete threads and messages created by this user to avoid FK violations
+        await tx.delete(messages)
+          .where(eq(messages.authorId, id));
+
+        await tx.delete(messageThreads)
+          .where(eq(messageThreads.createdBy, id));
+
+        // Finally, delete the user
+        const deleteResult = await tx.delete(users).where(eq(users.id, id));
+        return (deleteResult.rowCount || 0) > 0;
+      } catch (error) {
+        console.error('Transaction error during user deletion:', error);
+        throw error; // This will cause the transaction to rollback
+      }
+    });
+
+    return result;
   }
 
   async authenticateUser(credentials: LoginUser): Promise<User | null> {
@@ -1500,5 +1547,10 @@ async function initializeDatabaseData() {
   }
 }
 
-// Initialize database data on startup
-initializeDatabaseData();
+// Initialize database data on startup - ONLY in development mode
+if (process.env.NODE_ENV === 'development' || process.env.SEED_DATABASE === 'true') {
+  console.log('Development mode detected - initializing database with seed data');
+  initializeDatabaseData();
+} else {
+  console.log('Production mode - skipping database seeding');
+}

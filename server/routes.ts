@@ -130,7 +130,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.status(204).send();
     } catch (error) {
-      res.status(500).json({ message: "Failed to delete user" });
+      console.error("Delete user error:", error);
+      // Don't expose internal error details to client for security
+      res.status(500).json({ message: "Failed to delete user due to system constraints" });
     }
   });
 
