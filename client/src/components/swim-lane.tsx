@@ -301,13 +301,23 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         // Dependency should come BEFORE (lower position number) the dependent card
         return (depCard.position || 0) > (card.position || 0);
       } else {
-        // Cross-lane dependency: check timing to see if dependency finishes before dependent starts
-        const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
-        const depEndTime = (depCard.position || 0) + depDisplayDuration;
-        const cardStartTime = card.position || 0;
-        
-        // Conflict if dependency finishes AFTER dependent card starts
-        return depEndTime > cardStartTime;
+        // Cross-lane dependency: Use actual date/time information when available for accurate comparison
+        if (depCard.startTime && depCard.endTime && card.startTime) {
+          const depEndTime = new Date(depCard.endTime);
+          const cardStartTime = new Date(card.startTime);
+          
+          // Conflict if dependency finishes AFTER dependent card starts
+          return depEndTime > cardStartTime;
+        } else {
+          // Fallback to position-based check if timing info unavailable
+          // Note: This is less reliable for cross-lane dependencies
+          const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
+          const depEndTime = (depCard.position || 0) + depDisplayDuration;
+          const cardStartTime = card.position || 0;
+          
+          // Conflict if dependency finishes AFTER dependent card starts
+          return depEndTime > cardStartTime;
+        }
       }
     });
 
@@ -359,16 +369,32 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
           }
         } else {
-          // Cross-lane dependency: check timing to see if dependency finishes before dependent starts
-          const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
-          const depEndTime = (depCard.position || 0) + depDisplayDuration;
-          const cardStartTime = card.position || 0;
-          
-          // Conflict if dependency finishes AFTER dependent card starts
-          if (depEndTime > cardStartTime) {
-            conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTime}h > ${cardStartTime}h)`);
-          } else if (depCard.status === "blocked") {
-            conflicts.push(`Card ${dep} is blocked`);
+          // Cross-lane dependency: Use actual date/time information when available for accurate comparison
+          if (depCard.startTime && depCard.endTime && card.startTime) {
+            const depEndTime = new Date(depCard.endTime);
+            const cardStartTime = new Date(card.startTime);
+            
+            // Conflict if dependency finishes AFTER dependent card starts
+            if (depEndTime > cardStartTime) {
+              const depEndTimeStr = depEndTime.toLocaleString();
+              const cardStartTimeStr = cardStartTime.toLocaleString();
+              conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTimeStr} > ${cardStartTimeStr})`);
+            } else if (depCard.status === "blocked") {
+              conflicts.push(`Card ${dep} is blocked`);
+            }
+          } else {
+            // Fallback to position-based check if timing info unavailable  
+            // Note: This is less reliable for cross-lane dependencies
+            const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
+            const depEndTime = (depCard.position || 0) + depDisplayDuration;
+            const cardStartTime = card.position || 0;
+            
+            // Conflict if dependency finishes AFTER dependent card starts
+            if (depEndTime > cardStartTime) {
+              conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTime}h > ${cardStartTime}h) - Warning: Using position-based comparison`);
+            } else if (depCard.status === "blocked") {
+              conflicts.push(`Card ${dep} is blocked`);
+            }
           }
         }
       });
