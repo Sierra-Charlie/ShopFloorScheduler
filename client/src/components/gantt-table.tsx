@@ -296,12 +296,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
+                <Select value={filters.type || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value === "all" ? "" : value }))}>
                   <SelectTrigger className="h-8 text-xs" data-testid="filter-type">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="D">D</SelectItem>
                     <SelectItem value="E">E</SelectItem>
                     <SelectItem value="KB">KB</SelectItem>
@@ -330,12 +330,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Select value={filters.phase} onValueChange={(value) => setFilters(prev => ({ ...prev, phase: value }))}>
+                <Select value={filters.phase || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, phase: value === "all" ? "" : value }))}>
                   <SelectTrigger className="h-8 text-xs" data-testid="filter-phase">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Phases</SelectItem>
+                    <SelectItem value="all">All Phases</SelectItem>
                     <SelectItem value="1">Phase 1</SelectItem>
                     <SelectItem value="2">Phase 2</SelectItem>
                     <SelectItem value="3">Phase 3</SelectItem>
@@ -345,12 +345,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 </Select>
               </th>
               <th className="px-2 py-2">
-                <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+                <Select value={filters.priority || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value === "all" ? "" : value }))}>
                   <SelectTrigger className="h-8 text-xs" data-testid="filter-priority">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Priorities</SelectItem>
+                    <SelectItem value="all">All Priorities</SelectItem>
                     <SelectItem value="A">A</SelectItem>
                     <SelectItem value="B">B</SelectItem>
                     <SelectItem value="C">C</SelectItem>
@@ -424,12 +424,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+                <Select value={filters.status || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value === "all" ? "" : value }))}>
                   <SelectTrigger className="h-8 text-xs" data-testid="filter-status">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="all">All Status</SelectItem>
                     <SelectItem value="scheduled">Scheduled</SelectItem>
                     <SelectItem value="in_progress">In Progress</SelectItem>
                     <SelectItem value="completed">Completed</SelectItem>
@@ -447,12 +447,12 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 />
               </th>
               <th className="px-2 py-2">
-                <Select value={filters.crane} onValueChange={(value) => setFilters(prev => ({ ...prev, crane: value }))}>
+                <Select value={filters.crane || "all"} onValueChange={(value) => setFilters(prev => ({ ...prev, crane: value === "all" ? "" : value }))}>
                   <SelectTrigger className="h-8 text-xs" data-testid="filter-crane">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     <SelectItem value="yes">Yes</SelectItem>
                     <SelectItem value="no">No</SelectItem>
                   </SelectContent>
