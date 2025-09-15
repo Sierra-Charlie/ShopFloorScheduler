@@ -309,14 +309,11 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           // Conflict if dependency finishes AFTER dependent card starts
           return depEndTime > cardStartTime;
         } else {
-          // Fallback to position-based check if timing info unavailable
-          // Note: This is less reliable for cross-lane dependencies
-          const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
-          const depEndTime = (depCard.position || 0) + depDisplayDuration;
-          const cardStartTime = card.position || 0;
-          
-          // Conflict if dependency finishes AFTER dependent card starts
-          return depEndTime > cardStartTime;
+          // For cross-lane dependencies, position values are not comparable 
+          // since they're lane-specific. Without timing data, we cannot 
+          // accurately determine cross-lane conflicts, so we default to no conflict
+          // to avoid false positives. However, we should flag blocked dependencies.
+          return depCard.status === "blocked";
         }
       }
     });
@@ -383,18 +380,13 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
               conflicts.push(`Card ${dep} is blocked`);
             }
           } else {
-            // Fallback to position-based check if timing info unavailable  
-            // Note: This is less reliable for cross-lane dependencies
-            const depDisplayDuration = depCard.status === "completed" && depCard.actualDuration ? depCard.actualDuration : depCard.duration;
-            const depEndTime = (depCard.position || 0) + depDisplayDuration;
-            const cardStartTime = card.position || 0;
-            
-            // Conflict if dependency finishes AFTER dependent card starts
-            if (depEndTime > cardStartTime) {
-              conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTime}h > ${cardStartTime}h) - Warning: Using position-based comparison`);
-            } else if (depCard.status === "blocked") {
+            // For cross-lane dependencies without timing data, we cannot accurately 
+            // determine conflicts since position values are lane-specific
+            // Only flag if the dependency is in a problematic state
+            if (depCard.status === "blocked") {
               conflicts.push(`Card ${dep} is blocked`);
             }
+            // Note: Without timing data, we cannot detect timing-based conflicts across lanes
           }
         }
       });
