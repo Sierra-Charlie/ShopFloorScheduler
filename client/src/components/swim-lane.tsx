@@ -107,7 +107,8 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     }
 
     // Normalize inputs - guard against NaN/undefined
-    const position = Number.isFinite(card.position) ? card.position : 0;
+    const parsedPos = Number(card.position);
+    const position = Number.isFinite(parsedPos) ? parsedPos : 0;
     const duration = (() => {
       if (card.status === "completed" && card.actualDuration) {
         return Number(card.actualDuration) || 1;
@@ -115,8 +116,27 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       return Number(card.duration) || 1;
     })();
     
-    // Create base date from schedule start date
+    // Debug logging for P2-1 and M3-1
+    if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
+      console.log(`DEBUG ${card.cardNumber}:`, {
+        rawPosition: card.position,
+        parsedPosition: parsedPos,
+        normalizedPosition: position,
+        rawDuration: card.duration,
+        actualDuration: card.actualDuration,
+        status: card.status,
+        normalizedDuration: duration,
+        startDate: startDate
+      });
+    }
+    
+    // Create base date from schedule start date and normalize to business day
     const baseDate = new Date(startDate || new Date());
+    // If base date is a weekend, move to next business day at 6:00 AM
+    while (baseDate.getDay() === 0 || baseDate.getDay() === 6) {
+      baseDate.setDate(baseDate.getDate() + 1);
+    }
+    baseDate.setHours(6, 0, 0, 0);
     
     // Calculate days and hours from position
     const dayStartHour = 6; // 6 AM
@@ -145,6 +165,17 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     
     // Calculate end time using work hours
     const endTime = addWorkHours(startTime, duration);
+    
+    // Debug logging for P2-1 and M3-1
+    if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
+      console.log(`DEBUG ${card.cardNumber} timing:`, {
+        dayOffset,
+        hourOffset,
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        baseDate: baseDate.toISOString()
+      });
+    }
     
     return { startTime, endTime };
   };
