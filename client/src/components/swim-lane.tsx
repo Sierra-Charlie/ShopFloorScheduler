@@ -97,6 +97,31 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     return currentTime;
   };
 
+  // Helper function to calculate business days (Mon-Fri) from start date - matches scheduler logic
+  const getBusinessDay = (startDateStr: string, dayOffset: number) => {
+    // Parse date in local timezone to avoid UTC offset issues - same as scheduler
+    const [year, month, day] = startDateStr.split('-').map(Number);
+    const start = new Date(year, month - 1, day);
+    
+    // For Day 1 (dayOffset 0), return the start date
+    if (dayOffset === 0) {
+      return start;
+    }
+    
+    let current = new Date(start);
+    let businessDaysAdded = 0;
+    
+    while (businessDaysAdded < dayOffset) {
+      current.setDate(current.getDate() + 1);
+      // Monday = 1, Friday = 5, Saturday = 6, Sunday = 0
+      if (current.getDay() !== 0 && current.getDay() !== 6) {
+        businessDaysAdded++;
+      }
+    }
+    
+    return current;
+  };
+
   // Helper function to calculate actual start/end times from position and duration
   const calculateCardTiming = (card: AssemblyCard) => {
     if (card.startTime && card.endTime) {
@@ -116,7 +141,28 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       return Number(card.duration) || 1;
     })();
     
-    // Debug logging for P2-1 and M3-1
+    // Calculate days and hours from position - matches scheduler visual logic exactly
+    const dayStartHour = 6; // 6 AM
+    const hoursPerDay = 9; // 6 AM to 3 PM
+    const dayOffset = Math.floor(position / hoursPerDay);
+    const hourOffset = position % hoursPerDay;
+    
+    // Use the same business day calculation as scheduler formatDayLabel function
+    // Create timezone-safe fallback for startDate
+    const todayFallback = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in local timezone
+    const baseDate = getBusinessDay(startDate || todayFallback, dayOffset);
+    
+    // Set start time (6 AM + hour offset)
+    const startTime = new Date(baseDate);
+    startTime.setHours(dayStartHour + Math.floor(hourOffset));
+    startTime.setMinutes((hourOffset % 1) * 60);
+    startTime.setSeconds(0);
+    startTime.setMilliseconds(0);
+    
+    // Calculate end time using work hours
+    const endTime = addWorkHours(startTime, duration);
+    
+    // Debug logging for P2-1 and M3-1 - now shows correct times
     if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
       console.log(`DEBUG ${card.cardNumber}:`, {
         rawPosition: card.position,
@@ -128,52 +174,14 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         normalizedDuration: duration,
         startDate: startDate
       });
-    }
-    
-    // Create base date from schedule start date and normalize to business day
-    const baseDate = new Date(startDate || new Date());
-    // If base date is a weekend, move to next business day at 6:00 AM
-    while (baseDate.getDay() === 0 || baseDate.getDay() === 6) {
-      baseDate.setDate(baseDate.getDate() + 1);
-    }
-    baseDate.setHours(6, 0, 0, 0);
-    
-    // Calculate days and hours from position
-    const dayStartHour = 6; // 6 AM
-    const hoursPerDay = 9; // 6 AM to 3 PM
-    const dayOffset = Math.floor(position / hoursPerDay);
-    const hourOffset = position % hoursPerDay;
-    
-    // Add business days to base date
-    let currentDate = new Date(baseDate);
-    let businessDaysAdded = 0;
-    
-    while (businessDaysAdded < dayOffset) {
-      currentDate.setDate(currentDate.getDate() + 1);
-      // Skip weekends (Saturday = 6, Sunday = 0)
-      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
-        businessDaysAdded++;
-      }
-    }
-    
-    // Set start time (6 AM + hour offset)
-    const startTime = new Date(currentDate);
-    startTime.setHours(dayStartHour + Math.floor(hourOffset));
-    startTime.setMinutes((hourOffset % 1) * 60);
-    startTime.setSeconds(0);
-    startTime.setMilliseconds(0);
-    
-    // Calculate end time using work hours
-    const endTime = addWorkHours(startTime, duration);
-    
-    // Debug logging for P2-1 and M3-1
-    if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
       console.log(`DEBUG ${card.cardNumber} timing:`, {
         dayOffset,
         hourOffset,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
-        baseDate: baseDate.toISOString()
+        startTime: startTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
+        endTime: endTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
+        baseDate: baseDate.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
+        startTimeUTC: startTime.toISOString(),
+        endTimeUTC: endTime.toISOString()
       });
     }
     
