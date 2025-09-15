@@ -60,6 +60,43 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
   const updateAssemblerMutation = useUpdateAssembler();
   const { startDate } = useUser();
 
+  // Helper function to add work hours respecting business days and work hours
+  const addWorkHours = (startTime: Date, hoursToAdd: number) => {
+    const dayStartHour = 6; // 6 AM
+    const hoursPerDay = 9; // 6 AM to 3 PM
+    
+    let currentTime = new Date(startTime);
+    let remainingHours = hoursToAdd;
+    
+    while (remainingHours > 0) {
+      // How many hours left in current work day?
+      const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
+      const hoursLeftInDay = Math.max(0, (dayStartHour + hoursPerDay) - currentHour);
+      
+      if (hoursLeftInDay >= remainingHours) {
+        // Remaining hours fit in current day
+        currentTime.setHours(
+          currentTime.getHours() + Math.floor(remainingHours),
+          currentTime.getMinutes() + ((remainingHours % 1) * 60)
+        );
+        remainingHours = 0;
+      } else {
+        // Move to next business day
+        remainingHours -= hoursLeftInDay;
+        
+        // Find next business day
+        do {
+          currentTime.setDate(currentTime.getDate() + 1);
+        } while (currentTime.getDay() === 0 || currentTime.getDay() === 6); // Skip weekends
+        
+        // Start at beginning of work day
+        currentTime.setHours(dayStartHour, 0, 0, 0);
+      }
+    }
+    
+    return currentTime;
+  };
+
   // Helper function to calculate actual start/end times from position and duration
   const calculateCardTiming = (card: AssemblyCard) => {
     if (card.startTime && card.endTime) {
@@ -69,19 +106,23 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       };
     }
 
-    // Calculate from position and duration if timing data is missing
-    const position = card.position || 0; // Hours from start of timeline
-    const duration = card.status === "completed" && card.actualDuration 
-      ? card.actualDuration 
-      : (card.duration || 1); // Default to 1 hour if null
+    // Normalize inputs - guard against NaN/undefined
+    const position = Number.isFinite(card.position) ? card.position : 0;
+    const duration = (() => {
+      if (card.status === "completed" && card.actualDuration) {
+        return Number(card.actualDuration) || 1;
+      }
+      return Number(card.duration) || 1;
+    })();
     
     // Create base date from schedule start date
     const baseDate = new Date(startDate || new Date());
     
     // Calculate days and hours from position
-    const workHoursPerDay = 9; // 6 AM to 3 PM
-    const dayOffset = Math.floor(position / workHoursPerDay);
-    const hourOffset = position % workHoursPerDay;
+    const dayStartHour = 6; // 6 AM
+    const hoursPerDay = 9; // 6 AM to 3 PM
+    const dayOffset = Math.floor(position / hoursPerDay);
+    const hourOffset = position % hoursPerDay;
     
     // Add business days to base date
     let currentDate = new Date(baseDate);
@@ -97,15 +138,13 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     
     // Set start time (6 AM + hour offset)
     const startTime = new Date(currentDate);
-    startTime.setHours(6 + Math.floor(hourOffset));
+    startTime.setHours(dayStartHour + Math.floor(hourOffset));
     startTime.setMinutes((hourOffset % 1) * 60);
     startTime.setSeconds(0);
     startTime.setMilliseconds(0);
     
-    // Calculate end time
-    const endTime = new Date(startTime);
-    endTime.setHours(endTime.getHours() + Math.floor(duration));
-    endTime.setMinutes(endTime.getMinutes() + ((duration % 1) * 60));
+    // Calculate end time using work hours
+    const endTime = addWorkHours(startTime, duration);
     
     return { startTime, endTime };
   };
@@ -291,8 +330,13 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                     position: cumulativePosition,
                   });
                   // Next card starts after this card's display duration
-                  const displayDuration = reorderedCards[i].status === "completed" && reorderedCards[i].actualDuration ? reorderedCards[i].actualDuration : reorderedCards[i].duration;
-                  cumulativePosition += displayDuration;
+                  const displayDuration = (() => {
+                    if (reorderedCards[i].status === "completed" && reorderedCards[i].actualDuration) {
+                      return Number(reorderedCards[i].actualDuration) || 1;
+                    }
+                    return Number(reorderedCards[i].duration) || 1;
+                  })();
+                  cumulativePosition = Number(cumulativePosition) + displayDuration;
                 }
                 
                 toast({
@@ -311,9 +355,14 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           
           let newPosition = 0;
           for (const existingCard of sortedCards) {
-            const displayDuration = existingCard.status === "completed" && existingCard.actualDuration ? existingCard.actualDuration : existingCard.duration;
+            const displayDuration = (() => {
+              if (existingCard.status === "completed" && existingCard.actualDuration) {
+                return Number(existingCard.actualDuration) || 1;
+              }
+              return Number(existingCard.duration) || 1;
+            })();
             const cardEnd = (existingCard.position || 0) + displayDuration;
-            newPosition = Math.max(newPosition, cardEnd);
+            newPosition = Math.max(Number(newPosition) || 0, Number(cardEnd) || 0);
           }
           
           await updateCardMutation.mutateAsync({
@@ -374,26 +423,12 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
           return false; // Skip same card, non-crane cards, or cards in same lane
         }
         
-        // If both cards have timing information, check time overlap
-        if (card.startTime && card.endTime && otherCard.startTime && otherCard.endTime) {
-          const cardStart = new Date(card.startTime);
-          const cardEnd = new Date(card.endTime);
-          const otherStart = new Date(otherCard.startTime);
-          const otherEnd = new Date(otherCard.endTime);
-          
-          // Time periods overlap if: start1 < end2 && start2 < end1
-          return cardStart < otherEnd && otherStart < cardEnd;
-        }
+        // Always use calculated timing for crane conflict detection
+        const cardTiming = calculateCardTiming(card);
+        const otherTiming = calculateCardTiming(otherCard);
         
-        // For cards without timing info, check timeline position overlap
-        // Calculate timeline positions based on position and duration (position = hours from 6am)
-        const cardStart = card.position || 0;
-        const cardEnd = cardStart + card.duration;
-        const otherStart = otherCard.position || 0;
-        const otherEnd = otherStart + otherCard.duration;
-        
-        // Timeline positions overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        // Time periods overlap if: start1 < end2 && start2 < end1
+        return cardTiming.startTime < otherTiming.endTime && otherTiming.startTime < cardTiming.endTime;
       });
     
     return hasDependencyConflict || hasCraneConflict;
@@ -431,41 +466,27 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       });
     }
     
-    // Check crane dependency conflicts based on timeline position overlap
+    // Check crane dependency conflicts using calculated timing
     if (card.requiresCrane && allAssemblyCards) {
       const craneConflicts = allAssemblyCards.filter(otherCard => {
         if (otherCard.id === card.id || !otherCard.requiresCrane || otherCard.assignedTo === card.assignedTo) {
           return false; // Skip same card, non-crane cards, or cards in same lane
         }
         
-        // If both cards have timing information, check time overlap
-        if (card.startTime && card.endTime && otherCard.startTime && otherCard.endTime) {
-          const cardStart = new Date(card.startTime);
-          const cardEnd = new Date(card.endTime);
-          const otherStart = new Date(otherCard.startTime);
-          const otherEnd = new Date(otherCard.endTime);
-          
-          // Time periods overlap if: start1 < end2 && start2 < end1
-          return cardStart < otherEnd && otherStart < cardEnd;
-        }
+        // Always use calculated timing for crane conflict detection
+        const cardTiming = calculateCardTiming(card);
+        const otherTiming = calculateCardTiming(otherCard);
         
-        // For cards without timing info, check timeline position overlap
-        // Calculate timeline positions based on position and duration (position = hours from 6am)
-        const cardStart = card.position || 0;
-        const cardEnd = cardStart + card.duration;
-        const otherStart = otherCard.position || 0;
-        const otherEnd = otherStart + otherCard.duration;
-        
-        // Timeline positions overlap if: start1 < end2 && start2 < end1
-        return cardStart < otherEnd && otherStart < cardEnd;
+        // Time periods overlap if: start1 < end2 && start2 < end1
+        return cardTiming.startTime < otherTiming.endTime && otherTiming.startTime < cardTiming.endTime;
       });
       
       craneConflicts.forEach(conflictCard => {
-        if (card.startTime && card.endTime && conflictCard.startTime && conflictCard.endTime) {
-          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times`);
-        } else {
-          conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane at overlapping timeline positions`);
-        }
+        const cardTiming = calculateCardTiming(card);
+        const otherTiming = calculateCardTiming(conflictCard);
+        const cardTimeStr = cardTiming.startTime.toLocaleString();
+        const otherTimeStr = otherTiming.startTime.toLocaleString();
+        conflicts.push(`Crane conflict with card ${conflictCard.cardNumber} - both require crane during overlapping times (${cardTimeStr} - ${otherTimeStr})`);
       });
     }
     
