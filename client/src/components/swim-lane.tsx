@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import AssemblyCardComponent from "./assembly-card";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/contexts/user-context";
 
 interface SwimLaneProps {
   assembler: Assembler;
@@ -57,6 +58,57 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   const updateAssemblerMutation = useUpdateAssembler();
+  const { startDate } = useUser();
+
+  // Helper function to calculate actual start/end times from position and duration
+  const calculateCardTiming = (card: AssemblyCard) => {
+    if (card.startTime && card.endTime) {
+      return {
+        startTime: new Date(card.startTime),
+        endTime: new Date(card.endTime)
+      };
+    }
+
+    // Calculate from position and duration if timing data is missing
+    const position = card.position || 0; // Hours from start of timeline
+    const duration = card.status === "completed" && card.actualDuration 
+      ? card.actualDuration 
+      : (card.duration || 1); // Default to 1 hour if null
+    
+    // Create base date from schedule start date
+    const baseDate = new Date(startDate || new Date());
+    
+    // Calculate days and hours from position
+    const workHoursPerDay = 9; // 6 AM to 3 PM
+    const dayOffset = Math.floor(position / workHoursPerDay);
+    const hourOffset = position % workHoursPerDay;
+    
+    // Add business days to base date
+    let currentDate = new Date(baseDate);
+    let businessDaysAdded = 0;
+    
+    while (businessDaysAdded < dayOffset) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      // Skip weekends (Saturday = 6, Sunday = 0)
+      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+        businessDaysAdded++;
+      }
+    }
+    
+    // Set start time (6 AM + hour offset)
+    const startTime = new Date(currentDate);
+    startTime.setHours(6 + Math.floor(hourOffset));
+    startTime.setMinutes((hourOffset % 1) * 60);
+    startTime.setSeconds(0);
+    startTime.setMilliseconds(0);
+    
+    // Calculate end time
+    const endTime = new Date(startTime);
+    endTime.setHours(endTime.getHours() + Math.floor(duration));
+    endTime.setMinutes(endTime.getMinutes() + ((duration % 1) * 60));
+    
+    return { startTime, endTime };
+  };
 
   // Handle user assignment to assembler
   const handleUserAssignment = async (userId: string) => {
@@ -301,20 +353,17 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
         // Dependency should come BEFORE (lower position number) the dependent card
         return (depCard.position || 0) > (card.position || 0);
       } else {
-        // Cross-lane dependency: Use actual date/time information when available for accurate comparison
-        if (depCard.startTime && depCard.endTime && card.startTime) {
-          const depEndTime = new Date(depCard.endTime);
-          const cardStartTime = new Date(card.startTime);
-          
-          // Conflict if dependency finishes AFTER dependent card starts
-          return depEndTime > cardStartTime;
-        } else {
-          // For cross-lane dependencies, position values are not comparable 
-          // since they're lane-specific. Without timing data, we cannot 
-          // accurately determine cross-lane conflicts, so we default to no conflict
-          // to avoid false positives. However, we should flag blocked dependencies.
-          return depCard.status === "blocked";
-        }
+        // Cross-lane dependency: Use actual timing data or calculate from position
+        const depTiming = calculateCardTiming(depCard);
+        const cardTiming = calculateCardTiming(card);
+        
+        // Conflict if dependency finishes AFTER dependent card starts
+        const hasTimingConflict = depTiming.endTime > cardTiming.startTime;
+        
+        // Also flag if dependency is blocked
+        const isBlocked = depCard.status === "blocked";
+        
+        return hasTimingConflict || isBlocked;
       }
     });
 
@@ -366,27 +415,17 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             conflicts.push(`Card ${dep} is positioned after ${card.cardNumber} in the same lane`);
           }
         } else {
-          // Cross-lane dependency: Use actual date/time information when available for accurate comparison
-          if (depCard.startTime && depCard.endTime && card.startTime) {
-            const depEndTime = new Date(depCard.endTime);
-            const cardStartTime = new Date(card.startTime);
-            
-            // Conflict if dependency finishes AFTER dependent card starts
-            if (depEndTime > cardStartTime) {
-              const depEndTimeStr = depEndTime.toLocaleString();
-              const cardStartTimeStr = cardStartTime.toLocaleString();
-              conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTimeStr} > ${cardStartTimeStr})`);
-            } else if (depCard.status === "blocked") {
-              conflicts.push(`Card ${dep} is blocked`);
-            }
-          } else {
-            // For cross-lane dependencies without timing data, we cannot accurately 
-            // determine conflicts since position values are lane-specific
-            // Only flag if the dependency is in a problematic state
-            if (depCard.status === "blocked") {
-              conflicts.push(`Card ${dep} is blocked`);
-            }
-            // Note: Without timing data, we cannot detect timing-based conflicts across lanes
+          // Cross-lane dependency: Use actual timing data or calculate from position
+          const depTiming = calculateCardTiming(depCard);
+          const cardTiming = calculateCardTiming(card);
+          
+          // Check for timing conflicts
+          if (depTiming.endTime > cardTiming.startTime) {
+            const depEndTimeStr = depTiming.endTime.toLocaleString();
+            const cardStartTimeStr = cardTiming.startTime.toLocaleString();
+            conflicts.push(`Card ${dep} finishes after ${card.cardNumber} starts (${depEndTimeStr} > ${cardStartTimeStr})`);
+          } else if (depCard.status === "blocked") {
+            conflicts.push(`Card ${dep} is blocked`);
           }
         }
       });
