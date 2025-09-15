@@ -52,6 +52,27 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
   const [editingCard, setEditingCard] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Partial<AssemblyCard>>({});
   
+  // Filter states
+  const [filters, setFilters] = useState({
+    cardNumber: '',
+    name: '',
+    type: '',
+    duration: '',
+    dependencies: '',
+    phase: '',
+    priority: '',
+    materialSeq: '',
+    assemblySeq: '',
+    operationSeq: '',
+    pickTime: '',
+    assignedTo: '',
+    machineType: '',
+    machineNumber: '',
+    status: '',
+    subAssyArea: '',
+    crane: '',
+  });
+  
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   const deleteCardMutation = useDeleteAssemblyCard();
@@ -127,6 +148,47 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
     }
   };
 
+  // Helper function for safe string filtering
+  const safeStringIncludes = (value: any, filter: string): boolean => {
+    if (filter === '') return true;
+    const safeValue = String(value ?? '').toLowerCase();
+    const safeFilter = filter.toLowerCase();
+    return safeValue.includes(safeFilter);
+  };
+
+  // Helper function for safe dependency filtering
+  const safeDependencyIncludes = (dependencies: string[] | undefined, filter: string): boolean => {
+    if (filter === '') return true;
+    if (!dependencies || dependencies.length === 0) return false;
+    const safeFilter = filter.toLowerCase();
+    return dependencies.some(dep => String(dep ?? '').toLowerCase().includes(safeFilter));
+  };
+
+  // Filter assembly cards based on filter values
+  const filteredCards = assemblyCards.filter(card => {
+    const assignedAssembler = assemblers.find(a => a.id === card.assignedTo);
+    
+    return (
+      safeStringIncludes(card.cardNumber, filters.cardNumber) &&
+      safeStringIncludes(card.name, filters.name) &&
+      (filters.type === '' || card.type === filters.type) &&
+      safeStringIncludes(card.duration, filters.duration) &&
+      safeDependencyIncludes(card.dependencies, filters.dependencies) &&
+      (filters.phase === '' || String(card.phase ?? '') === filters.phase) &&
+      (filters.priority === '' || card.priority === filters.priority) &&
+      safeStringIncludes(card.materialSeq, filters.materialSeq) &&
+      safeStringIncludes(card.assemblySeq, filters.assemblySeq) &&
+      safeStringIncludes(card.operationSeq, filters.operationSeq) &&
+      safeStringIncludes(card.pickTime, filters.pickTime) &&
+      safeStringIncludes(assignedAssembler?.name, filters.assignedTo) &&
+      safeStringIncludes(assignedAssembler?.machineType, filters.machineType) &&
+      safeStringIncludes(assignedAssembler?.machineNumber, filters.machineNumber) &&
+      (filters.status === '' || card.status === filters.status) &&
+      safeStringIncludes(card.subAssyArea, filters.subAssyArea) &&
+      (filters.crane === '' || (filters.crane === 'yes' ? card.requiresCrane : !card.requiresCrane))
+    );
+  });
+
   // Check for dependency issues
   const hasDependencyIssues = (card: AssemblyCard) => {
     return card.dependencies?.some(dep => {
@@ -156,7 +218,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
         <table className="w-full">
           <thead className="bg-muted sticky top-0 z-10">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider sticky left-0 bg-muted z-20 border-r border-border">
                 Card #
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
@@ -213,9 +275,211 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                 Actions
               </th>
             </tr>
+            {/* Filter Row */}
+            <tr className="bg-muted">
+              <th className="px-2 py-2 sticky left-0 bg-muted z-20 border-r border-border">
+                <Input
+                  placeholder="Filter..."
+                  value={filters.cardNumber}
+                  onChange={(e) => setFilters(prev => ({ ...prev, cardNumber: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-card-number"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Filter..."
+                  value={filters.name}
+                  onChange={(e) => setFilters(prev => ({ ...prev, name: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-name"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="filter-type">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="D">D</SelectItem>
+                    <SelectItem value="E">E</SelectItem>
+                    <SelectItem value="KB">KB</SelectItem>
+                    <SelectItem value="M">M</SelectItem>
+                    <SelectItem value="P">P</SelectItem>
+                    <SelectItem value="S">S</SelectItem>
+                  </SelectContent>
+                </Select>
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Hours..."
+                  value={filters.duration}
+                  onChange={(e) => setFilters(prev => ({ ...prev, duration: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-duration"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Dependencies..."
+                  value={filters.dependencies}
+                  onChange={(e) => setFilters(prev => ({ ...prev, dependencies: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-dependencies"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Select value={filters.phase} onValueChange={(value) => setFilters(prev => ({ ...prev, phase: value }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="filter-phase">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Phases</SelectItem>
+                    <SelectItem value="1">Phase 1</SelectItem>
+                    <SelectItem value="2">Phase 2</SelectItem>
+                    <SelectItem value="3">Phase 3</SelectItem>
+                    <SelectItem value="4">Phase 4</SelectItem>
+                    <SelectItem value="5">Phase 5</SelectItem>
+                  </SelectContent>
+                </Select>
+              </th>
+              <th className="px-2 py-2">
+                <Select value={filters.priority} onValueChange={(value) => setFilters(prev => ({ ...prev, priority: value }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="filter-priority">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Priorities</SelectItem>
+                    <SelectItem value="A">A</SelectItem>
+                    <SelectItem value="B">B</SelectItem>
+                    <SelectItem value="C">C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Job #..."
+                  value={filters.materialSeq}
+                  onChange={(e) => setFilters(prev => ({ ...prev, materialSeq: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-material-seq"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Assy #..."
+                  value={filters.assemblySeq}
+                  onChange={(e) => setFilters(prev => ({ ...prev, assemblySeq: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-assembly-seq"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Op #..."
+                  value={filters.operationSeq}
+                  onChange={(e) => setFilters(prev => ({ ...prev, operationSeq: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-operation-seq"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <div className="h-8"></div>
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Minutes..."
+                  value={filters.pickTime}
+                  onChange={(e) => setFilters(prev => ({ ...prev, pickTime: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-pick-time"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Assigned..."
+                  value={filters.assignedTo}
+                  onChange={(e) => setFilters(prev => ({ ...prev, assignedTo: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-assigned-to"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Machine..."
+                  value={filters.machineType}
+                  onChange={(e) => setFilters(prev => ({ ...prev, machineType: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-machine-type"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Number..."
+                  value={filters.machineNumber}
+                  onChange={(e) => setFilters(prev => ({ ...prev, machineNumber: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-machine-number"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="filter-status">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Status</SelectItem>
+                    <SelectItem value="scheduled">Scheduled</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="blocked">Blocked</SelectItem>
+                  </SelectContent>
+                </Select>
+              </th>
+              <th className="px-2 py-2">
+                <Input
+                  placeholder="Area..."
+                  value={filters.subAssyArea}
+                  onChange={(e) => setFilters(prev => ({ ...prev, subAssyArea: e.target.value }))}
+                  className="h-8 text-xs"
+                  data-testid="filter-sub-assy-area"
+                />
+              </th>
+              <th className="px-2 py-2">
+                <Select value={filters.crane} onValueChange={(value) => setFilters(prev => ({ ...prev, crane: value }))}>
+                  <SelectTrigger className="h-8 text-xs" data-testid="filter-crane">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </th>
+              <th className="px-2 py-2">
+                <div className="h-8"></div>
+              </th>
+              <th className="px-2 py-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilters({
+                    cardNumber: '', name: '', type: '', duration: '', dependencies: '', phase: '',
+                    priority: '', materialSeq: '', assemblySeq: '', operationSeq: '', pickTime: '',
+                    assignedTo: '', machineType: '', machineNumber: '', status: '', subAssyArea: '', crane: ''
+                  })}
+                  className="h-8 px-2 text-xs"
+                  data-testid="clear-filters"
+                >
+                  Clear
+                </Button>
+              </th>
+            </tr>
           </thead>
           <tbody className="bg-card divide-y divide-border">
-            {assemblyCards.map((card) => {
+            {filteredCards.map((card) => {
               const isEditing = editingCard === card.id;
               const hasIssues = hasDependencyIssues(card);
               const statusBadge = getStatusBadge(card.status);
@@ -231,7 +495,7 @@ export default function GanttTable({ assemblyCards, assemblers, onCardEdit, onCa
                   onClick={() => !isEditing && onCardView?.(card)}
                   data-testid={`gantt-row-${card.cardNumber}`}
                 >
-                  <td className="px-4 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap sticky left-0 bg-card z-10 border-r border-border">
                     <div className="flex items-center">
                       <div className={cn("w-3 h-3 rounded mr-2", getPhaseColor(card.phase || 1))}></div>
                       {isEditing ? (
