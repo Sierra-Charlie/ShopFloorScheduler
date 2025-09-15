@@ -326,6 +326,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!card) {
         return res.status(404).json({ message: "Assembly card not found" });
       }
+      
+      // Broadcast assembly card update to all connected clients for real-time updates
+      broadcastToAll({
+        type: 'assembly_card_updated',
+        data: { 
+          cardId: card.id,
+          updatedCard: card 
+        }
+      });
+      
       res.json(card);
     } catch (error) {
       console.error("Update error:", error);

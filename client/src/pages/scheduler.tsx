@@ -9,6 +9,7 @@ import { useAssemblers } from "@/hooks/use-assemblers";
 import { useUsers } from "@/hooks/use-users";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useToast } from "@/hooks/use-toast";
+import { useWebSocket } from "@/hooks/use-websocket";
 import SwimLane from "@/components/swim-lane";
 import GanttTable from "@/components/gantt-table";
 import AssemblyCardModal from "@/components/assembly-card-modal";
@@ -53,6 +54,9 @@ export default function Scheduler() {
   const { data: assemblers = [], isLoading: assemblersLoading } = useAssemblers();
   const { data: users = [], isLoading: usersLoading } = useUsers();
   const updateCardMutation = useUpdateAssemblyCard();
+  
+  // Enable real-time updates for assembly card changes
+  const { isConnected } = useWebSocket();
   const resetAllStatusMutation = useResetAllAssemblyCardStatus();
   const deleteAllCardsMutation = useDeleteAllAssemblyCards();
   const updatePhaseClearedDatesMutation = useUpdatePhaseClearedDates();

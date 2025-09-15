@@ -49,6 +49,13 @@ export function useWebSocket() {
                   queryClient.invalidateQueries({ queryKey: ["/api/threads", message.data.thread.id] });
                 }
                 break;
+              
+              case "assembly_card_updated":
+                // Invalidate assembly cards to refresh all clients with updated data
+                queryClient.invalidateQueries({ queryKey: ["/api/assembly-cards"] });
+                // Also invalidate assemblers in case assignment changed
+                queryClient.invalidateQueries({ queryKey: ["/api/assemblers"] });
+                break;
             }
           } catch (error) {
             console.error("Error parsing WebSocket message:", error);
