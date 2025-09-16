@@ -310,12 +310,21 @@ export default function Scheduler() {
     
     const currentTimePosition = getCurrentTimePosition();
     
-    if (currentTimePosition === null || !card.startTime || !card.duration) return false;
+    if (currentTimePosition === null || card.position === undefined || !card.duration) return false;
     
-    // Calculate card's start and end positions
-    const cardStart = new Date(card.startTime);
-    const cardStartPosition = getCardTimePosition(cardStart);
-    const cardEndPosition = cardStartPosition + (card.duration * 60); // duration in hours * 60px
+    // Calculate card's start and end positions using the same logic as visual positioning
+    // This matches the swim-lane.tsx calculateCardTiming function
+    const position = Number(card.position) || 0;
+    const duration = Number(card.duration) || 0;
+    
+    // Calculate days and hours from position (same as swim lane logic)
+    const hoursPerDay = 9; // 6 AM to 3 PM
+    const dayOffset = Math.floor(position / hoursPerDay);
+    const hourOffset = position % hoursPerDay;
+    
+    // Calculate visual position (in pixels)
+    const cardStartPosition = dayOffset * 540 + hourOffset * 60; // 540px per day, 60px per hour
+    const cardEndPosition = cardStartPosition + (duration * 60); // duration in hours * 60px
     
     // Card is only overdue if:
     // 1. Current time has passed the card's start time (card should have started)
@@ -325,12 +334,15 @@ export default function Scheduler() {
     const isPastEndTime = currentTimePosition > cardEndPosition;
     
     // Debug logging for a few cards
-    if (card.cardNumber && (card.cardNumber.includes('P10') || card.cardNumber.includes('P2-1'))) {
+    if (card.cardNumber && (card.cardNumber.includes('P10') || card.cardNumber.includes('P2-1') || card.cardNumber.includes('D2') || card.cardNumber.includes('M15'))) {
       console.log(`DEBUG OVERDUE - Card ${card.cardNumber}:`, {
+        position,
+        dayOffset,
+        hourOffset,
         currentTimePosition,
         cardStartPosition,
         cardEndPosition,
-        duration: card.duration,
+        duration,
         hasStarted,
         isPastEndTime,
         isOverdue: hasStarted && isPastEndTime
