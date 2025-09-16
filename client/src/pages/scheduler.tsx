@@ -315,8 +315,12 @@ export default function Scheduler() {
   // Helper to get time position for a given date
   const getCardTimePosition = (date: Date) => {
     const startDateObj = new Date(startDate);
-    const daysDiff = Math.floor((date.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
-    const timeOffset = Math.max(0, (date.getHours() - 6) * 60 + date.getMinutes());
+    
+    // Convert date to Central Time to match current time calculation
+    const centralDate = new Date(date.toLocaleString("en-US", {timeZone: "America/Chicago"}));
+    
+    const daysDiff = Math.floor((centralDate.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    const timeOffset = Math.max(0, (centralDate.getHours() - 6) * 60 + centralDate.getMinutes());
     return daysDiff * 540 + timeOffset;
   };
 
