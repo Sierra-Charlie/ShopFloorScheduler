@@ -32,7 +32,7 @@ export default function AssemblerView() {
   }
 
   // Get cards assigned to current assembler or show all if admin/supervisor
-  const currentAssembler = assemblers.find(a => a.name.toLowerCase().includes(currentUser.name.toLowerCase()));
+  const currentAssembler = assemblers.find(a => a.assignedUser === currentUser.id);
   const relevantCards = currentUser.role === 'assembler' && currentAssembler
     ? assemblyCards.filter(card => card.assignedTo === currentAssembler.id)
     : assemblyCards;
@@ -92,6 +92,7 @@ export default function AssemblerView() {
             isOpen={isModalOpen}
             onClose={handleModalClose}
             card={editCard}
+            assemblers={assemblers}
           />
         )}
       </>
