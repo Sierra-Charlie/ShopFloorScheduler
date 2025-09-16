@@ -1352,7 +1352,7 @@ export default function Scheduler() {
                     <div
                       className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
                       style={{
-                        left: `${240 + timePosition}px`, // 240px for assembler column width
+                        left: `${256 + timePosition}px`, // 256px for assembler column width (24+40+192)
                         boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
                       }}
                       data-testid="current-time-line"
