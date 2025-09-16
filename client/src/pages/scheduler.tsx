@@ -252,36 +252,52 @@ export default function Scheduler() {
     }));
   };
   
-  // Utility function to get current time in Central Time Zone
-  const getCurrentCentralTime = () => {
-    return new Date(currentTime.toLocaleString("en-US", {timeZone: "America/Chicago"}));
+  // Helper function to get Central Time parts for a given date
+  const getCTParts = (date: Date) => {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Chicago',
+      year: 'numeric',
+      month: 'numeric', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false
+    });
+    const parts = formatter.formatToParts(date);
+    return Object.fromEntries(parts.map(p => [p.type, p.value]));
+  };
+
+  // Parse startDate without UTC interpretation
+  const getStartDateCT = () => {
+    const [year, month, day] = startDate.split('-').map(Number);
+    return new Date(year, month - 1, day); // Local date, not UTC
   };
   
   // Calculate position of current time line
   const getCurrentTimePosition = () => {
-    const centralTime = getCurrentCentralTime();
-    const currentDate = new Date(centralTime.getFullYear(), centralTime.getMonth(), centralTime.getDate());
-    const startDateObj = new Date(startDate);
+    const parts = getCTParts(new Date());
+    const currentHour = parseInt(parts.hour);
+    const currentMinutes = parseInt(parts.minute);
+    
+    // Check if current time is within work hours (6 AM to 3 PM CT)
+    if (currentHour < 6 || currentHour >= 15) {
+      return null;
+    }
+    
+    // Create current date in CT and start date for comparison
+    const currentDateCT = new Date(parseInt(parts.year), parseInt(parts.month) - 1, parseInt(parts.day));
+    const startDateCT = getStartDateCT();
     
     // Calculate which day we're in relative to start date
-    const daysDiff = Math.floor((currentDate.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
+    const daysDiff = Math.floor((currentDateCT.getTime() - startDateCT.getTime()) / (1000 * 60 * 60 * 24));
     
     // If we're before start date or after our visible days, don't show line
     if (daysDiff < 0 || daysDiff >= 5) {
       return null;
     }
     
-    // Check if current time is within work hours (6 AM to 3 PM CT)
-    const currentHour = centralTime.getHours();
-    const currentMinutes = centralTime.getMinutes();
-    
-    // Hide line if outside work hours (before 6 AM or after 3 PM)
-    if (currentHour < 6 || currentHour >= 15) {
-      return null;
-    }
-    
     // Calculate time position within the day (6am = 0px, each hour = 60px)
-    const timeOffset = Math.max(0, (currentHour - 6) * 60 + currentMinutes); // 60px per hour
+    const timeOffset = Math.max(0, (currentHour - 6) * 60 + currentMinutes);
     
     // Calculate total position (day offset + time offset)
     const dayOffset = daysDiff * 540; // 540px per day
@@ -292,7 +308,6 @@ export default function Scheduler() {
   const isCardOverdue = (card: AssemblyCard) => {
     if (card.status === 'completed') return false;
     
-    const centralTime = getCurrentCentralTime();
     const currentTimePosition = getCurrentTimePosition();
     
     if (currentTimePosition === null || !card.startTime || !card.duration) return false;
@@ -309,18 +324,32 @@ export default function Scheduler() {
     const hasStarted = currentTimePosition >= cardStartPosition;
     const isPastEndTime = currentTimePosition > cardEndPosition;
     
+    // Debug logging for a few cards
+    if (card.cardNumber && (card.cardNumber.includes('P10') || card.cardNumber.includes('P2-1'))) {
+      console.log(`DEBUG OVERDUE - Card ${card.cardNumber}:`, {
+        currentTimePosition,
+        cardStartPosition,
+        cardEndPosition,
+        duration: card.duration,
+        hasStarted,
+        isPastEndTime,
+        isOverdue: hasStarted && isPastEndTime
+      });
+    }
+    
     return hasStarted && isPastEndTime;
   };
   
   // Helper to get time position for a given date
   const getCardTimePosition = (date: Date) => {
-    const startDateObj = new Date(startDate);
+    const parts = getCTParts(date);
+    const startDateCT = getStartDateCT();
     
-    // Convert date to Central Time to match current time calculation
-    const centralDate = new Date(date.toLocaleString("en-US", {timeZone: "America/Chicago"}));
+    // Create card date in CT for comparison
+    const cardDateCT = new Date(parseInt(parts.year), parseInt(parts.month) - 1, parseInt(parts.day));
     
-    const daysDiff = Math.floor((centralDate.getTime() - startDateObj.getTime()) / (1000 * 60 * 60 * 24));
-    const timeOffset = Math.max(0, (centralDate.getHours() - 6) * 60 + centralDate.getMinutes());
+    const daysDiff = Math.floor((cardDateCT.getTime() - startDateCT.getTime()) / (1000 * 60 * 60 * 24));
+    const timeOffset = Math.max(0, (parseInt(parts.hour) - 6) * 60 + parseInt(parts.minute));
     return daysDiff * 540 + timeOffset;
   };
 
@@ -1318,7 +1347,7 @@ export default function Scheduler() {
                     >
                       {/* Time indicator tooltip */}
                       <div className="absolute -top-6 -left-8 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                        {getCurrentCentralTime().toLocaleTimeString('en-US', {
+                        {new Date().toLocaleTimeString('en-US', {
                           hour: 'numeric',
                           minute: '2-digit',
                           timeZone: 'America/Chicago'
@@ -1478,7 +1507,7 @@ export default function Scheduler() {
               <div className="flex flex-col">
                 <h2 className="text-xl font-semibold">Assembly Card Details Editor</h2>
                 <div className="text-sm text-muted-foreground mt-1">
-                  Current Time: {getCurrentCentralTime().toLocaleString('en-US', {
+                  Current Time: {new Date().toLocaleString('en-US', {
                     timeZone: 'America/Chicago',
                     weekday: 'long',
                     year: 'numeric',
