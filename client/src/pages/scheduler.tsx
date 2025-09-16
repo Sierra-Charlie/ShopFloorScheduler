@@ -297,13 +297,19 @@ export default function Scheduler() {
     
     if (currentTimePosition === null || !card.startTime || !card.duration) return false;
     
-    // Calculate card's expected end position
+    // Calculate card's start and end positions
     const cardStart = new Date(card.startTime);
     const cardStartPosition = getCardTimePosition(cardStart);
     const cardEndPosition = cardStartPosition + (card.duration * 60); // duration in hours * 60px
     
-    // Card is overdue if current time has passed its expected end
-    return currentTimePosition > cardEndPosition;
+    // Card is only overdue if:
+    // 1. Current time has passed the card's start time (card should have started)
+    // 2. AND current time has passed the card's expected end time
+    // This prevents cards that haven't started yet from being marked as overdue
+    const hasStarted = currentTimePosition >= cardStartPosition;
+    const isPastEndTime = currentTimePosition > cardEndPosition;
+    
+    return hasStarted && isPastEndTime;
   };
   
   // Helper to get time position for a given date
