@@ -52,6 +52,7 @@ function Router() {
           <Route path="/planning" component={Planning} />
           <Route path="/material-handler" component={MaterialHandler} />
           <Route path="/assembler" component={AssemblerView} />
+          <Route path="/assembler-view" component={AssemblerView} />
           <Route path="/andon-issues" component={AndonIssues} />
           <Route path="/build-bay-map" component={BuildBayMap} />
           <Route path="/messages" component={Messages} />
