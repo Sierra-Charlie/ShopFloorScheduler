@@ -46,6 +46,7 @@ function Router() {
       <main>
         <Switch>
           <Route path="/" component={Scheduler} />
+          <Route path="/scheduler" component={Scheduler} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/gantt" component={GanttView} />
           <Route path="/planning" component={Planning} />
