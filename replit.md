@@ -60,3 +60,25 @@ Preferred communication style: Simple, everyday language.
 **Drag & Drop Implementation**: React DnD provides robust drag-and-drop functionality with proper accessibility support and mobile compatibility.
 
 **Type Safety**: Zod schemas shared between frontend and backend ensure runtime validation matches TypeScript types, reducing bugs and improving developer experience.
+
+## Recent Changes
+
+### September 17, 2025 - Timing Calculation Fix
+**Issue**: Assembly cards were incorrectly showing as overdue (red) when current time hadn't passed their actual end time. The red current-time line was also positioned incorrectly.
+
+**Root Cause**: Mixed timing baselines across components:
+- SwimLane component used hardcoded 6 AM start time
+- Scheduler used configurable 8:00 AM start time from user context
+- Coordinate space mismatch between visual positioning and overdue calculations
+
+**Solution**: 
+- Created centralized timeline configuration (`client/src/lib/timeline-config.ts`) with shared constants and utilities
+- Updated all timing calculations to use configurable start time from user context
+- Fixed coordinate space consistency by ensuring all components use same pixel calculations including left gutter offset
+- Resolved red line positioning by removing double-counting of left gutter padding
+
+**Impact**: 
+- Assembly cards now show correct overdue status based on actual timing
+- Red current-time line accurately positioned at current time
+- Consistent timing calculations across all scheduler components
+- Improved maintainability through centralized timeline configuration

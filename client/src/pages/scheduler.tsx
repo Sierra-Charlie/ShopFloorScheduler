@@ -335,25 +335,6 @@ export default function Scheduler() {
     const hasStarted = currentTimePosition >= cardStartPosition;
     const isPastEndTime = currentTimePosition > cardEndPosition;
     
-    // Debug logging for a few cards
-    if (card.cardNumber && (card.cardNumber.includes('P10') || card.cardNumber.includes('P2-1') || card.cardNumber.includes('D2') || card.cardNumber.includes('M15'))) {
-      // Calculate for debug output only
-      const dayOffset = Math.floor(position / HOURS_PER_DAY);
-      const hourOffset = position % HOURS_PER_DAY;
-      
-      console.log(`DEBUG OVERDUE - Card ${card.cardNumber}:`, {
-        position,
-        dayOffset,
-        hourOffset,
-        currentTimePosition,
-        cardStartPosition,
-        cardEndPosition,
-        duration,
-        hasStarted,
-        isPastEndTime,
-        isOverdue: hasStarted && isPastEndTime
-      });
-    }
     
     return hasStarted && isPastEndTime;
   };

@@ -106,28 +106,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
     // Calculate end time using work hours
     const endTime = addWorkHours(cardStartTime, duration, dayStartHour, HOURS_PER_DAY);
     
-    // Debug logging for P2-1 and M3-1 - now shows correct times
-    if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
-      console.log(`DEBUG ${card.cardNumber}:`, {
-        rawPosition: card.position,
-        parsedPosition: parsedPos,
-        normalizedPosition: position,
-        rawDuration: card.duration,
-        actualDuration: card.actualDuration,
-        status: card.status,
-        normalizedDuration: duration,
-        startDate: startDate
-      });
-      console.log(`DEBUG ${card.cardNumber} timing:`, {
-        dayOffset,
-        hourOffset,
-        startTime: cardStartTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
-        endTime: endTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
-        baseDate: baseDate.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
-        startTimeUTC: cardStartTime.toISOString(),
-        endTimeUTC: endTime.toISOString()
-      });
-    }
     
     return { startTime: cardStartTime, endTime };
   };
@@ -175,7 +153,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       return canCardBeAssignedToAssembler(draggedCard.type, assembler.name);
     },
     drop: async (item: { id: string; cardNumber: string; originalPosition?: number; assignedTo?: string; type?: string; duration?: number; isNewDeadTime?: boolean }, monitor) => {
-      console.log('DROP EVENT TRIGGERED:', { cardNumber: item.cardNumber, assemblerName: assembler.name, itemId: item.id });
       try {
         // Handle new dead time card creation
         if (item.isNewDeadTime) {
@@ -300,7 +277,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
               
               // Only update if position actually changed
               if (currentIndex !== newPosition) {
-                console.log('REORDERING CARDS:', { cardNumber: item.cardNumber, currentIndex, newPosition, sortedCardsLength: sortedCards.length });
                 // Reorder the cards
                 const reorderedCards = [...sortedCards];
                 const [movedCard] = reorderedCards.splice(currentIndex, 1);
@@ -310,11 +286,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
                 // Use displayDuration (actualDuration for completed cards, otherwise planned duration)
                 let cumulativePosition = 0;
                 for (let i = 0; i < reorderedCards.length; i++) {
-                  console.log(`UPDATING POSITION for ${reorderedCards[i].cardNumber}:`, { 
-                    id: reorderedCards[i].id, 
-                    newPosition: cumulativePosition,
-                    cardNumber: reorderedCards[i].cardNumber
-                  });
                   await updateCardMutation.mutateAsync({
                     id: reorderedCards[i].id,
                     position: cumulativePosition,
@@ -355,12 +326,6 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
             newPosition = Math.max(Number(newPosition) || 0, Number(cardEnd) || 0);
           }
           
-          console.log('MOVING CARD TO DIFFERENT ASSEMBLER:', { 
-            cardNumber: item.cardNumber, 
-            fromAssembler: item.assignedTo, 
-            toAssembler: assembler.id, 
-            newPosition 
-          });
           await updateCardMutation.mutateAsync({
             id: item.id,
             assignedTo: assembler.id,
