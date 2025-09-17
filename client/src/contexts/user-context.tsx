@@ -19,7 +19,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [startDate, setStartDate] = useState("2025-09-24");
+  const [startDate, setStartDate] = useState("2025-09-17");
   const [startTime, setStartTime] = useState("08:00");
 
   useEffect(() => {
