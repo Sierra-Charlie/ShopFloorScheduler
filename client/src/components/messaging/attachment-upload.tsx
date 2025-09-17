@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Paperclip, X, Upload, Image, Video, FileText } from "lucide-react";
+import { Camera, X, Upload, Image, Video, FileText } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 interface AttachmentUploadProps {
@@ -130,8 +130,8 @@ export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: Att
             disabled={isUploading}
             data-testid="button-select-file"
           >
-            <Paperclip className="h-4 w-4 mr-2" />
-            Attach File
+            <Camera className="h-4 w-4 mr-2" />
+            Take a Photo or Video
           </Button>
         </div>
       ) : (
