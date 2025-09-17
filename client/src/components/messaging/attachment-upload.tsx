@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Upload, Image, Video, FileText } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { CameraCapture } from "@/components/CameraCapture";
 
 interface AttachmentUploadProps {
   onAttachmentSelect: (attachment: { url: string; name: string; type: string }) => void;
@@ -11,6 +12,7 @@ interface AttachmentUploadProps {
 export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: AttachmentUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,6 +98,18 @@ export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: Att
     await handleUploadFile(selectedFile);
   };
 
+  const handlePhotoCapture = async (photoBlob: Blob) => {
+    // Convert blob to file
+    const file = new File([photoBlob], `photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+    setSelectedFile(file);
+    setShowCamera(false);
+    
+    // Auto-upload if enabled
+    if (autoUpload) {
+      await handleUploadFile(file);
+    }
+  };
+
   const getFileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="h-4 w-4" />;
     if (type.startsWith('video/')) return <Video className="h-4 w-4" />;
@@ -126,7 +140,7 @@ export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: Att
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setShowCamera(true)}
             disabled={isUploading}
             data-testid="button-select-file"
           >
@@ -190,6 +204,14 @@ export function AttachmentUpload({ onAttachmentSelect, autoUpload = false }: Att
             </Button>
           </div>
         </div>
+      )}
+      
+      {/* Camera Dialog */}
+      {showCamera && (
+        <CameraCapture
+          onPhotoCapture={handlePhotoCapture}
+          onCancel={() => setShowCamera(false)}
+        />
       )}
     </div>
   );
