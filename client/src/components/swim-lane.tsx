@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import AssemblyCardComponent from "./assembly-card";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/contexts/user-context";
+import { parseStartTime, getBusinessDay, addWorkHours, HOURS_PER_DAY } from "@/lib/timeline-config";
 
 interface SwimLaneProps {
   assembler: Assembler;
@@ -58,69 +59,9 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
   const { toast } = useToast();
   const updateCardMutation = useUpdateAssemblyCard();
   const updateAssemblerMutation = useUpdateAssembler();
-  const { startDate } = useUser();
+  const { startDate, startTime } = useUser();
 
-  // Helper function to add work hours respecting business days and work hours
-  const addWorkHours = (startTime: Date, hoursToAdd: number) => {
-    const dayStartHour = 6; // 6 AM
-    const hoursPerDay = 9; // 6 AM to 3 PM
-    
-    let currentTime = new Date(startTime);
-    let remainingHours = hoursToAdd;
-    
-    while (remainingHours > 0) {
-      // How many hours left in current work day?
-      const currentHour = currentTime.getHours() + (currentTime.getMinutes() / 60);
-      const hoursLeftInDay = Math.max(0, (dayStartHour + hoursPerDay) - currentHour);
-      
-      if (hoursLeftInDay >= remainingHours) {
-        // Remaining hours fit in current day
-        currentTime.setHours(
-          currentTime.getHours() + Math.floor(remainingHours),
-          currentTime.getMinutes() + ((remainingHours % 1) * 60)
-        );
-        remainingHours = 0;
-      } else {
-        // Move to next business day
-        remainingHours -= hoursLeftInDay;
-        
-        // Find next business day
-        do {
-          currentTime.setDate(currentTime.getDate() + 1);
-        } while (currentTime.getDay() === 0 || currentTime.getDay() === 6); // Skip weekends
-        
-        // Start at beginning of work day
-        currentTime.setHours(dayStartHour, 0, 0, 0);
-      }
-    }
-    
-    return currentTime;
-  };
 
-  // Helper function to calculate business days (Mon-Fri) from start date - matches scheduler logic
-  const getBusinessDay = (startDateStr: string, dayOffset: number) => {
-    // Parse date in local timezone to avoid UTC offset issues - same as scheduler
-    const [year, month, day] = startDateStr.split('-').map(Number);
-    const start = new Date(year, month - 1, day);
-    
-    // For Day 1 (dayOffset 0), return the start date
-    if (dayOffset === 0) {
-      return start;
-    }
-    
-    let current = new Date(start);
-    let businessDaysAdded = 0;
-    
-    while (businessDaysAdded < dayOffset) {
-      current.setDate(current.getDate() + 1);
-      // Monday = 1, Friday = 5, Saturday = 6, Sunday = 0
-      if (current.getDay() !== 0 && current.getDay() !== 6) {
-        businessDaysAdded++;
-      }
-    }
-    
-    return current;
-  };
 
   // Helper function to calculate actual start/end times from position and duration
   const calculateCardTiming = (card: AssemblyCard) => {
@@ -141,26 +82,29 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       return Number(card.duration) || 1;
     })();
     
-    // Calculate days and hours from position - matches scheduler visual logic exactly
-    const dayStartHour = 6; // 6 AM
-    const hoursPerDay = 9; // 6 AM to 3 PM
+    // Calculate days and hours from position using configurable start time
+    const hoursPerDay = HOURS_PER_DAY; // Use configurable hours per day
     const dayOffset = Math.floor(position / hoursPerDay);
     const hourOffset = position % hoursPerDay;
     
-    // Use the same business day calculation as scheduler formatDayLabel function
-    // Create timezone-safe fallback for startDate
+    // Parse the configurable start time from user context
     const todayFallback = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD format in local timezone
+    const workDayStart = parseStartTime(startDate || todayFallback, startTime);
+    const dayStartHour = workDayStart.getHours();
+    const dayStartMinute = workDayStart.getMinutes();
+    
+    // Get the business day for this card
     const baseDate = getBusinessDay(startDate || todayFallback, dayOffset);
     
-    // Set start time (6 AM + hour offset)
-    const startTime = new Date(baseDate);
-    startTime.setHours(dayStartHour + Math.floor(hourOffset));
-    startTime.setMinutes((hourOffset % 1) * 60);
-    startTime.setSeconds(0);
-    startTime.setMilliseconds(0);
+    // Set start time (configurable start time + hour offset)
+    const cardStartTime = new Date(baseDate);
+    cardStartTime.setHours(dayStartHour + Math.floor(hourOffset));
+    cardStartTime.setMinutes(dayStartMinute + ((hourOffset % 1) * 60));
+    cardStartTime.setSeconds(0);
+    cardStartTime.setMilliseconds(0);
     
     // Calculate end time using work hours
-    const endTime = addWorkHours(startTime, duration);
+    const endTime = addWorkHours(cardStartTime, duration, dayStartHour, HOURS_PER_DAY);
     
     // Debug logging for P2-1 and M3-1 - now shows correct times
     if (card.cardNumber === 'P2-1' || card.cardNumber === 'M3-1') {
@@ -177,15 +121,15 @@ export default function SwimLane({ assembler, assemblyCards, allAssemblyCards, u
       console.log(`DEBUG ${card.cardNumber} timing:`, {
         dayOffset,
         hourOffset,
-        startTime: startTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
+        startTime: cardStartTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
         endTime: endTime.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
         baseDate: baseDate.toLocaleString('en-US', { timeZone: 'America/Chicago', dateStyle: 'short', timeStyle: 'medium' }),
-        startTimeUTC: startTime.toISOString(),
+        startTimeUTC: cardStartTime.toISOString(),
         endTimeUTC: endTime.toISOString()
       });
     }
     
-    return { startTime, endTime };
+    return { startTime: cardStartTime, endTime };
   };
 
   // Handle user assignment to assembler

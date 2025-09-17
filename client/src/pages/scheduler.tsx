@@ -18,6 +18,7 @@ import DeadTimeSource from "@/components/dead-time-source";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AssemblyCard } from "@shared/schema";
+import { parseStartTime, PX_PER_HOUR, HOURS_PER_DAY, LEFT_GUTTER_PX, cardPixelRange } from "@/lib/timeline-config";
 
 export default function Scheduler() {
   const { currentUser } = useUser();
@@ -275,12 +276,18 @@ export default function Scheduler() {
   
   // Calculate position of current time line
   const getCurrentTimePosition = () => {
+    // Parse the configurable start time
+    const workDayStart = parseStartTime(startDate, startTime);
+    const workStartHour = workDayStart.getHours();
+    const workStartMinute = workDayStart.getMinutes();
+    const workEndHour = workStartHour + HOURS_PER_DAY;
+    
     const parts = getCTParts(new Date());
     const currentHour = parseInt(parts.hour);
     const currentMinutes = parseInt(parts.minute);
     
-    // Check if current time is within work hours (6 AM to 3 PM CT)
-    if (currentHour < 6 || currentHour >= 15) {
+    // Check if current time is within work hours (configurable start to start + 9 hours)
+    if (currentHour < workStartHour || currentHour >= workEndHour) {
       return null;
     }
     
@@ -296,12 +303,13 @@ export default function Scheduler() {
       return null;
     }
     
-    // Calculate time position within the day (6am = 0px, each hour = 60px)
-    const timeOffset = Math.max(0, (currentHour - 6) * 60 + currentMinutes);
+    // Calculate time position within the day (configurable start = 0px, each hour = PX_PER_HOUR)
+    const hoursFromStart = (currentHour - workStartHour) + (currentMinutes - workStartMinute) / 60;
+    const timeOffset = Math.max(0, hoursFromStart * PX_PER_HOUR);
     
-    // Calculate total position (day offset + time offset)
-    const dayOffset = daysDiff * 540; // 540px per day
-    return dayOffset + timeOffset;
+    // Calculate total position (left gutter + day offset + time offset)
+    const dayOffset = daysDiff * (HOURS_PER_DAY * PX_PER_HOUR); // Use configurable hours and pixels
+    return LEFT_GUTTER_PX + dayOffset + timeOffset;
   };
   
   // Check if assembly card is overdue
@@ -317,14 +325,8 @@ export default function Scheduler() {
     const position = Number(card.position) || 0;
     const duration = Number(card.duration) || 0;
     
-    // Calculate days and hours from position (same as swim lane logic)
-    const hoursPerDay = 9; // 6 AM to 3 PM
-    const dayOffset = Math.floor(position / hoursPerDay);
-    const hourOffset = position % hoursPerDay;
-    
-    // Calculate visual position (in pixels)
-    const cardStartPosition = dayOffset * 540 + hourOffset * 60; // 540px per day, 60px per hour
-    const cardEndPosition = cardStartPosition + (duration * 60); // duration in hours * 60px
+    // Use shared utility for consistent coordinate space
+    const { start: cardStartPosition, end: cardEndPosition } = cardPixelRange(position, duration);
     
     // Card is only overdue if:
     // 1. Current time has passed the card's start time (card should have started)
@@ -335,6 +337,10 @@ export default function Scheduler() {
     
     // Debug logging for a few cards
     if (card.cardNumber && (card.cardNumber.includes('P10') || card.cardNumber.includes('P2-1') || card.cardNumber.includes('D2') || card.cardNumber.includes('M15'))) {
+      // Calculate for debug output only
+      const dayOffset = Math.floor(position / HOURS_PER_DAY);
+      const hourOffset = position % HOURS_PER_DAY;
+      
       console.log(`DEBUG OVERDUE - Card ${card.cardNumber}:`, {
         position,
         dayOffset,
@@ -354,6 +360,11 @@ export default function Scheduler() {
   
   // Helper to get time position for a given date
   const getCardTimePosition = (date: Date) => {
+    // Parse the configurable start time
+    const workDayStart = parseStartTime(startDate, startTime);
+    const workStartHour = workDayStart.getHours();
+    const workStartMinute = workDayStart.getMinutes();
+    
     const parts = getCTParts(date);
     const startDateCT = getStartDateCT();
     
@@ -361,8 +372,9 @@ export default function Scheduler() {
     const cardDateCT = new Date(parseInt(parts.year), parseInt(parts.month) - 1, parseInt(parts.day));
     
     const daysDiff = Math.floor((cardDateCT.getTime() - startDateCT.getTime()) / (1000 * 60 * 60 * 24));
-    const timeOffset = Math.max(0, (parseInt(parts.hour) - 6) * 60 + parseInt(parts.minute));
-    return daysDiff * 540 + timeOffset;
+    const hoursFromStart = (parseInt(parts.hour) - workStartHour) + (parseInt(parts.minute) - workStartMinute) / 60;
+    const timeOffset = Math.max(0, hoursFromStart * PX_PER_HOUR);
+    return LEFT_GUTTER_PX + daysDiff * (HOURS_PER_DAY * PX_PER_HOUR) + timeOffset;
   };
 
   // Bulk operations handlers
