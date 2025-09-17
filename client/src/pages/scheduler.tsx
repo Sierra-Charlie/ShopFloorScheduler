@@ -1364,7 +1364,7 @@ export default function Scheduler() {
                     <div
                       className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 pointer-events-none"
                       style={{
-                        left: `${timePosition}px`, // timePosition already includes left gutter
+                        left: `${timePosition + 150}px`, // adjust position to the right by 150px
                         boxShadow: '0 0 4px rgba(239, 68, 68, 0.5)',
                       }}
                       data-testid="current-time-line"
