@@ -181,8 +181,8 @@ export default function BuildBayMap() {
             <div className="col-span-12 grid grid-cols-12 gap-4 flex-1">
               
               {/* Left Side - Sub Assembly Areas (Vertical Stack) */}
-              <div className="col-span-5 grid grid-rows-6 gap-2">
-                {[6, 5, 4, 3, 2, 1].map(areaNum => (
+              <div className="col-span-5 grid grid-rows-5 gap-2">
+                {[5, 4, 3, 2, 1].map(areaNum => (
                   <BuildAreaZone
                     key={areaNum}
                     title={`SUB ASSY AREA ${areaNum}`}
