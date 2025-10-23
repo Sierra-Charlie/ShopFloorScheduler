@@ -134,7 +134,7 @@ export default function BuildBayMap() {
           <div className="grid grid-cols-12 gap-4 h-[800px]">
             
             {/* Top Row - Pre-Assembly Areas */}
-            <div className="col-span-12 grid grid-cols-4 gap-4 h-32">
+            <div className="col-span-12 grid grid-cols-4 gap-4 h-64">
               {/* Warehouse Picking */}
               <BuildAreaZone
                 title="WAREHOUSE PICKING"
