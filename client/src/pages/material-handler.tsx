@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck, Pause } from "lucide-react";
+import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck, Pause, Play } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
@@ -487,7 +487,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
               className="ml-2 border-green-600 text-green-700 hover:bg-green-50"
               data-testid={`button-resume-picking-${card.cardNumber}`}
             >
-              <Package className="h-4 w-4" />
+              <Play className="h-4 w-4" />
             </Button>
           )}
         </div>
