@@ -446,6 +446,7 @@ export default function GanttView() {
                   <Label className="text-sm font-medium">Assigned To</Label>
                   <div className="space-y-2">
                     {filterOptions.assignedToIds.map(assemblerId => {
+                      if (!assemblerId) return null;
                       const assembler = assemblers.find(a => a.id === assemblerId);
                       return (
                         <div key={assemblerId} className="flex items-center space-x-2">
