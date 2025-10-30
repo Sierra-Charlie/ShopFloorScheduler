@@ -165,7 +165,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       await updateCardMutation.mutateAsync({
         id: card.id,
         status: "picking",
-        pickingStartTime: new Date(),
+        pickingStartTime: new Date().toISOString(),
       });
       onStatusChange(card.id);
       toast({
@@ -505,7 +505,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         </Button>
       )}
       
-      {!isClearedForPicking && !isPicking && !isReady && !isDeliveredToPaint && card.status !== "completed" && card.status !== "assembling" && (
+      {!isClearedForPicking && !isPicking && !isPaused && !isReady && !isDeliveredToPaint && card.status !== "completed" && card.status !== "assembling" && (
         <div className="text-center text-sm font-medium text-orange-800 p-2 bg-orange-50 rounded">
           ⏳ Waiting for Planning Clearance
         </div>
