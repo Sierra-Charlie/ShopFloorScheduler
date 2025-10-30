@@ -156,6 +156,13 @@ export default function AssemblerView() {
                           <span className="ml-1">{card.type}</span>
                         </div>
                       </div>
+                      {(card.materialSeq || card.assemblySeq || card.operationSeq) && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {card.materialSeq ? `Job #${card.materialSeq}` : ''} 
+                          {card.assemblySeq ? ` | Assy ${card.assemblySeq}` : ''}
+                          {card.operationSeq ? ` | Op ${card.operationSeq}` : ''}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 );
@@ -206,6 +213,13 @@ export default function AssemblerView() {
                           <span className="ml-1">{card.type}</span>
                         </div>
                       </div>
+                      {(card.materialSeq || card.assemblySeq || card.operationSeq) && (
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {card.materialSeq ? `Job #${card.materialSeq}` : ''} 
+                          {card.assemblySeq ? ` | Assy ${card.assemblySeq}` : ''}
+                          {card.operationSeq ? ` | Op ${card.operationSeq}` : ''}
+                        </div>
+                      )}
                       {card.dependencies && card.dependencies.length > 0 && (
                         <div className="mt-2 text-xs text-warning">
                           Waiting for: {card.dependencies.join(", ")}
