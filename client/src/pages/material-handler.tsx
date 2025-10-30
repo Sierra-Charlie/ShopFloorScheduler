@@ -697,9 +697,8 @@ export default function MaterialHandler() {
     }
   };
 
-  // Filter out M cards (since they are not picked) and sort by phase first, then by position for material picking order
+  // Sort by phase first, then by position for material picking order
   const sortedCards = [...assemblyCards]
-    .filter(card => card.type !== "M") // Exclude M cards from Material Handler view
     .sort((a, b) => {
       if (a.phase !== b.phase) {
         return (a.phase || 1) - (b.phase || 1);
