@@ -141,10 +141,10 @@ export const updateAssemblyCardSchema = z.object({
   materialSeq: z.number().nullable().optional(),
   assemblySeq: z.number().nullable().optional(),
   operationSeq: z.number().nullable().optional(),
-  startTime: z.date().nullable().optional(),
-  endTime: z.date().nullable().optional(),
+  startTime: z.coerce.date().nullable().optional(),
+  endTime: z.coerce.date().nullable().optional(),
   elapsedTime: z.number().optional(),
-  pickingStartTime: z.date().nullable().optional(),
+  pickingStartTime: z.coerce.date().nullable().optional(),
   actualDuration: z.number().optional(),
   position: z.number().nullable().optional(),
   grounded: z.boolean().optional(),
@@ -152,8 +152,8 @@ export const updateAssemblyCardSchema = z.object({
   requiresCrane: z.boolean().optional(),
   priority: z.enum(["A", "B", "C"]).optional(),
   pickTime: z.number().nullable().optional(),
-  pickDueDate: z.date().nullable().optional(),
-  phaseClearedToBuildDate: z.date().nullable().optional(),
+  pickDueDate: z.coerce.date().nullable().optional(),
+  phaseClearedToBuildDate: z.coerce.date().nullable().optional(),
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
