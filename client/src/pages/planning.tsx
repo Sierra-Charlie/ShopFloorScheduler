@@ -231,13 +231,12 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
       </div>
       <div className="flex justify-between items-center text-xs mb-3 text-gray-700">
         <span>{card.duration} hrs • {getSequenceTypeLabel(card.type)}</span>
-        <span className="text-[10px] font-medium">
+        <span className="font-medium text-[14px]">
           {card.materialSeq ? `Job #${card.materialSeq}` : ''} 
           {card.assemblySeq ? ` | Assy ${card.assemblySeq}` : ''}
           {card.operationSeq ? ` | Op ${card.operationSeq}` : ''}
         </span>
       </div>
-      
       {!isClearedForPicking && card.status === "scheduled" && (
         <div className="space-y-2">
           <Button
@@ -251,13 +250,11 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
           </Button>
         </div>
       )}
-      
       {isClearedForPicking && (
         <div className="text-center text-sm font-medium text-green-800 mb-2">
           ✓ Cleared for Picking
         </div>
       )}
-
       {/* Andon Alert Button */}
       <div className="mt-2">
         <Button
@@ -271,7 +268,6 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
           Andon Alert
         </Button>
       </div>
-
       {/* Andon Issue Dialog */}
       <Dialog open={showAndonDialog} onOpenChange={setShowAndonDialog}>
         <DialogContent>
@@ -352,7 +348,6 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
           </div>
         </DialogContent>
       </Dialog>
-      
       {/* Camera Dialog */}
       {showCamera && (
         <CameraCapture
