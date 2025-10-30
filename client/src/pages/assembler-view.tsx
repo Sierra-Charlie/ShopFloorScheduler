@@ -112,7 +112,6 @@ export default function AssemblerView() {
           </p>
         </div>
       </div>
-
       <div className="grid gap-6 md:grid-cols-2">
         {/* Active Work */}
         <div className="space-y-4">
@@ -157,7 +156,7 @@ export default function AssemblerView() {
                         </div>
                       </div>
                       {(card.materialSeq || card.assemblySeq || card.operationSeq) && (
-                        <div className="mt-1 text-xs text-muted-foreground">
+                        <div className="mt-1 text-muted-foreground text-[14px]">
                           {card.materialSeq ? `Job #${card.materialSeq}` : ''} 
                           {card.assemblySeq ? ` | Assy ${card.assemblySeq}` : ''}
                           {card.operationSeq ? ` | Op ${card.operationSeq}` : ''}
