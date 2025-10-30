@@ -36,7 +36,7 @@ export const assemblyCards = pgTable("assembly_cards", {
   dependencies: text("dependencies").array().notNull().default([]), // array of card numbers that must be completed first
   gembaDocLink: text("gemba_doc_link"), // URL link to Gemba documentation for work instructions
   pickListLink: text("pick_list_link"), // URL link to pick list in external system
-  materialSeq: integer("material_seq"), // Material sequence information - numeric
+  materialSeq: text("material_seq"), // Material sequence information - allows alphanumeric and "-" characters
   assemblySeq: integer("assembly_seq"), // Assembly sequence information - numeric
   operationSeq: integer("operation_seq"), // Operation sequence information - numeric
   startTime: timestamp("start_time"),
