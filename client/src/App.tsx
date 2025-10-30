@@ -49,6 +49,7 @@ function Router() {
           <Route path="/scheduler" component={Scheduler} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/gantt" component={GanttView} />
+          <Route path="/gantt-view" component={GanttView} />
           <Route path="/planning" component={Planning} />
           <Route path="/material-handler" component={MaterialHandler} />
           <Route path="/assembler" component={AssemblerView} />
