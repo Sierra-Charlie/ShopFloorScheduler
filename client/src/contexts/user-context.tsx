@@ -19,8 +19,14 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [startDate, setStartDate] = useState("2025-09-17");
-  const [startTime, setStartTime] = useState("08:00");
+  const [startDate, setStartDate] = useState(() => {
+    const saved = localStorage.getItem('assemblyBuildStartDate');
+    return saved || "2025-09-17";
+  });
+  const [startTime, setStartTime] = useState(() => {
+    const saved = localStorage.getItem('assemblyBuildStartTime');
+    return saved || "08:00";
+  });
 
   useEffect(() => {
     // Check for existing authentication on app load
@@ -41,6 +47,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     checkAuth();
   }, []);
+
+  // Persist startDate to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('assemblyBuildStartDate', startDate);
+  }, [startDate]);
+
+  // Persist startTime to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('assemblyBuildStartTime', startTime);
+  }, [startTime]);
 
   const login = (user: User) => {
     setCurrentUser(user);
