@@ -85,6 +85,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
 
   const isReady = card.status === "ready_for_build";
   const isPicking = card.status === "picking";
+  const isPaused = card.status === "paused";
   const isDeliveredToPaint = card.status === "delivered_to_paint";
   const isClearedForPicking = card.status === "cleared_for_picking";
   
@@ -98,15 +99,19 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     let interval: NodeJS.Timeout;
     if (isPicking && card.pickingStartTime) {
       const startTime = new Date(card.pickingStartTime);
+      const baseElapsed = card.elapsedTime || 0;
       // Update immediately
-      setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
+      setPickingElapsed(baseElapsed + Math.floor((Date.now() - startTime.getTime()) / 1000));
       
       interval = setInterval(() => {
-        setPickingElapsed(Math.floor((Date.now() - startTime.getTime()) / 1000));
+        setPickingElapsed(baseElapsed + Math.floor((Date.now() - startTime.getTime()) / 1000));
       }, 1000);
+    } else if (isPaused) {
+      // When paused, just show the accumulated elapsed time
+      setPickingElapsed(card.elapsedTime || 0);
     }
     return () => clearInterval(interval);
-  }, [isPicking, card.pickingStartTime]);
+  }, [isPicking, isPaused, card.pickingStartTime, card.elapsedTime]);
 
   const handleStartPicking = async () => {
     try {
@@ -130,9 +135,16 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
 
   const handlePausePicking = async () => {
     try {
+      // Calculate total elapsed time including current session
+      const currentElapsed = card.pickingStartTime 
+        ? Math.floor((Date.now() - new Date(card.pickingStartTime).getTime()) / 1000)
+        : 0;
+      const totalElapsed = (card.elapsedTime || 0) + currentElapsed;
+      
       await updateCardMutation.mutateAsync({
         id: card.id,
-        status: "cleared_for_picking",
+        status: "paused",
+        elapsedTime: totalElapsed,
       });
       onStatusChange(card.id);
       toast({
@@ -142,6 +154,27 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     } catch (error) {
       toast({
         title: "Failed to pause picking",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleResumePicking = async () => {
+    try {
+      await updateCardMutation.mutateAsync({
+        id: card.id,
+        status: "picking",
+        pickingStartTime: new Date(),
+      });
+      onStatusChange(card.id);
+      toast({
+        title: "Picking resumed",
+        description: `Picking resumed for ${card.cardNumber}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to resume picking",
         description: "Please try again",
         variant: "destructive",
       });
@@ -417,23 +450,46 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         )}
       </div>
       
-      {isPicking && (
-        <div className="flex items-center justify-between mb-3 bg-green-50 p-2 rounded">
+      {(isPicking || isPaused) && (
+        <div className={cn(
+          "flex items-center justify-between mb-3 p-2 rounded",
+          isPicking ? "bg-green-50" : "bg-orange-50"
+        )}>
           <div className="text-center flex-1">
-            <div className="text-sm font-medium text-green-800">Picking in progress</div>
-            <div className="text-lg font-mono font-bold text-green-600">
+            <div className={cn(
+              "text-sm font-medium",
+              isPicking ? "text-green-800" : "text-orange-800"
+            )}>
+              {isPicking ? "Picking in progress" : "Picking paused"}
+            </div>
+            <div className={cn(
+              "text-lg font-mono font-bold",
+              isPicking ? "text-green-600" : "text-orange-600"
+            )}>
               {formatTime(pickingElapsed)}
             </div>
           </div>
-          <Button
-            onClick={handlePausePicking}
-            size="sm"
-            variant="outline"
-            className="ml-2 border-orange-400 text-orange-700 hover:bg-orange-50"
-            data-testid={`button-pause-picking-${card.cardNumber}`}
-          >
-            <Pause className="h-4 w-4" />
-          </Button>
+          {isPicking ? (
+            <Button
+              onClick={handlePausePicking}
+              size="sm"
+              variant="outline"
+              className="ml-2 border-orange-400 text-orange-700 hover:bg-orange-50"
+              data-testid={`button-pause-picking-${card.cardNumber}`}
+            >
+              <Pause className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              onClick={handleResumePicking}
+              size="sm"
+              variant="outline"
+              className="ml-2 border-green-600 text-green-700 hover:bg-green-50"
+              data-testid={`button-resume-picking-${card.cardNumber}`}
+            >
+              <Package className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       )}
       
@@ -455,7 +511,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
         </div>
       )}
       
-      {isPicking && (
+      {(isPicking || isPaused) && (
         <div className="space-y-2">
           {card.pickListLink && (
             <Button
