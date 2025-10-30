@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck } from "lucide-react";
+import { Package, ArrowLeft, AlertTriangle, Camera, UserCheck, Pause } from "lucide-react";
 import { useAssemblyCards, useUpdateAssemblyCard } from "@/hooks/use-assembly-cards";
 import { useUser, canAccess } from "@/contexts/user-context";
 import { useUsers } from "@/hooks/use-users";
@@ -122,6 +122,26 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
     } catch (error) {
       toast({
         title: "Failed to start picking",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePausePicking = async () => {
+    try {
+      await updateCardMutation.mutateAsync({
+        id: card.id,
+        status: "cleared_for_picking",
+      });
+      onStatusChange(card.id);
+      toast({
+        title: "Picking paused",
+        description: `Picking paused for ${card.cardNumber}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to pause picking",
         description: "Please try again",
         variant: "destructive",
       });
@@ -398,11 +418,22 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
       </div>
       
       {isPicking && (
-        <div className="text-center mb-3">
-          <div className="text-sm font-medium text-green-800">Picking in progress</div>
-          <div className="text-lg font-mono font-bold text-green-600">
-            {formatTime(pickingElapsed)}
+        <div className="flex items-center justify-between mb-3 bg-green-50 p-2 rounded">
+          <div className="text-center flex-1">
+            <div className="text-sm font-medium text-green-800">Picking in progress</div>
+            <div className="text-lg font-mono font-bold text-green-600">
+              {formatTime(pickingElapsed)}
+            </div>
           </div>
+          <Button
+            onClick={handlePausePicking}
+            size="sm"
+            variant="outline"
+            className="ml-2 border-orange-400 text-orange-700 hover:bg-orange-50"
+            data-testid={`button-pause-picking-${card.cardNumber}`}
+          >
+            <Pause className="h-4 w-4" />
+          </Button>
         </div>
       )}
       
