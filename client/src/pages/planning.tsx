@@ -229,8 +229,13 @@ function PlanningCard({ card, index, onStatusChange }: PlanningCardProps) {
       <div className="text-sm mb-2" title={getSequenceTypeLabel(card.type)}>
         {card.name}
       </div>
-      <div className="text-xs mb-3 text-gray-700">
-        {card.duration} hrs • {getSequenceTypeLabel(card.type)}
+      <div className="flex justify-between items-center text-xs mb-3 text-gray-700">
+        <span>{card.duration} hrs • {getSequenceTypeLabel(card.type)}</span>
+        <span className="text-[10px] font-medium">
+          {card.materialSeq ? `Job #${card.materialSeq}` : ''} 
+          {card.assemblySeq ? ` | Assy ${card.assemblySeq}` : ''}
+          {card.operationSeq ? ` | Op ${card.operationSeq}` : ''}
+        </span>
       </div>
       
       {!isClearedForPicking && card.status === "scheduled" && (
