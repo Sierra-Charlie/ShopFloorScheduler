@@ -378,7 +378,7 @@ function MaterialCard({ card, index, onStatusChange }: MaterialCardProps) {
               P
             </div>
           )}
-          {isClearedForPicking && (
+          {(isClearedForPicking || isPaused) && (
             <div className="bg-white text-black rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg border-2 border-black">
               P
             </div>
